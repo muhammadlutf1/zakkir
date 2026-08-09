@@ -1,6 +1,7 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 import type { Command } from "./Command";
 import type { BotEvent } from "./Event";
+import type { PlayerRegistry } from "../voice/PlayerRegistry";
 
 export default class Bot extends Client {
 	private initialized = false;
@@ -10,6 +11,7 @@ export default class Bot extends Client {
 	constructor(
 		private commandLoader: () => Promise<Collection<string, Command>>,
 		private eventLoader: () => Promise<Collection<string, BotEvent>>,
+		private playerRegistry: PlayerRegistry,
 	) {
 		super({
 			intents: [
@@ -36,6 +38,10 @@ export default class Bot extends Client {
 
 	public get commands() {
 		return this._commands;
+	}
+
+	public get players() {
+		return this.playerRegistry;
 	}
 
 	async init() {
