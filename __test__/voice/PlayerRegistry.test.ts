@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { Player } from "./Player";
-import { PlayerRegistry } from "./PlayerRegistry";
-import type { VoicePort } from "./VoicePort";
+import { Player } from "../../src/voice/Player";
+import { PlayerRegistry } from "../../src/voice/PlayerRegistry";
+import type { VoicePort } from "../../src/voice/VoicePort";
 
 class NoopVoicePort implements VoicePort {
 	async join() {}

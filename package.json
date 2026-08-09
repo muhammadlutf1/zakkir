@@ -8,7 +8,7 @@
 		"build": "node --experimental-strip-types esbuild.config.ts",
 		"dev": "tsx --env-file=.env --watch src/index.ts",
 		"start": "node --env-file=.env dist/index.js",
-		"test": "tsx --test src/**/*.test.ts"
+		"test": "tsx --test __test__/**/*.test.ts"
 	},
 	"keywords": [],
 	"author": "Muhammad Lutfi <mohamed10lotfy10@gmail.com>",

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { Queue, type QueueView } from "./Queue";
+import { Queue, type QueueView } from "../../src/voice/Queue";
 
 const alFatiha = { surah: "Al-Fatiha", reciter: "Mishary" } as const;
 const yaseen = { surah: "Yaseen", reciter: "Mishary" } as const;

@@ -12,19 +12,19 @@ before(() => {
 });
 
 test("resolveLogLevel defaults to debug in development", async () => {
-	const { resolveLogLevel } = await import("./logger");
+	const { resolveLogLevel } = await import("../../src/core/logger");
 
 	assert.equal(resolveLogLevel({}), "debug");
 });
 
 test("resolveLogLevel defaults to info in production", async () => {
-	const { resolveLogLevel } = await import("./logger");
+	const { resolveLogLevel } = await import("../../src/core/logger");
 
 	assert.equal(resolveLogLevel({ NODE_ENV: "production" }), "info");
 });
 
 test("resolveLogLevel honors LOG_LEVEL", async () => {
-	const { resolveLogLevel } = await import("./logger");
+	const { resolveLogLevel } = await import("../../src/core/logger");
 
 	assert.equal(resolveLogLevel({ LOG_LEVEL: "warn" }), "warn");
 	assert.equal(
@@ -34,16 +34,16 @@ test("resolveLogLevel honors LOG_LEVEL", async () => {
 });
 
 test("createLogger returns a single shared logger per module name", async () => {
-	const { createLogger } = await import("./logger");
+	const { createLogger } = await import("../../src/core/logger");
 
 	assert.equal(createLogger("shared"), createLogger("shared"));
 	assert.notEqual(createLogger("shared"), createLogger("other"));
 });
 
 test("createLogger binds the module name into emitted log lines", () => {
-	const loggerUrl = pathToFileURL(
-		join(dirname(fileURLToPath(import.meta.url)), "logger"),
-	).href;
+		const loggerUrl = pathToFileURL(
+			join(dirname(fileURLToPath(import.meta.url)), "../../src/core/logger"),
+		).href;
 
 	const dir = mkdtempSync(join(tmpdir(), "logger-test-"));
 	const fixture = join(dir, "fixture.ts");
