@@ -101,6 +101,14 @@ export class DiscordVoicePort implements VoicePort {
 		}
 	}
 
+	pause(): void {
+		this.audioPlayer?.pause();
+	}
+
+	unpause(): void {
+		this.audioPlayer?.unpause();
+	}
+
 	stop(): void {
 		this.audioPlayer?.stop();
 	}

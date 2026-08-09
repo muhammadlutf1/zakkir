@@ -37,6 +37,14 @@ class FakeVoicePort implements VoicePort {
 		this.calls.push("stop");
 	}
 
+	pause() {
+		this.calls.push("pause");
+	}
+
+	unpause() {
+		this.calls.push("unpause");
+	}
+
 	destroy() {
 		this.calls.push("destroy");
 	}
@@ -118,6 +126,24 @@ test("stop delegates to the VoicePort", () => {
 	player.stop();
 
 	assert.deepEqual(port.calls, ["stop"]);
+});
+
+test("pause delegates to the VoicePort", () => {
+	const port = new FakeVoicePort();
+	const player = new Player("guild-1", port);
+
+	player.pause();
+
+	assert.deepEqual(port.calls, ["pause"]);
+});
+
+test("unpause delegates to the VoicePort", () => {
+	const port = new FakeVoicePort();
+	const player = new Player("guild-1", port);
+
+	player.unpause();
+
+	assert.deepEqual(port.calls, ["unpause"]);
 });
 
 test("voice errors emitted by the port are caught and do not escape", async () => {

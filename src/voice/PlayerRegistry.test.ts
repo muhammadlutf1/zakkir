@@ -11,6 +11,10 @@ class NoopVoicePort implements VoicePort {
 
 	play() {}
 
+	pause() {}
+
+	unpause() {}
+
 	stop() {}
 
 	destroy() {}

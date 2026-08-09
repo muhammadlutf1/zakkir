@@ -23,6 +23,8 @@ export interface VoicePort {
 	join(channel: VoiceChannel): Promise<void>;
 	leave(): void;
 	play(url: string): void;
+	pause(): void;
+	unpause(): void;
 	stop(): void;
 	on<K extends VoicePortEventName>(
 		event: K,

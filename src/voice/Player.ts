@@ -44,6 +44,14 @@ export class Player {
 		this.port.play(url);
 	}
 
+	pause(): void {
+		this.port.pause();
+	}
+
+	unpause(): void {
+		this.port.unpause();
+	}
+
 	stop(): void {
 		this.port.stop();
 	}
