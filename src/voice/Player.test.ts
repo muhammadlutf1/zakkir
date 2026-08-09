@@ -1,14 +1,20 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { VoiceConnectionStatus } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
 import { Player } from "./Player";
-import type { VoicePort, VoicePortEvents } from "./VoicePort";
+import type {
+	VoicePort,
+	VoicePortEventName,
+	VoicePortEventPayload,
+	VoicePortEvents,
+} from "./VoicePort";
 
 class FakeVoicePort implements VoicePort {
 	readonly calls: string[] = [];
 
 	private listeners: {
-		[K in keyof VoicePortEvents]: Set<VoicePortEvents[K]>;
+		[K in VoicePortEventName]: Set<VoicePortEvents[K]>;
 	} = {
 		stateChange: new Set(),
 		playerStateChange: new Set(),
@@ -35,22 +41,20 @@ class FakeVoicePort implements VoicePort {
 		this.calls.push("destroy");
 	}
 
-	on<K extends keyof VoicePortEvents>(event: K, listener: VoicePortEvents[K]) {
+	on<K extends VoicePortEventName>(event: K, listener: VoicePortEvents[K]) {
 		this.listeners[event].add(listener);
 	}
 
-	off<K extends keyof VoicePortEvents>(event: K, listener: VoicePortEvents[K]) {
+	off<K extends VoicePortEventName>(event: K, listener: VoicePortEvents[K]) {
 		this.listeners[event].delete(listener);
 	}
 
-	emit<K extends keyof VoicePortEvents>(
+	emit<K extends VoicePortEventName>(
 		event: K,
-		payload: Parameters<VoicePortEvents[K]>[0],
+		payload: VoicePortEventPayload<K>,
 	) {
 		for (const listener of this.listeners[event]) {
-			(listener as (payload: Parameters<VoicePortEvents[K]>[0]) => void)(
-				payload,
-			);
+			(listener as (payload: VoicePortEventPayload<K>) => void)(payload);
 		}
 	}
 }
@@ -73,10 +77,10 @@ test("join delegates to the VoicePort and reflects the ready state", async () =>
 	assert.deepEqual(port.calls, ["join:voice-1"]);
 	assert.equal(player.isConnected, false);
 
-	port.emit("stateChange", "ready");
+	port.emit("stateChange", VoiceConnectionStatus.Ready);
 	assert.equal(player.isConnected, true);
 
-	port.emit("stateChange", "disconnected");
+	port.emit("stateChange", VoiceConnectionStatus.Disconnected);
 	assert.equal(player.isConnected, false);
 });
 

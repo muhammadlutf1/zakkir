@@ -1,24 +1,19 @@
+import type {
+	AudioPlayerStatus,
+	VoiceConnectionStatus,
+} from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
 
-export type VoiceConnectionState =
-	| "signalling"
-	| "connecting"
-	| "ready"
-	| "disconnected"
-	| "destroyed";
-
-export type AudioPlayerState =
-	| "idle"
-	| "buffering"
-	| "playing"
-	| "paused"
-	| "autoPaused";
-
 export interface VoicePortEvents {
-	stateChange: (state: VoiceConnectionState) => void;
-	playerStateChange: (state: AudioPlayerState) => void;
+	stateChange: (state: VoiceConnectionStatus) => void;
+	playerStateChange: (state: AudioPlayerStatus) => void;
 	error: (error: unknown) => void;
 }
+
+export type VoicePortEventName = keyof VoicePortEvents;
+
+export type VoicePortEventPayload<K extends VoicePortEventName> =
+	VoicePortEvents[K] extends (arg: infer A) => void ? A : never;
 
 /**
  * Isolates @discordjs/voice behind a small injected interface so the Player
@@ -29,11 +24,11 @@ export interface VoicePort {
 	leave(): void;
 	play(url: string): void;
 	stop(): void;
-	on<K extends keyof VoicePortEvents>(
+	on<K extends VoicePortEventName>(
 		event: K,
 		listener: VoicePortEvents[K],
 	): void;
-	off<K extends keyof VoicePortEvents>(
+	off<K extends VoicePortEventName>(
 		event: K,
 		listener: VoicePortEvents[K],
 	): void;

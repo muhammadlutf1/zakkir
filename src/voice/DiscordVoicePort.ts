@@ -1,60 +1,21 @@
 import {
-	AudioPlayerStatus,
+	type AudioPlayer,
 	createAudioPlayer,
 	createAudioResource,
 	joinVoiceChannel,
-	VoiceConnectionStatus,
-	type AudioPlayer,
 	type VoiceConnection,
+	VoiceConnectionStatus,
 } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
 import { createLogger } from "../core/logger";
 import type {
-	AudioPlayerState,
-	VoiceConnectionState,
 	VoicePort,
+	VoicePortEventName,
+	VoicePortEventPayload,
 	VoicePortEvents,
 } from "./VoicePort";
 
 const logger = createLogger("discordVoicePort");
-
-type Payload<K extends keyof VoicePortEvents> = VoicePortEvents[K] extends (
-	arg: infer A,
-) => void
-	? A
-	: never;
-
-function toConnectionState(
-	status: VoiceConnectionStatus,
-): VoiceConnectionState {
-	switch (status) {
-		case VoiceConnectionStatus.Signalling:
-			return "signalling";
-		case VoiceConnectionStatus.Connecting:
-			return "connecting";
-		case VoiceConnectionStatus.Ready:
-			return "ready";
-		case VoiceConnectionStatus.Disconnected:
-			return "disconnected";
-		case VoiceConnectionStatus.Destroyed:
-			return "destroyed";
-	}
-}
-
-function toPlayerState(status: AudioPlayerStatus): AudioPlayerState {
-	switch (status) {
-		case AudioPlayerStatus.Idle:
-			return "idle";
-		case AudioPlayerStatus.Buffering:
-			return "buffering";
-		case AudioPlayerStatus.Playing:
-			return "playing";
-		case AudioPlayerStatus.Paused:
-			return "paused";
-		case AudioPlayerStatus.AutoPaused:
-			return "autoPaused";
-	}
-}
 
 /**
  * @discordjs/voice adapter. Every 'error' source is attached to a listener
@@ -65,7 +26,7 @@ export class DiscordVoicePort implements VoicePort {
 	private audioPlayer: AudioPlayer | null = null;
 
 	private readonly listeners: {
-		[K in keyof VoicePortEvents]: Set<VoicePortEvents[K]>;
+		[K in VoicePortEventName]: Set<VoicePortEvents[K]>;
 	} = {
 		stateChange: new Set(),
 		playerStateChange: new Set(),
@@ -92,15 +53,12 @@ export class DiscordVoicePort implements VoicePort {
 		this.connection = connection;
 
 		connection.on("stateChange", (_oldState, newState) => {
-			const state = toConnectionState(newState.status);
+			const state = newState.status;
 
 			this.emit("stateChange", state);
 
-			if (state === "disconnected") {
-				logger.warn(
-					{ guildId: channel.guild.id },
-					"Voice connection dropped",
-				);
+			if (state === VoiceConnectionStatus.Disconnected) {
+				logger.warn({ guildId: channel.guild.id }, "Voice connection dropped");
 			}
 		});
 
@@ -117,7 +75,7 @@ export class DiscordVoicePort implements VoicePort {
 		});
 
 		audioPlayer.on("stateChange", (_oldState, newState) => {
-			this.emit("playerStateChange", toPlayerState(newState.status));
+			this.emit("playerStateChange", newState.status);
 		});
 
 		connection.subscribe(audioPlayer);
@@ -147,11 +105,11 @@ export class DiscordVoicePort implements VoicePort {
 		this.audioPlayer?.stop();
 	}
 
-	on<K extends keyof VoicePortEvents>(event: K, listener: VoicePortEvents[K]) {
+	on<K extends VoicePortEventName>(event: K, listener: VoicePortEvents[K]) {
 		this.listeners[event].add(listener);
 	}
 
-	off<K extends keyof VoicePortEvents>(event: K, listener: VoicePortEvents[K]) {
+	off<K extends VoicePortEventName>(event: K, listener: VoicePortEvents[K]) {
 		this.listeners[event].delete(listener);
 	}
 
@@ -159,12 +117,12 @@ export class DiscordVoicePort implements VoicePort {
 		for (const listeners of Object.values(this.listeners)) listeners.clear();
 	}
 
-	private emit<K extends keyof VoicePortEvents>(
+	private emit<K extends VoicePortEventName>(
 		event: K,
-		payload: Payload<K>,
+		payload: VoicePortEventPayload<K>,
 	) {
 		for (const listener of this.listeners[event]) {
-			(listener as (payload: Payload<K>) => void)(payload);
+			(listener as (payload: VoicePortEventPayload<K>) => void)(payload);
 		}
 	}
 }

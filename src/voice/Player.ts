@@ -1,11 +1,13 @@
+import { VoiceConnectionStatus } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
 import { createLogger } from "../core/logger";
-import type { VoiceConnectionState, VoicePort } from "./VoicePort";
+import type { VoicePort } from "./VoicePort";
 
 const logger = createLogger("player");
 
 export class Player {
-	private connectionState: VoiceConnectionState = "destroyed";
+	private connectionState: VoiceConnectionStatus =
+		VoiceConnectionStatus.Destroyed;
 
 	constructor(
 		public readonly guildId: string,
@@ -21,7 +23,7 @@ export class Player {
 	}
 
 	get isConnected() {
-		return this.connectionState === "ready";
+		return this.connectionState === VoiceConnectionStatus.Ready;
 	}
 
 	async join(channel: VoiceChannel): Promise<void> {
