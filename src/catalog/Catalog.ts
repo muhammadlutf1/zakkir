@@ -132,7 +132,7 @@ function normalizeReciter(raw: RawReciter): Reciter {
 	};
 }
 
-export function buildSurahStreamUrl(server: string, surahNumber: number) {
+function buildSurahStreamUrl(server: string, surahNumber: number) {
 	return `${server}${String(surahNumber).padStart(3, "0")}.mp3`; // ex: https://server6.mp3quran.net/akdr/001.mp3
 }
 
