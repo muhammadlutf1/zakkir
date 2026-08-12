@@ -15,3 +15,7 @@ The five canonical triage labels are used as-is (needs-triage, needs-info, ready
 ### Domain docs
 
 Single-context layout — root `CONTEXT.md` + `docs/adr/`. See `docs/agents/domain.md`.
+
+### Pull requests
+
+Create PRs with `gh`, and write the body via `--body-file` from a temp file — inline `--body` strings in PowerShell leave literal `\` escapes in the markdown. See `docs/agents/pull-requests.md`.
