@@ -14,7 +14,6 @@ const playerRegistry = new PlayerRegistry(
 
 const guildConfig = new GuildConfig(
 	new SqliteGuildConfigStore(config.database.path),
-	config.defaults,
 );
 
 const bot = new Bot(commandLoader, eventLoader, playerRegistry, guildConfig);

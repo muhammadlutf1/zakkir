@@ -1,28 +1,20 @@
-import type { GuildConfigStore } from "./GuildConfigStore";
-import { resolveDefaults } from "./resolveDefaults";
-import type {
-	GlobalDefaults,
-	GuildConfigData,
-	ResolveRequest,
-	RewayahCoverage,
-} from "./types";
+import { config } from "../config";
+import type { SqliteGuildConfigStore } from "./SqliteGuildConfigStore";
+import type { GuildConfigData, ResolveRequest, RewayahCoverage } from "./types";
 
 export class GuildConfig {
 	private readonly cache = new Map<string, GuildConfigData>();
 
-	constructor(
-		private readonly store: GuildConfigStore,
-		private readonly global: GlobalDefaults,
-	) {}
+	constructor(private readonly store: SqliteGuildConfigStore) {}
 
 	async get(guildId: string) {
 		if (this.cache.has(guildId)) return this.cache.get(guildId);
 
-		const config = await this.store.get(guildId);
+		const saved = await this.store.get(guildId);
 
-		if (config) this.cache.set(guildId, config);
+		if (saved) this.cache.set(guildId, saved);
 
-		return config;
+		return saved;
 	}
 
 	async set(guildId: string, patch: Partial<GuildConfigData>) {
@@ -33,29 +25,52 @@ export class GuildConfig {
 			defaultRewayah: undefined,
 		};
 
-		const config: GuildConfigData = {
+		const data: GuildConfigData = {
 			guildId,
 			language: patch.language ?? current.language,
 			defaultReciter: patch.defaultReciter ?? current.defaultReciter,
 			defaultRewayah: patch.defaultRewayah ?? current.defaultRewayah,
 		};
 
-		await this.store.set(config);
-		this.cache.set(guildId, config);
+		await this.store.set(data);
+		this.cache.set(guildId, data);
 
-		return config;
+		return data;
 	}
 
+	/**
+	 * Resolves the playback defaults for a play request: which reciter and
+	 * rewayah to use. Precedence is the command option, then the guild config,
+	 * then the bot-wide defaults; the rewayah is kept only if it covers the surah.
+	 */
 	async resolve(
 		guildId: string,
 		request: ResolveRequest,
 		rewayahCovers: RewayahCoverage,
 	) {
-		return resolveDefaults({
-			guildConfig: await this.get(guildId),
-			global: this.global,
-			request,
-			rewayahCovers,
-		});
+		const guildConfig = await this.get(guildId);
+		const option = request.option ?? {};
+
+		const reciter =
+			option.reciter ??
+			guildConfig?.defaultReciter ??
+			config.defaults.defaultReciter;
+
+		let rewayah: number | undefined;
+		if (reciter !== undefined) {
+			const candidate =
+				option.rewayah ??
+				guildConfig?.defaultRewayah ??
+				config.defaults.defaultRewayah;
+
+			if (
+				candidate !== undefined &&
+				(await rewayahCovers(reciter, request.surahNumber, candidate))
+			) {
+				rewayah = candidate;
+			}
+		}
+
+		return { reciter, rewayah };
 	}
 }

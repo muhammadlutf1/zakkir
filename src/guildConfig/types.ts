@@ -12,13 +12,11 @@ export interface GlobalDefaults {
 }
 
 export interface DefaultsOption {
-	language?: string;
 	reciter?: number;
 	rewayah?: number;
 }
 
 export interface ResolvedDefaults {
-	language: string;
 	reciter: number | undefined;
 	rewayah: number | undefined;
 }
@@ -28,6 +26,9 @@ export interface ResolveRequest {
 	option?: DefaultsOption;
 }
 
+/**
+ * Whether a rewayah is available for a given reciter and surah.
+ */
 export type RewayahCoverage = (
 	reciterId: number,
 	surahNumber: number,

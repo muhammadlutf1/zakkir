@@ -1,7 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { dirname } from "node:path";
-import type { GuildConfigStore } from "./GuildConfigStore";
 import type { GuildConfigData } from "./types";
 
 interface Row {
@@ -10,7 +9,7 @@ interface Row {
 	default_rewayah: number | null;
 }
 
-export class SqliteGuildConfigStore implements GuildConfigStore {
+export class SqliteGuildConfigStore {
 	private readonly db: DatabaseSync;
 
 	constructor(path: string) {

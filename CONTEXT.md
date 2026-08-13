@@ -67,7 +67,7 @@ A recitation method (e.g. Hafs) that a Reciter provides. A Rewayah has a server 
 _Avoid_: moshaf, rewaya
 
 **GuildConfig**:
-A guild's persisted preferences: language, default Reciter, and default Rewayah, used to resolve defaults when a command omits them.
+A guild's persisted preferences: language (the bot UI's display language), default Reciter, and default Rewayah. The UI language is read directly; the default Reciter and default Rewayah resolve playback defaults when a command omits them.
 _Avoid_: ServerSettings, GuildSettings, GuildPreferences
 
 **Radio**:
