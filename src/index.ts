@@ -12,10 +12,18 @@ const playerRegistry = new PlayerRegistry(
 	(guildId) => new Player(guildId, new DiscordVoicePort()),
 );
 
-const guildConfig = new GuildConfig(
-	new SqliteGuildConfigStore(config.database.path),
-);
+const store = new SqliteGuildConfigStore(config.database.path);
+const guildConfig = new GuildConfig(store);
 
 const bot = new Bot(commandLoader, eventLoader, playerRegistry, guildConfig);
 
 bot.login();
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+	process.on(signal, () => {
+		bot.destroy().finally(() => {
+			store.close();
+			process.exit(0);
+		});
+	});
+}
