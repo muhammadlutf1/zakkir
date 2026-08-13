@@ -21,8 +21,12 @@ The mechanism that reads files from the `commands/` and `events/` directories an
 _Avoid_: importer, registrar
 
 **Dispatcher**:
-The BotEvent that routes an incoming interaction to the matching Command and handles command execution errors.
+The BotEvent that routes an incoming interaction to the matching Command (and Component, e.g. PlayerPanel buttons) and handles command execution errors.
 _Avoid_: handler, router
+
+**Component**:
+A Discord message-component interaction handler (button or select menu) with a customId and an `execute(bot, interaction)` behavior — the widget counterpart to a Command.
+_Avoid_: button handler, widget, component handler
 
 ## Voice
 
@@ -30,16 +34,24 @@ _Avoid_: handler, router
 One per guild. Owns that guild's voice connection and audio playback — joins/leaves voice channels, and feeds tracks from its Queue to the audio player as each one finishes.
 _Avoid_: VC manager, audio player manager, guild player
 
+**PlayerPanel**:
+One per guild. Renders the Player's state to a Discord message (embed with action components) and re-edits that same message in place as playback state changes, so the panel stays the single live view of the session.
+_Avoid_: player card, now-playing message, player message
+
 **Queue**:
-One per guild. The ordered list of tracks a Player plays, supporting add, remove, skip, and clear operations.
+One per guild. The ordered list of tracks a Player plays, supporting add, remove, skip, and clear operations. Owns the RepeatMode.
 _Avoid_: playlist, song list, queue manager
+
+**RepeatMode**:
+The Queue's looping behavior: OFF (advance and end), TRACK (replay the current Recitation), or ALL (wrap back to the first when the queue ends). The Player's auto-advance follows the current mode.
+_Avoid_: loop mode
 
 **PlayerRegistry**:
 The bot-wide map from guild id to that guild's Player, created lazily when the Player first joins.
 _Avoid_: voice manager, player manager
 
 **Recitation**:
-The queue's unit of playback — a Surah read by a Reciter. A finite track that ends, which the Player auto-advances past.
+The queue's unit of playback — a Surah read by a Reciter in a specific Rewayah. A finite track that ends, which the Player auto-advances past.
 _Avoid_: track, song, audio file
 
 **Surah**:
@@ -47,8 +59,16 @@ One of the 114 chapters of the Quran, identified by name or number.
 _Avoid_: chapter
 
 **Reciter**:
-A reciter whose readings are streamable through the Catalog. A Reciter's reading style is a moshaf with a server base URL.
+A reciter whose readings are streamable through the Catalog. A Reciter has one or more Rewayat (sometimes none available for a given Surah).
 _Avoid_: reader, qari
+
+**Rewayah**:
+A recitation method (e.g. Hafs) that a Reciter provides. A Rewayah has a server base URL and covers a set of Surahs (which may be empty for a given Reciter/Surah pairing).
+_Avoid_: moshaf, rewaya
+
+**GuildConfig**:
+A guild's persisted preferences: language (the bot UI's display language), default Reciter, and default Rewayah. The UI language is read directly; the default Reciter and default Rewayah resolve playback defaults when a command omits them.
+_Avoid_: ServerSettings, GuildSettings, GuildPreferences
 
 **Radio**:
 An endless streaming channel the Player can play instead of the Queue. Exclusive — while a Radio plays, recitations can't start; the Queue is paused, not cleared, and resumes when the Radio ends.

@@ -12,3 +12,6 @@ dist/
 # Logs & temp files
 *.log
 .DS_Store
+
+# SQLite data
+data/
