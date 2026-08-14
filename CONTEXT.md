@@ -77,3 +77,25 @@ _Avoid_: station, live stream, radio station
 **Catalog**:
 The client that resolves Reciter/Surah names and numbers to stream URLs, via the MP3Quran API.
 _Avoid_: API client, radio API, Quran API
+
+## Play
+
+**PlayOutcome**:
+The result of resolving a `/play` request — either a ready `play` Recitation, a `picker` showing the Rewayah choices, or an `error` message.
+_Avoid_: play result, resolution
+
+**RewayahChoice**:
+A single Rewayah the picker offers for a Surah (Reciter + Rewayah identity), resolved to a full Recitation only when the user picks it or the picker auto-plays it on timeout.
+_Avoid_: option, picker entry
+
+**RewayahPicker**:
+The ephemeral message shown when `/play` needs the user to choose a Rewayah (more than one covers the Surah, or the default doesn't). One Play button per Rewayah; a 30s timeout auto-plays the resolved default or cancels when none exists.
+_Avoid_: riwayat list, choice menu
+
+**PlayOutcome resolution**:
+Resolving a `/play` request — which Reciter plays the given Surah via option > GuildConfig > global default, then which Rewayah. A single Rewayah (or a covering default) plays directly; otherwise the picker shows.
+_Avoid_: command logic
+
+**Notice channel**:
+The text channel where a guild's Player posts user-facing notices (e.g. a failed Recitation). Set to the channel of the guild's most recent `/play`.
+_Avoid_: notification channel
