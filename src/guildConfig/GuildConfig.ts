@@ -1,11 +1,22 @@
 import { config } from "../config";
 import type { SqliteGuildConfigStore } from "./SqliteGuildConfigStore";
-import type { GuildConfigData, ResolveRequest, RewayahCoverage } from "./types";
+import type {
+	GlobalDefaults,
+	GuildConfigData,
+	ResolveRequest,
+	RewayahCoverage,
+} from "./types";
 
 export class GuildConfig {
 	private readonly cache = new Map<string, GuildConfigData>();
+	private readonly defaults: GlobalDefaults;
 
-	constructor(private readonly store: SqliteGuildConfigStore) {}
+	constructor(
+		private readonly store: SqliteGuildConfigStore,
+		defaults: GlobalDefaults = config.defaults,
+	) {
+		this.defaults = defaults;
+	}
 
 	async get(guildId: string) {
 		if (this.cache.has(guildId)) return this.cache.get(guildId);
@@ -54,14 +65,14 @@ export class GuildConfig {
 		const reciter =
 			option.reciter ??
 			guildConfig?.defaultReciter ??
-			config.defaults.defaultReciter;
+			this.defaults.defaultReciter;
 
 		let rewayah: number | undefined;
 		if (reciter !== undefined) {
 			const candidate =
 				option.rewayah ??
 				guildConfig?.defaultRewayah ??
-				config.defaults.defaultRewayah;
+				this.defaults.defaultRewayah;
 
 			if (
 				candidate !== undefined &&
