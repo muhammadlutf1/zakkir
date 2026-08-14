@@ -1,20 +1,71 @@
-import { VoiceConnectionStatus } from "@discordjs/voice";
+import {
+	AudioPlayerStatus,
+	VoiceConnectionStatus,
+} from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
 import { createLogger } from "../core/logger";
+import { recitationLabel, type Recitation } from "./Recitation";
+import { Queue } from "./Queue";
 import type { VoicePort } from "./VoicePort";
 
 const logger = createLogger("player");
 
+const MAX_STREAM_RETRIES = 1;
+
+export interface PlayResult {
+	started: boolean;
+	/** True when the Recitation was appended behind an already-playing one. */
+	queued: boolean;
+}
+
+export interface PlayerOptions {
+	/**
+	 * Pre-flight reachability probe run before a Recitation is fed to the
+	 * port. Returning false stops the Recitation (404/5xx policy), posts a
+	 * notice, and advances the Queue. Defaults to a HEAD request.
+	 */
+	probeStream?: (url: string) => Promise<boolean>;
+}
+
+async function defaultProbeStream(url: string): Promise<boolean> {
+	try {
+		const response = await fetch(url, {
+			method: "HEAD",
+			signal: AbortSignal.timeout(10_000),
+		});
+
+		return response.ok;
+	} catch {
+		return false;
+	}
+}
+
 export class Player {
 	private connectionState: VoiceConnectionStatus =
 		VoiceConnectionStatus.Destroyed;
+	private readonly queue = new Queue<Recitation>();
+	private active: { item: Recitation; retries: number } | null = null;
+	private readonly probeStream: (url: string) => Promise<boolean>;
+	private readonly noticeListeners = new Set<(message: string) => void>();
 
 	constructor(
 		public readonly guildId: string,
 		private readonly port: VoicePort,
+		options: PlayerOptions = {},
 	) {
+		this.probeStream = options.probeStream ?? defaultProbeStream;
+
 		port.on("error", (error) => {
 			logger.error(error, "Voice error in guild %s", this.guildId);
+		});
+
+		port.on("streamError", (error) => {
+			logger.error(error, "Stream error in guild %s", this.guildId);
+			this.onStreamError();
+		});
+
+		port.on("playerStateChange", (state) => {
+			if (state === AudioPlayerStatus.Idle) this.onTrackEnd();
 		});
 
 		port.on("stateChange", (state) => {
@@ -24,6 +75,32 @@ export class Player {
 
 	get isConnected() {
 		return this.connectionState === VoiceConnectionStatus.Ready;
+	}
+
+	get isPlaying() {
+		return this.active !== null;
+	}
+
+	get queueView() {
+		return this.queue.view();
+	}
+
+	/**
+	 * Adds the Recitation to the guild's Queue. If nothing is currently
+	 * playing, it starts immediately.
+	 */
+	async play(recitation: Recitation): Promise<PlayResult> {
+		this.queue.add(recitation);
+
+		if (this.isPlaying) return { started: false, queued: true };
+
+		return this.startCurrent();
+	}
+
+	onNotice(listener: (message: string) => void): () => void {
+		this.noticeListeners.add(listener);
+
+		return () => this.noticeListeners.delete(listener);
 	}
 
 	async join(channel: VoiceChannel): Promise<void> {
@@ -37,11 +114,14 @@ export class Player {
 
 	leave(): void {
 		logger.info("Player leaving voice channel in guild %s", this.guildId);
+		this.active = null;
 		this.port.leave();
 	}
 
-	play(url: string): void {
-		this.port.play(url);
+	stop(): void {
+		this.active = null;
+		this.queue.clear();
+		this.port.stop();
 	}
 
 	pause(): void {
@@ -52,12 +132,69 @@ export class Player {
 		this.port.unpause();
 	}
 
-	stop(): void {
-		this.port.stop();
-	}
-
 	dispose(): void {
+		this.active = null;
 		this.port.leave();
 		this.port.destroy();
+	}
+
+	private async startCurrent(): Promise<PlayResult> {
+		const current = this.queue.view().current;
+
+		if (!current) return { started: false, queued: false };
+
+		const reachable = await this.probeStream(current.url);
+
+		if (!reachable) {
+			this.emitNotice(
+				`Couldn't play ${recitationLabel(current)} — the stream is unreachable.`,
+			);
+			this.queue.skip();
+			return this.startCurrent();
+		}
+
+		this.active = { item: current, retries: 0 };
+		this.port.play(current.url);
+
+		return { started: true, queued: false };
+	}
+
+	private onStreamError() {
+		const active = this.active;
+
+		if (!active) return;
+
+		if (active.retries < MAX_STREAM_RETRIES) {
+			active.retries += 1;
+			logger.info(
+				"Retrying stream in guild %s (%d/%d)",
+				this.guildId,
+				active.retries,
+				MAX_STREAM_RETRIES,
+			);
+			this.port.play(active.item.url);
+			return;
+		}
+
+		this.emitNotice(`Playback of ${recitationLabel(active.item)} failed.`);
+		this.advance();
+	}
+
+	private advance() {
+		this.active = null;
+		this.queue.skip();
+		void this.startCurrent();
+	}
+
+	private onTrackEnd() {
+		if (!this.active) return;
+
+		this.advance();
+	}
+
+	private emitNotice(message: string) {
+		logger.info("Notice in guild %s: %s", this.guildId, message);
+
+		for (const listener of this.noticeListeners) listener(message);
 	}
 }

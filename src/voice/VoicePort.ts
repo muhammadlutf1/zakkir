@@ -7,6 +7,9 @@ import type { VoiceChannel } from "discord.js";
 export interface VoicePortEvents {
 	stateChange: (state: VoiceConnectionStatus) => void;
 	playerStateChange: (state: AudioPlayerStatus) => void;
+	/** Audio-player / stream failures (a mid-play cut, a bad resource). */
+	streamError: (error: unknown) => void;
+	/** Voice-connection errors. */
 	error: (error: unknown) => void;
 }
 
