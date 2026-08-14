@@ -1,5 +1,6 @@
 import { config } from "../config";
 import { createLogger } from "../core/logger";
+import { resolveSurah, SURAHS, type Surah } from "./surahs";
 
 const logger = createLogger("catalog");
 
@@ -62,6 +63,32 @@ export class Catalog {
 		const data = await this.get<{ reciters: RawReciter[] }>("reciters");
 
 		return data.reciters.map(normalizeReciter);
+	}
+
+	/**
+	 * The fixed list of 114 surahs, used for `/play` autocomplete.
+	 */
+	surahs(): Surah[] {
+		return SURAHS;
+	}
+
+	/**
+	 * Resolves a surah given by number (1-114), numeric string, or name.
+	 */
+	resolveSurah(input: string | number): Surah | undefined {
+		return resolveSurah(input);
+	}
+
+	async resolveReciterByName(name: string) {
+		const reciters = await this.fetchReciters();
+
+		return reciters.find((r) => r.name === name.trim());
+	}
+
+	async resolveReciterById(reciterId: number) {
+		const reciters = await this.fetchReciters();
+
+		return reciters.find((r) => r.id === reciterId);
 	}
 
 	/**
