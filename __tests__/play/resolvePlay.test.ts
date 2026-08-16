@@ -6,7 +6,7 @@ import { GuildConfig } from "../../src/guildConfig/GuildConfig";
 import { SqliteGuildConfigStore } from "../../src/guildConfig/SqliteGuildConfigStore";
 import type { GlobalDefaults } from "../../src/guildConfig/types";
 import {
-	buildRecitation,
+	buildRecitationFromChoice,
 	resolvePlay,
 	type RewayahChoice,
 } from "../../src/play/resolvePlay";
@@ -202,7 +202,7 @@ test("returns an error when no Rewayah covers the Surah for the Reciter", async 
 	assert.match(outcome.kind === "error" ? outcome.message : "", /no recitation/);
 });
 
-test("buildRecitation resolves a full Recitation from a picker choice", async () => {
+test("buildRecitationFromChoice resolves a full Recitation from a picker choice", async () => {
 	const choice: RewayahChoice = {
 		surahNumber: 18,
 		reciterId: 10,
@@ -211,7 +211,7 @@ test("buildRecitation resolves a full Recitation from a picker choice", async ()
 		rewayahName: "حفص عن عاصم - مرتل",
 	};
 
-	const recitation = await buildRecitation(catalog, choice);
+	const recitation = await buildRecitationFromChoice(catalog, choice);
 
 	assert.deepEqual(recitation, {
 		surah: alKahf,

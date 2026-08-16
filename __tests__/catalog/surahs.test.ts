@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { resolveSurah, SURAHS } from "../../src/catalog/surahs";
+import { resolveSurah, SURAH_LIST } from "../../src/catalog/surahs";
 
 test("the fixture lists all 114 surahs numbered 1..114", () => {
-	assert.equal(SURAHS.length, 114);
+	assert.equal(SURAH_LIST.length, 114);
 
-	const numbers = SURAHS.map((s) => s.number);
+	const numbers = SURAH_LIST.map((s) => s.number);
 
 	assert.deepEqual(numbers, Array.from({ length: 114 }, (_, i) => i + 1));
 
-	for (const surah of SURAHS) {
+	for (const surah of SURAH_LIST) {
 		assert.ok(surah.name.length > 0);
 	}
 });

@@ -56,7 +56,11 @@ export async function resolvePlay(
 		reciterId = reciter.id;
 	}
 
-	const rewayahCovers: RewayahCoverage = async (rId, surahNumber, rewayahId) => {
+	const rewayahCovers: RewayahCoverage = async (
+		rId,
+		surahNumber,
+		rewayahId,
+	) => {
 		const rewayat = await catalog.resolveRewayat(rId, surahNumber);
 
 		return rewayat.some((r) => r.id === rewayahId);
@@ -71,6 +75,7 @@ export async function resolvePlay(
 		rewayahCovers,
 	);
 
+	// reciter
 	if (resolved.reciter === undefined) {
 		return {
 			kind: "error",
@@ -82,9 +87,10 @@ export async function resolvePlay(
 	const reciter = await catalog.resolveReciterById(resolved.reciter);
 
 	if (!reciter) {
-		return { kind: "error", message: "Reciter not found in the catalog." };
+		return { kind: "error", message: "Reciter not found." };
 	}
 
+	// rewayah
 	const rewayat = await catalog.resolveRewayat(reciter.id, surah.number);
 
 	if (rewayat.length === 0) {
@@ -122,8 +128,12 @@ export async function resolvePlay(
 		};
 	}
 
-	const rewayah = defaultChoice ?? rewayat[0]!;
-	const url = await catalog.resolveStreamUrl(reciter.id, rewayah.id, surah.number);
+	const rewayah = defaultChoice ?? rewayat[0];
+	const url = await catalog.resolveStreamUrl(
+		reciter.id,
+		rewayah.id,
+		surah.number,
+	);
 
 	if (!url) {
 		return {
@@ -146,10 +156,10 @@ export async function resolvePlay(
 }
 
 /**
- * Turns a picker choice into a full Recitation (resolving the stream URL
+ * Turns a 'picker' choice into a full Recitation (resolving the stream URL
  * through the Catalog) at the moment playback actually starts.
  */
-export async function buildRecitation(
+export async function buildRecitationFromChoice(
 	catalog: Catalog,
 	choice: RewayahChoice,
 ): Promise<Recitation> {
@@ -163,7 +173,9 @@ export async function buildRecitation(
 	);
 
 	if (!surah || !reciter || !rewayah || !url) {
-		throw new Error(`Could not resolve a stream for surah ${choice.surahNumber}.`);
+		throw new Error(
+			`Could not resolve a stream for surah ${choice.surahNumber}.`,
+		);
 	}
 
 	return {

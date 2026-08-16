@@ -1,7 +1,7 @@
-import type { Component } from "../core/Component";
-import { setGuildNoticeChannel } from "../play/noticeChannels";
-import { buildRecitation } from "../play/resolvePlay";
-import { cancelPicker, parsePickerCustomId } from "../play/rewayahPicker";
+import type { Component } from "../../core/Component";
+import { setGuildNoticeChannel } from "../../play/noticeChannels";
+import { buildRecitationFromChoice } from "../../play/resolvePlay";
+import { clearPickerTimeout, parsePickerCustomId } from "../../play/rewayahPicker";
 
 const component: Component = {
 	id: "rewayah-play",
@@ -17,11 +17,11 @@ const component: Component = {
 
 		if (!guildId) return;
 
-		cancelPicker(interaction.message.id);
+		clearPickerTimeout(interaction.message.id);
 
 		const player = bot.players.get(guildId);
 
-		if (!player || !player.isConnected) {
+		if (!player?.isConnected) {
 			await interaction.editReply({
 				content: "I'm not connected to a voice channel in this server.",
 				components: [],
@@ -29,7 +29,7 @@ const component: Component = {
 			return;
 		}
 
-		const recitation = await buildRecitation(bot.catalog, {
+		const recitation = await buildRecitationFromChoice(bot.catalog, {
 			surahNumber: parsed.surahNumber,
 			reciterId: parsed.reciterId,
 			reciterName: "",

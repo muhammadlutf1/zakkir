@@ -1,6 +1,6 @@
 import { config } from "../config";
 import { createLogger } from "../core/logger";
-import { resolveSurah, SURAHS, type Surah } from "./surahs";
+import { resolveSurah, SURAH_LIST, type Surah } from "./surahs";
 
 const logger = createLogger("catalog");
 
@@ -66,10 +66,10 @@ export class Catalog {
 	}
 
 	/**
-	 * The fixed list of 114 surahs, used for `/play` autocomplete.
+	 * The fixed list of 114 suwar, used for `/play` autocomplete.
 	 */
-	surahs(): Surah[] {
-		return SURAHS;
+	get surahList(): Surah[] {
+		return SURAH_LIST;
 	}
 
 	/**
@@ -130,10 +130,7 @@ export class Catalog {
 		const response = await fetch(url);
 
 		if (!response.ok) {
-			logger.error(
-				{ status: response.status, url },
-				"MP3Quran request failed",
-			);
+			logger.error({ status: response.status, url }, "MP3Quran request failed");
 			throw new Error(`MP3Quran request failed with status ${response.status}`);
 		}
 

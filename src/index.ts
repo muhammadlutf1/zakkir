@@ -1,9 +1,9 @@
+import { Catalog } from "./catalog/Catalog";
+import { config } from "./config";
 import Bot from "./core/Bot";
 import commandLoader from "./core/loaders/commandLoader";
 import componentLoader from "./core/loaders/componentLoader";
 import eventLoader from "./core/loaders/eventLoader";
-import { config } from "./config";
-import { Catalog } from "./catalog/Catalog";
 import { GuildConfig } from "./guildConfig/GuildConfig";
 import { SqliteGuildConfigStore } from "./guildConfig/SqliteGuildConfigStore";
 import { attachPlayerNotices } from "./play/noticeChannels";

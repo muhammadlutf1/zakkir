@@ -1,11 +1,8 @@
-import {
-	AudioPlayerStatus,
-	VoiceConnectionStatus,
-} from "@discordjs/voice";
+import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
 import { createLogger } from "../core/logger";
-import { recitationLabel, type Recitation } from "./Recitation";
 import { Queue } from "./Queue";
+import { type Recitation, recitationLabel } from "./Recitation";
 import type { VoicePort } from "./VoicePort";
 
 const logger = createLogger("player");

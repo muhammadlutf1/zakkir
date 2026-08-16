@@ -1,13 +1,9 @@
-import {
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle,
-} from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import type { Catalog } from "../catalog/Catalog";
-import { createLogger } from "../core/logger";
 import type { Surah } from "../catalog/surahs";
+import { createLogger } from "../core/logger";
 import type { Player } from "../voice/Player";
-import { buildRecitation, type RewayahChoice } from "./resolvePlay";
+import { buildRecitationFromChoice, type RewayahChoice } from "./resolvePlay";
 
 const logger = createLogger("rewayahPicker");
 const CUSTOM_ID_PREFIX = "rewayah-play:";
@@ -50,7 +46,9 @@ export function renderPicker(options: PickerOptions): {
 } {
 	const content = [
 		`Available Riwayat for Surah ${options.surah.name} (${options.surah.number}) by ${options.reciterName}:`,
-		...options.choices.map((choice, index) => `${index + 1}. ${choice.rewayahName}`),
+		...options.choices.map(
+			(choice, index) => `${index + 1}. ${choice.rewayahName}`,
+		),
 		"Pick a Rewayah to play it.",
 	].join("\n");
 
@@ -80,33 +78,33 @@ export interface PendingPicker {
 
 const pending = new Map<string, PendingPicker>();
 
-export function armPickerTimeout(
-	key: string,
+export function registerPickerTimeout(
+	messageId: string,
 	options: { timeoutMs: number; onTimeout: () => void },
 ): PendingPicker {
 	const timer = setTimeout(() => {
-		pending.delete(key);
+		pending.delete(messageId);
 		Promise.resolve(options.onTimeout()).catch((error) => {
 			logger.error(error, "Picker timeout action failed");
 		});
 	}, options.timeoutMs);
 
-	timer.unref?.();
+	timer.unref();
 
 	const entry: PendingPicker = {
 		cancel() {
 			clearTimeout(timer);
-			pending.delete(key);
+			pending.delete(messageId);
 		},
 	};
 
-	pending.set(key, entry);
+	pending.set(messageId, entry);
 
 	return entry;
 }
 
-export function cancelPicker(key: string): void {
-	pending.get(key)?.cancel();
+export function clearPickerTimeout(messageId: string) {
+	pending.get(messageId)?.cancel();
 }
 
 export interface PickerTimeoutContext {
@@ -130,7 +128,7 @@ export async function handlePickerTimeout(
 		return;
 	}
 
-	const recitation = await buildRecitation(context.catalog, defaultChoice);
+	const recitation = await buildRecitationFromChoice(context.catalog, defaultChoice);
 	const result = await context.player.play(recitation);
 
 	if (result.queued) {

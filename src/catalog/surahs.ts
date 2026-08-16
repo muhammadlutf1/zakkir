@@ -3,7 +3,11 @@ export interface Surah {
 	name: string;
 }
 
-export const SURAHS: Surah[] = [
+/**
+ * The fixed list of 114 surah names, keyed by number. Names are currently
+ * Arabic-only; i18n (per-guild language) will be introduced later.
+ */
+export const SURAH_LIST: Surah[] = [
 	{ number: 1, name: "الفاتحة" },
 	{ number: 2, name: "البقرة" },
 	{ number: 3, name: "آل عمران" },
@@ -121,11 +125,12 @@ export const SURAHS: Surah[] = [
 ];
 
 export function resolveSurah(input: string | number): Surah | undefined {
-	if (typeof input === "number") return SURAHS.find((s) => s.number === input);
+	if (typeof input === "number") return SURAH_LIST.find((s) => s.number === input);
 
 	const trimmed = input.trim();
 
-	if (/^\d+$/.test(trimmed)) return SURAHS.find((s) => s.number === Number(trimmed));
+	if (/^\d+$/.test(trimmed))
+		return SURAH_LIST.find((s) => s.number === Number(trimmed));
 
-	return SURAHS.find((s) => s.name === trimmed);
+	return SURAH_LIST.find((s) => s.name === trimmed);
 }

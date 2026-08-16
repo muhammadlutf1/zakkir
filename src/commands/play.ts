@@ -1,17 +1,13 @@
-import {
-	ChannelType,
-	MessageFlags,
-	SlashCommandBuilder,
-} from "discord.js";
+import { ChannelType, MessageFlags, SlashCommandBuilder } from "discord.js";
 import { config } from "../config";
 import type { Command } from "../core/Command";
 import { setGuildNoticeChannel } from "../play/noticeChannels";
+import { resolvePlay } from "../play/resolvePlay";
 import {
-	armPickerTimeout,
 	handlePickerTimeout,
+	registerPickerTimeout,
 	renderPicker,
 } from "../play/rewayahPicker";
-import { resolvePlay } from "../play/resolvePlay";
 
 const playCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -36,8 +32,7 @@ const playCommand: Command = {
 			.toString()
 			.trim()
 			.toLowerCase();
-		const matches = bot.catalog
-			.surahs()
+		const matches = bot.catalog.surahList
 			.filter(
 				(surah) =>
 					surah.name.toLowerCase().includes(query) ||
@@ -118,7 +113,7 @@ const playCommand: Command = {
 
 		const message = await interaction.editReply(renderPicker(outcome));
 
-		armPickerTimeout(message.id, {
+		registerPickerTimeout(message.id, {
 			timeoutMs: config.rewayahPicker.timeoutMs,
 			onTimeout: () =>
 				handlePickerTimeout(

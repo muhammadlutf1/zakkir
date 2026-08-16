@@ -4,11 +4,11 @@ import type { Catalog } from "../../src/catalog/Catalog";
 import { resolveSurah } from "../../src/catalog/surahs";
 import type { Player } from "../../src/voice/Player";
 import {
-	armPickerTimeout,
-	cancelPicker,
+	clearPickerTimeout,
 	handlePickerTimeout,
 	parsePickerCustomId,
 	pickerCustomId,
+	registerPickerTimeout,
 	renderPicker,
 } from "../../src/play/rewayahPicker";
 
@@ -71,12 +71,12 @@ test("parsePickerCustomId round-trips a picker button", () => {
 	assert.equal(pickerCustomId(choices[1]!), "rewayah-play:18:1:2");
 });
 
-test("armPickerTimeout fires onTimeout only once after the delay, then removes the entry", () => {
+test("registerPickerTimeout fires onTimeout only once after the delay, then removes the entry", () => {
 	const timers = mock.timers;
 	timers.enable({ apis: ["setTimeout"] });
 
 	let calls = 0;
-	const entry = armPickerTimeout("picker-1", {
+	const entry = registerPickerTimeout("picker-1", {
 		timeoutMs: 100,
 		onTimeout: () => {
 			calls += 1;
@@ -97,14 +97,14 @@ test("cancelling a picker prevents its onTimeout", () => {
 	timers.enable({ apis: ["setTimeout"] });
 
 	let calls = 0;
-	armPickerTimeout("picker-2", {
+	registerPickerTimeout("picker-2", {
 		timeoutMs: 100,
 		onTimeout: () => {
 			calls += 1;
 		},
 	});
 
-	cancelPicker("picker-2");
+	clearPickerTimeout("picker-2");
 	timers.tick(200);
 
 	assert.equal(calls, 0);
