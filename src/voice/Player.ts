@@ -90,11 +90,6 @@ export class Player {
 		this.queue.setRepeatMode(mode);
 	}
 
-	/** Advances to the next RepeatMode in the OFF → TRACK → ALL cycle. */
-	cycleRepeat() {
-		return this.queue.cycleRepeat();
-	}
-
 	/**
 	 * Adds the Recitation to the guild's Queue. If nothing is currently
 	 * playing, it starts immediately.

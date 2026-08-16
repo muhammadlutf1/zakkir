@@ -12,8 +12,6 @@ export enum RepeatMode {
 	ALL = "all",
 }
 
-const CYCLE_ORDER = [RepeatMode.OFF, RepeatMode.TRACK, RepeatMode.ALL] as const;
-
 export interface QueueView<T> {
 	current: T | undefined;
 	upcoming: T[];
@@ -34,13 +32,6 @@ export class Queue<T> {
 
 	setRepeatMode(mode: RepeatMode) {
 		this._repeatMode = mode;
-	}
-
-	/** Advances to the next RepeatMode in the OFF → TRACK → ALL cycle. */
-	cycleRepeat() {
-		const index = CYCLE_ORDER.indexOf(this._repeatMode);
-		this._repeatMode = CYCLE_ORDER[(index + 1) % CYCLE_ORDER.length];
-		return this._repeatMode;
 	}
 
 	add(item: T) {

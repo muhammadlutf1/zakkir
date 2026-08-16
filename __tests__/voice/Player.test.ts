@@ -321,14 +321,12 @@ describe("Player", () => {
 			assert.equal(player.queueView.repeatMode, "off");
 		});
 
-		it("setRepeatMode and cycleRepeat update the Queue's mode", () => {
+		it("setRepeatMode selects the Queue's mode", () => {
 			const player = new Player("guild-1", new FakeVoicePort());
 
 			player.setRepeatMode(RepeatMode.TRACK);
 			assert.equal(player.repeatMode, "track");
-
-			assert.equal(player.cycleRepeat(), "all");
-			assert.equal(player.cycleRepeat(), "off");
+			assert.equal(player.queueView.repeatMode, "track");
 		});
 	});
 

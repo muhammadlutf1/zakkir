@@ -205,14 +205,6 @@ describe("RepeatMode", () => {
 		assert.equal(queue.repeatMode, RepeatMode.TRACK);
 		assert.equal(queue.view().repeatMode, RepeatMode.TRACK);
 	});
-
-	it("cycleRepeat advances OFF → TRACK → ALL → OFF", () => {
-		const queue = new Queue();
-
-		assert.equal(queue.cycleRepeat(), RepeatMode.TRACK);
-		assert.equal(queue.cycleRepeat(), RepeatMode.ALL);
-		assert.equal(queue.cycleRepeat(), RepeatMode.OFF);
-	});
 });
 
 describe("advance honors RepeatMode", () => {
