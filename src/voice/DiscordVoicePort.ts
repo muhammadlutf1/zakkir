@@ -30,6 +30,7 @@ export class DiscordVoicePort implements VoicePort {
 	} = {
 		stateChange: new Set(),
 		playerStateChange: new Set(),
+		streamError: new Set(),
 		error: new Set(),
 	};
 
@@ -71,7 +72,7 @@ export class DiscordVoicePort implements VoicePort {
 		this.audioPlayer = audioPlayer;
 
 		audioPlayer.on("error", (error) => {
-			this.emit("error", error);
+			this.emit("streamError", error);
 		});
 
 		audioPlayer.on("stateChange", (_oldState, newState) => {
@@ -97,7 +98,7 @@ export class DiscordVoicePort implements VoicePort {
 
 			this.audioPlayer.play(resource);
 		} catch (error) {
-			this.emit("error", error);
+			this.emit("streamError", error);
 		}
 	}
 

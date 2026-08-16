@@ -1,21 +1,36 @@
+import { Catalog } from "./catalog/Catalog";
+import { config } from "./config";
 import Bot from "./core/Bot";
 import commandLoader from "./core/loaders/commandLoader";
+import componentLoader from "./core/loaders/componentLoader";
 import eventLoader from "./core/loaders/eventLoader";
-import { config } from "./config";
 import { GuildConfig } from "./guildConfig/GuildConfig";
 import { SqliteGuildConfigStore } from "./guildConfig/SqliteGuildConfigStore";
+import { attachPlayerNotices } from "./play/noticeChannels";
 import { DiscordVoicePort } from "./voice/DiscordVoicePort";
 import { Player } from "./voice/Player";
 import { PlayerRegistry } from "./voice/PlayerRegistry";
 
-const playerRegistry = new PlayerRegistry(
-	(guildId) => new Player(guildId, new DiscordVoicePort()),
-);
+const playerRegistry = new PlayerRegistry((guildId) => {
+	const player = new Player(guildId, new DiscordVoicePort());
+
+	attachPlayerNotices(player);
+
+	return player;
+});
 
 const store = new SqliteGuildConfigStore(config.database.path);
 const guildConfig = new GuildConfig(store);
+const catalog = new Catalog();
 
-const bot = new Bot(commandLoader, eventLoader, playerRegistry, guildConfig);
+const bot = new Bot(
+	commandLoader,
+	eventLoader,
+	componentLoader,
+	playerRegistry,
+	guildConfig,
+	catalog,
+);
 
 bot.login();
 

@@ -1,5 +1,6 @@
 import { config } from "../config";
 import { createLogger } from "../core/logger";
+import { resolveSurah, SURAH_LIST, type Surah } from "./surahs";
 
 const logger = createLogger("catalog");
 
@@ -65,6 +66,32 @@ export class Catalog {
 	}
 
 	/**
+	 * The fixed list of 114 suwar, used for `/play` autocomplete.
+	 */
+	get surahList(): Surah[] {
+		return SURAH_LIST;
+	}
+
+	/**
+	 * Resolves a surah given by number (1-114), numeric string, or name.
+	 */
+	resolveSurah(input: string | number): Surah | undefined {
+		return resolveSurah(input);
+	}
+
+	async resolveReciterByName(name: string) {
+		const reciters = await this.fetchReciters();
+
+		return reciters.find((r) => r.name === name.trim());
+	}
+
+	async resolveReciterById(reciterId: number) {
+		const reciters = await this.fetchReciters();
+
+		return reciters.find((r) => r.id === reciterId);
+	}
+
+	/**
 	 * get the different rewayat of a reciter that list a specific surah
 	 */
 	async resolveRewayat(reciterId: number, surahNumber: number) {
@@ -103,10 +130,7 @@ export class Catalog {
 		const response = await fetch(url);
 
 		if (!response.ok) {
-			logger.error(
-				{ status: response.status, url },
-				"MP3Quran request failed",
-			);
+			logger.error({ status: response.status, url }, "MP3Quran request failed");
 			throw new Error(`MP3Quran request failed with status ${response.status}`);
 		}
 

@@ -4,6 +4,8 @@ import { pathToFileURL } from "node:url";
 import { Collection } from "discord.js";
 import type { Command } from "../Command";
 import { isCommand } from "../Command";
+import type { Component } from "../Component";
+import { isComponent } from "../Component";
 import type { BotEvent } from "../Event";
 import { isBotEvent } from "../Event";
 import { createLogger } from "../logger";
@@ -19,7 +21,7 @@ const logger = createLogger("loader");
  *   - general
  *     - commandName.ts
  */
-export default async function loader<T extends Command | BotEvent>(
+export default async function loader<T extends Command | BotEvent | Component>(
 	dir: string,
 ) {
 	const collection = new Collection<string, T>();
@@ -53,7 +55,7 @@ export default async function loader<T extends Command | BotEvent>(
 }
 
 async function loadFile(
-	collection: Collection<string, Command | BotEvent>,
+	collection: Collection<string, Command | BotEvent | Component>,
 	filePath: string,
 ) {
 	try {
@@ -62,6 +64,7 @@ async function loadFile(
 		const item = module.default ?? module;
 
 		if (isBotEvent(item)) collection.set(item.name, item);
+		else if (isComponent(item)) collection.set(item.id, item);
 		else if (isCommand(item)) collection.set(item.data.name, item);
 	} catch (error) {
 		logger.error(error, "Failed to import %s", filePath);

@@ -1,19 +1,24 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
+import type { Component } from "./Component";
 import type { Command } from "./Command";
 import type { BotEvent } from "./Event";
 import type { PlayerRegistry } from "../voice/PlayerRegistry";
 import type { GuildConfig } from "../guildConfig/GuildConfig";
+import type { Catalog } from "../catalog/Catalog";
 
 export default class Bot extends Client {
 	private initialized = false;
 	private _commands = new Collection<string, Command>();
+	private _components = new Collection<string, Component>();
 	private events = new Collection<string, BotEvent>();
 
 	constructor(
 		private commandLoader: () => Promise<Collection<string, Command>>,
 		private eventLoader: () => Promise<Collection<string, BotEvent>>,
+		private componentLoader: () => Promise<Collection<string, Component>>,
 		private playerRegistry: PlayerRegistry,
 		private guildConfig: GuildConfig,
+		public readonly catalog: Catalog,
 	) {
 		super({
 			intents: [
@@ -42,6 +47,10 @@ export default class Bot extends Client {
 		return this._commands;
 	}
 
+	public get components() {
+		return this._components;
+	}
+
 	public get players() {
 		return this.playerRegistry;
 	}
@@ -52,6 +61,8 @@ export default class Bot extends Client {
 
 	async init() {
 		this._commands = await this.commandLoader();
+
+		this._components = await this.componentLoader();
 
 		this.events = await this.eventLoader();
 

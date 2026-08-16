@@ -9,6 +9,9 @@ export interface BotConfig {
 		path: string;
 	};
 	defaults: GlobalDefaults;
+	rewayahPicker: {
+		timeoutMs: number;
+	};
 }
 
 export const config: BotConfig = {
@@ -23,5 +26,8 @@ export const config: BotConfig = {
 		language: "ar",
 		defaultReciter: undefined,
 		defaultRewayah: undefined,
+	},
+	rewayahPicker: {
+		timeoutMs: 30_000,
 	},
 };
