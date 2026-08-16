@@ -1,7 +1,7 @@
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
 import { createLogger } from "../core/logger";
-import { Queue } from "./Queue";
+import { Queue, type RepeatMode } from "./Queue";
 import { type Recitation, recitationLabel } from "./Recitation";
 import type { VoicePort } from "./VoicePort";
 
@@ -82,6 +82,19 @@ export class Player {
 		return this.queue.view();
 	}
 
+	get repeatMode() {
+		return this.queue.repeatMode;
+	}
+
+	setRepeatMode(mode: RepeatMode) {
+		this.queue.setRepeatMode(mode);
+	}
+
+	/** Advances to the next RepeatMode in the OFF → TRACK → ALL cycle. */
+	cycleRepeat() {
+		return this.queue.cycleRepeat();
+	}
+
 	/**
 	 * Adds the Recitation to the guild's Queue. If nothing is currently
 	 * playing, it starts immediately.
@@ -119,6 +132,30 @@ export class Player {
 		this.active = null;
 		this.queue.clear();
 		this.port.stop();
+	}
+
+	/**
+	 * Stops the current Recitation and starts the next per RepeatMode. In OFF
+	 * mode playback ends cleanly when nothing is queued; TRACK replays the
+	 * current; ALL wraps back to the first when the queue ends.
+	 */
+	async skip() {
+		if (!this.active) return { started: false, queued: false };
+
+		return this.advance();
+	}
+
+	/**
+	 * Removes the Recitation at the given 1-based queue position. The current
+	 * playing Recitation keeps playing.
+	 */
+	remove(position: number) {
+		return this.queue.remove(position);
+	}
+
+	/** Empties the Queue while the current Recitation continues playing. */
+	clearQueue() {
+		this.queue.clearPending();
 	}
 
 	pause(): void {
@@ -174,19 +211,19 @@ export class Player {
 		}
 
 		this.emitNotice(`Playback of ${recitationLabel(active.item)} failed.`);
-		this.advance();
+		void this.advance();
 	}
 
-	private advance() {
+	private async advance() {
 		this.active = null;
-		this.queue.skip();
-		void this.startCurrent();
+		this.queue.advance();
+		return this.startCurrent();
 	}
 
 	private onTrackEnd() {
 		if (!this.active) return;
 
-		this.advance();
+		void this.advance();
 	}
 
 	private emitNotice(message: string) {

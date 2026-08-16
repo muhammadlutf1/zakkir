@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { Queue, type QueueView } from "../../src/voice/Queue";
+import { Queue, RepeatMode, type QueueView } from "../../src/voice/Queue";
 
 const alFatiha = { surah: "Al-Fatiha", reciter: "Mishary" } as const;
 const yaseen = { surah: "Yaseen", reciter: "Mishary" } as const;
 const arRahman = { surah: "Ar-Rahman", reciter: "Alafasy" } as const;
 
 function emptyView(): QueueView<typeof alFatiha> {
-	return { current: undefined, upcoming: [] };
+	return { current: undefined, upcoming: [], repeatMode: RepeatMode.OFF };
 }
 
 describe("a new Queue", () => {
@@ -26,7 +26,11 @@ describe("adding to a Queue", () => {
 		queue.add(alFatiha);
 		queue.add(yaseen);
 
-		assert.deepEqual(queue.view(), { current: alFatiha, upcoming: [yaseen] });
+		assert.deepEqual(queue.view(), {
+			current: alFatiha,
+			upcoming: [yaseen],
+			repeatMode: RepeatMode.OFF,
+		});
 		assert.equal(queue.size, 2);
 	});
 
@@ -35,7 +39,11 @@ describe("adding to a Queue", () => {
 
 		queue.add(alFatiha);
 
-		assert.deepEqual(queue.view(), { current: alFatiha, upcoming: [] });
+		assert.deepEqual(queue.view(), {
+			current: alFatiha,
+			upcoming: [],
+			repeatMode: RepeatMode.OFF,
+		});
 	});
 });
 
@@ -48,7 +56,11 @@ describe("skipping in a Queue", () => {
 
 		queue.skip();
 
-		assert.deepEqual(queue.view(), { current: yaseen, upcoming: [arRahman] });
+		assert.deepEqual(queue.view(), {
+			current: yaseen,
+			upcoming: [arRahman],
+			repeatMode: RepeatMode.OFF,
+		});
 	});
 
 	it("leaves no current item past the last Recitation", () => {
@@ -88,7 +100,11 @@ describe("removing from a Queue", () => {
 		queue.add(yaseen);
 
 		assert.equal(queue.remove(1), true);
-		assert.deepEqual(queue.view(), { current: yaseen, upcoming: [] });
+		assert.deepEqual(queue.view(), {
+			current: yaseen,
+			upcoming: [],
+			repeatMode: RepeatMode.OFF,
+		});
 	});
 
 	it("deletes an upcoming Recitation by position and preserves order", () => {
@@ -101,6 +117,7 @@ describe("removing from a Queue", () => {
 		assert.deepEqual(queue.view(), {
 			current: alFatiha,
 			upcoming: [arRahman],
+			repeatMode: RepeatMode.OFF,
 		});
 	});
 
@@ -111,7 +128,11 @@ describe("removing from a Queue", () => {
 		assert.equal(queue.remove(0), false);
 		assert.equal(queue.remove(-1), false);
 		assert.equal(queue.remove(2), false);
-		assert.deepEqual(queue.view(), { current: alFatiha, upcoming: [] });
+		assert.deepEqual(queue.view(), {
+			current: alFatiha,
+			upcoming: [],
+			repeatMode: RepeatMode.OFF,
+		});
 	});
 
 	it("reports failure on an empty Queue", () => {
@@ -159,6 +180,177 @@ describe("view", () => {
 		queue.remove(2);
 		queue.add(alFatiha);
 
-		assert.deepEqual(queue.view(), { current: yaseen, upcoming: [alFatiha] });
+		assert.deepEqual(queue.view(), {
+			current: yaseen,
+			upcoming: [alFatiha],
+			repeatMode: RepeatMode.OFF,
+		});
+	});
+});
+
+describe("RepeatMode", () => {
+	it("defaults to OFF and is exposed in the view", () => {
+		const queue = new Queue();
+
+		assert.equal(queue.repeatMode, RepeatMode.OFF);
+		assert.equal(queue.view().repeatMode, RepeatMode.OFF);
+	});
+
+	it("setRepeatMode takes a mode and exposes it", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+
+		queue.setRepeatMode(RepeatMode.TRACK);
+
+		assert.equal(queue.repeatMode, RepeatMode.TRACK);
+		assert.equal(queue.view().repeatMode, RepeatMode.TRACK);
+	});
+
+	it("cycleRepeat advances OFF → TRACK → ALL → OFF", () => {
+		const queue = new Queue();
+
+		assert.equal(queue.cycleRepeat(), RepeatMode.TRACK);
+		assert.equal(queue.cycleRepeat(), RepeatMode.ALL);
+		assert.equal(queue.cycleRepeat(), RepeatMode.OFF);
+	});
+});
+
+describe("advance honors RepeatMode", () => {
+	it("OFF advances to the next Recitation and ends when empty", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+
+		queue.advance();
+		assert.deepEqual(queue.view(), {
+			current: yaseen,
+			upcoming: [],
+			repeatMode: RepeatMode.OFF,
+		});
+
+		queue.advance();
+		assert.deepEqual(queue.view(), emptyView());
+		assert.equal(queue.size, 0);
+	});
+
+	it("TRACK leaves the current Recitation in place for replay", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+		queue.setRepeatMode(RepeatMode.TRACK);
+
+		queue.advance();
+
+		assert.deepEqual(queue.view(), {
+			current: alFatiha,
+			upcoming: [yaseen],
+			repeatMode: RepeatMode.TRACK,
+		});
+		assert.equal(queue.size, 2);
+	});
+
+	it("ALL rotates the played Recitation to the back", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+		queue.add(arRahman);
+		queue.setRepeatMode(RepeatMode.ALL);
+
+		queue.advance();
+
+		assert.deepEqual(queue.view(), {
+			current: yaseen,
+			upcoming: [arRahman, alFatiha],
+			repeatMode: RepeatMode.ALL,
+		});
+	});
+
+	it("ALL wraps back to the first Recitation when the queue ends", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+		queue.add(arRahman);
+		queue.setRepeatMode(RepeatMode.ALL);
+
+		queue.advance();
+		queue.advance();
+		queue.advance();
+
+		assert.deepEqual(queue.view(), {
+			current: alFatiha,
+			upcoming: [yaseen, arRahman],
+			repeatMode: RepeatMode.ALL,
+		});
+	});
+
+	it("ALL keeps a single Recitation as the current one", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.setRepeatMode(RepeatMode.ALL);
+
+		queue.advance();
+
+		assert.deepEqual(queue.view(), {
+			current: alFatiha,
+			upcoming: [],
+			repeatMode: RepeatMode.ALL,
+		});
+	});
+
+	it("is a safe no-op on an empty Queue in every mode", () => {
+		for (const mode of [
+			RepeatMode.OFF,
+			RepeatMode.TRACK,
+			RepeatMode.ALL,
+		]) {
+			const queue = new Queue();
+			queue.setRepeatMode(mode);
+
+			queue.advance();
+
+			assert.equal(queue.size, 0);
+			assert.equal(queue.view().current, undefined);
+			assert.deepEqual(queue.view().upcoming, []);
+		}
+	});
+
+	it("skip always removes the current Recitation regardless of RepeatMode", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+		queue.setRepeatMode(RepeatMode.ALL);
+
+		queue.skip();
+
+		assert.deepEqual(queue.view(), {
+			current: yaseen,
+			upcoming: [],
+			repeatMode: RepeatMode.ALL,
+		});
+	});
+});
+
+describe("clearPending", () => {
+	it("drops every upcoming Recitation and keeps the current one", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+		queue.add(arRahman);
+
+		queue.clearPending();
+
+		assert.deepEqual(queue.view(), {
+			current: alFatiha,
+			upcoming: [],
+			repeatMode: RepeatMode.OFF,
+		});
+	});
+
+	it("is a safe no-op with nothing queued", () => {
+		const queue = new Queue();
+
+		queue.clearPending();
+
+		assert.deepEqual(queue.view(), emptyView());
 	});
 });
