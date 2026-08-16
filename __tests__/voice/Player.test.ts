@@ -4,6 +4,7 @@ import { after, before, describe, it } from "node:test";
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
 import { Player } from "../../src/voice/Player";
+import { RepeatMode } from "../../src/voice/Queue";
 import type { Recitation } from "../../src/voice/Recitation";
 import type {
 	VoicePort,
@@ -309,6 +310,223 @@ describe("Player", () => {
 				"play:https://example.com/018.mp3",
 				"play:https://example.com/019.mp3",
 			]);
+		});
+	});
+
+	describe("RepeatMode", () => {
+		it("defaults to OFF and exposes the mode", () => {
+			const player = new Player("guild-1", new FakeVoicePort());
+
+			assert.equal(player.repeatMode, "off");
+			assert.equal(player.queueView.repeatMode, "off");
+		});
+
+		it("setRepeatMode selects the Queue's mode", () => {
+			const player = new Player("guild-1", new FakeVoicePort());
+
+			player.setRepeatMode(RepeatMode.TRACK);
+			assert.equal(player.repeatMode, "track");
+			assert.equal(player.queueView.repeatMode, "track");
+		});
+	});
+
+	describe("skipping", () => {
+		it("advances to the next Recitation in OFF mode", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+			);
+
+			const result = await player.skip();
+
+			assert.equal(result.started, true);
+			assert.equal(player.isPlaying, true);
+			assert.equal(player.queueView.current?.url, "https://example.com/019.mp3");
+			assert.deepEqual(port.calls, [
+				"play:https://example.com/018.mp3",
+				"play:https://example.com/019.mp3",
+			]);
+		});
+
+		it("ends playback cleanly in OFF mode with nothing queued", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+
+			const result = await player.skip();
+
+			assert.equal(result.started, false);
+			assert.equal(player.isPlaying, false);
+			assert.equal(player.queueView.current, undefined);
+		});
+
+		it("is a no-op when nothing is playing", async () => {
+			const player = new Player("guild-1", new FakeVoicePort());
+
+			const result = await player.skip();
+
+			assert.equal(result.started, false);
+			assert.equal(result.queued, false);
+		});
+
+		it("replays the current Recitation in TRACK mode", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+			);
+			player.setRepeatMode(RepeatMode.TRACK);
+
+			const result = await player.skip();
+
+			assert.equal(result.started, true);
+			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.deepEqual(port.calls, [
+				"play:https://example.com/018.mp3",
+				"play:https://example.com/018.mp3",
+			]);
+		});
+
+		it("wraps back to the first Recitation in ALL mode when the queue ends", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+			);
+			await player.play(
+				recitation({ surah: { number: 20, name: "طه" }, url: "https://example.com/020.mp3" }),
+			);
+			player.setRepeatMode(RepeatMode.ALL);
+
+			await player.skip();
+			await player.skip();
+			await player.skip();
+
+			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.deepEqual(port.calls, [
+				"play:https://example.com/018.mp3",
+				"play:https://example.com/019.mp3",
+				"play:https://example.com/020.mp3",
+				"play:https://example.com/018.mp3",
+			]);
+		});
+	});
+
+	describe("natural-end auto-advance honors RepeatMode", () => {
+		it("replays the current Recitation on Idle in TRACK mode", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			player.setRepeatMode(RepeatMode.TRACK);
+
+			port.emit("playerStateChange", AudioPlayerStatus.Idle);
+			await flush();
+
+			assert.equal(player.isPlaying, true);
+			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.deepEqual(port.calls, [
+				"play:https://example.com/018.mp3",
+				"play:https://example.com/018.mp3",
+			]);
+		});
+
+		it("wraps back to the first Recitation on Idle in ALL mode", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+			);
+			player.setRepeatMode(RepeatMode.ALL);
+
+			port.emit("playerStateChange", AudioPlayerStatus.Idle);
+			await flush();
+			port.emit("playerStateChange", AudioPlayerStatus.Idle);
+			await flush();
+
+			assert.equal(player.isPlaying, true);
+			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.deepEqual(port.calls, [
+				"play:https://example.com/018.mp3",
+				"play:https://example.com/019.mp3",
+				"play:https://example.com/018.mp3",
+			]);
+		});
+
+		it("ends cleanly on Idle in OFF mode when the queue is empty", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+
+			port.emit("playerStateChange", AudioPlayerStatus.Idle);
+			await flush();
+
+			assert.equal(player.isPlaying, false);
+			assert.equal(player.queueView.current, undefined);
+		});
+	});
+
+	describe("removing and clearing", () => {
+		it("remove deletes the Recitation at a 1-based queue position", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+			);
+
+			assert.equal(player.remove(2), true);
+			assert.equal(player.queueView.upcoming.length, 0);
+			assert.deepEqual(port.calls, ["play:https://example.com/018.mp3"]);
+
+			assert.equal(player.remove(2), false);
+		});
+
+		it("clearQueue keeps the current Recitation playing", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+			);
+
+			player.clearQueue();
+
+			assert.equal(player.isPlaying, true);
+			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.equal(player.queueView.upcoming.length, 0);
+			assert.deepEqual(port.calls, ["play:https://example.com/018.mp3"]);
 		});
 	});
 
