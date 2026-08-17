@@ -1,5 +1,15 @@
 import type { GlobalDefaults } from "../guild/types";
 
+/**
+ * Reads a positive millisecond duration from an env var, falling back when
+ * the var is absent, empty, or not a positive number.
+ */
+function envMs(value: string | undefined, fallback: number) {
+	if (value === undefined) return fallback;
+	const parsed = Number(value);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export interface BotConfig {
 	clientId: string;
 	mp3Quran: {
@@ -11,6 +21,13 @@ export interface BotConfig {
 	defaults: GlobalDefaults;
 	rewayahPicker: {
 		timeoutMs: number;
+	};
+	voice: {
+		/**
+		 * How long to wait for a human to return before ending the session
+		 * once the last human leaves the voice channel.
+		 */
+		gracePeriodMs: number;
 	};
 }
 
@@ -29,5 +46,8 @@ export const config: BotConfig = {
 	},
 	rewayahPicker: {
 		timeoutMs: 30_000,
+	},
+	voice: {
+		gracePeriodMs: envMs(process.env.GRACE_PERIOD_MS, 60_000),
 	},
 };

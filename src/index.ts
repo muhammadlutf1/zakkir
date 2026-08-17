@@ -15,7 +15,12 @@ import { PlayerRegistry } from "./voice/PlayerRegistry";
 const logger = createLogger("index");
 
 const playerRegistry = new PlayerRegistry((guildId) => {
-	const player = new Player(guildId, new DiscordVoicePort());
+	const player = new Player(guildId, new DiscordVoicePort(), {
+		gracePeriodMs: config.voice.gracePeriodMs,
+		onSessionEnd: () => {
+			playerRegistry.remove(guildId);
+		},
+	});
 
 	attachPlayerNotices(player);
 

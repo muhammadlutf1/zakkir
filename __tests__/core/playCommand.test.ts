@@ -100,6 +100,7 @@ describe("play command with a fabricated context", () => {
 				getOrCreate: () => player,
 				get: () => undefined,
 				remove: () => undefined,
+				forEach: () => undefined,
 			},
 			catalog: new FakeCatalog() as unknown as Catalog,
 			guildConfigs: new GuildConfig(new SqliteGuildConfigStore(":memory:")),

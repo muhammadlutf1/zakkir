@@ -27,4 +27,9 @@ export class PlayerRegistry {
 		this.players.delete(guildId);
 		return player;
 	}
+
+	/** Runs a callback against every registered Player (e.g. to refresh memberships). */
+	forEach(callback: (player: Player) => void) {
+		for (const player of this.players.values()) callback(player);
+	}
 }

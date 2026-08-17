@@ -31,7 +31,7 @@ _Avoid_: button handler, widget, component handler
 ## Voice
 
 **Player**:
-One per guild. Owns that guild's voice connection and audio playback — joins/leaves voice channels, and feeds tracks from its Queue to the audio player as each one finishes.
+One per guild. Owns that guild's voice connection and audio playback — joins/leaves voice channels, and feeds tracks from its Queue to the audio player as each one finishes. When the last human leaves its voice channel it starts a configurable grace timer; if nobody returns before it fires, the session ends — the Player disconnects, clears the Queue, and is disposed from the registry. The Stop button and the grace timer share this end-of-session action; `/leave` is not a standalone command.
 _Avoid_: VC manager, audio player manager, guild player
 
 **PlayerPanel**:

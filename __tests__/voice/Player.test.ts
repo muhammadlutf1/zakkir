@@ -129,13 +129,38 @@ describe("Player", () => {
 			assert.deepEqual(port.calls, ["leave"]);
 		});
 
-		it("dispose leaves and destroys the VoicePort", () => {
+		it("endSession disconnects, clears the Queue, and notifies the owner", async () => {
+			const port = new FakeVoicePort();
+			const ended: string[] = [];
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+				onSessionEnd: (guildId) => ended.push(guildId),
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+			);
+
+			player.endSession();
+
+			assert.equal(player.isPlaying, false);
+			assert.equal(player.isConnected, false);
+			assert.equal(player.queueView.current, undefined);
+			assert.equal(player.queueView.upcoming.length, 0);
+			assert.deepEqual(ended, ["guild-1"]);
+			assert.deepEqual(port.calls, [
+				"play:https://example.com/018.mp3",
+				"leave",
+				"destroy",
+			]);
+		});
+
+		it("leaves without an onSessionEnd hook when constructed bare", () => {
 			const port = new FakeVoicePort();
 			const player = new Player("guild-1", port);
 
-			player.dispose();
-
-			assert.deepEqual(port.calls, ["leave", "destroy"]);
+			assert.doesNotThrow(() => player.endSession());
 		});
 	});
 
@@ -584,6 +609,120 @@ describe("Player", () => {
 
 			assert.equal(player.isPlaying, false);
 			assert.deepEqual(port.calls, []);
+		});
+	});
+
+	describe("grace-period leave", () => {
+		it("ends the session when no human returns before the grace period fires", async (t) => {
+			t.mock.timers.enable({ apis: ["setTimeout"] });
+
+			const port = new FakeVoicePort();
+			const ended: string[] = [];
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+				gracePeriodMs: 60_000,
+				onSessionEnd: (guildId) => ended.push(guildId),
+			});
+
+			await player.join(channel);
+			port.emit("stateChange", VoiceConnectionStatus.Ready);
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+			);
+
+			// The last human leaves -> the grace timer starts.
+			player.updateVoiceMembership(0);
+
+			// Nobody returns before the window elapses -> the session ends.
+			t.mock.timers.tick(60_000);
+			await flush();
+
+			assert.equal(player.isConnected, false);
+			assert.equal(player.isPlaying, false);
+			assert.equal(player.queueView.current, undefined);
+			assert.equal(player.queueView.upcoming.length, 0);
+			assert.deepEqual(ended, ["guild-1"]);
+			assert.deepEqual(port.calls, [
+				"join:voice-1",
+				"play:https://example.com/018.mp3",
+				"leave",
+				"destroy",
+			]);
+		});
+
+		it("cancels the grace timer when a human rejoins within the window", async (t) => {
+			t.mock.timers.enable({ apis: ["setTimeout"] });
+
+			const port = new FakeVoicePort();
+			const ended: string[] = [];
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+				gracePeriodMs: 60_000,
+				onSessionEnd: (guildId) => ended.push(guildId),
+			});
+
+			await player.join(channel);
+			port.emit("stateChange", VoiceConnectionStatus.Ready);
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+
+			// The last human leaves -> the grace timer starts, then a human returns.
+			player.updateVoiceMembership(0);
+			player.updateVoiceMembership(2);
+
+			t.mock.timers.tick(60_000);
+			await flush();
+
+			assert.equal(player.isPlaying, true);
+			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.deepEqual(ended, []);
+			assert.deepEqual(port.calls, ["join:voice-1", "play:https://example.com/018.mp3"]);
+		});
+
+		it("does not arm the grace timer while not connected", async (t) => {
+			t.mock.timers.enable({ apis: ["setTimeout"] });
+
+			const port = new FakeVoicePort();
+			const ended: string[] = [];
+			const player = new Player("guild-1", port, {
+				gracePeriodMs: 60_000,
+				onSessionEnd: (guildId) => ended.push(guildId),
+			});
+
+			player.updateVoiceMembership(0);
+			t.mock.timers.tick(60_000);
+			await flush();
+
+			assert.deepEqual(ended, []);
+			assert.deepEqual(port.calls, []);
+		});
+
+		it("keeps the timer armed through a transient connection blip while the channel is empty", async (t) => {
+			t.mock.timers.enable({ apis: ["setTimeout"] });
+
+			const port = new FakeVoicePort();
+			const ended: string[] = [];
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+				gracePeriodMs: 60_000,
+				onSessionEnd: (guildId) => ended.push(guildId),
+			});
+
+			await player.join(channel);
+			port.emit("stateChange", VoiceConnectionStatus.Ready);
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+
+			// The last human leaves -> the grace timer arms.
+			player.updateVoiceMembership(0);
+
+			// A transient connection blip must NOT cancel the armed timer.
+			port.emit("stateChange", VoiceConnectionStatus.Signalling);
+			port.emit("stateChange", VoiceConnectionStatus.Ready);
+
+			t.mock.timers.tick(60_000);
+			await flush();
+
+			assert.deepEqual(ended, ["guild-1"]);
 		});
 	});
 });
