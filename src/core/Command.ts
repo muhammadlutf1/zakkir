@@ -1,20 +1,23 @@
 import type {
 	AutocompleteInteraction,
-	CommandInteraction,
+	ChatInputCommandInteraction,
 	SlashCommandBuilder,
 	SlashCommandOptionsOnlyBuilder,
 	SlashCommandSubcommandsOnlyBuilder,
 } from "discord.js";
-import type Bot from "./Bot";
+import type { CommandContext } from "./interactionContext";
 
 export interface Command {
 	readonly data:
 		| SlashCommandBuilder
 		| SlashCommandOptionsOnlyBuilder
 		| SlashCommandSubcommandsOnlyBuilder;
-	execute(bot: Bot, interaction: CommandInteraction): Promise<void> | void;
+	execute(
+		context: CommandContext,
+		interaction: ChatInputCommandInteraction,
+	): Promise<void> | void;
 	autocomplete?(
-		bot: Bot,
+		context: CommandContext,
 		interaction: AutocompleteInteraction,
 	): Promise<void> | void;
 }

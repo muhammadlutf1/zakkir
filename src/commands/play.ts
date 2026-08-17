@@ -1,11 +1,10 @@
 import { ChannelType, MessageFlags, SlashCommandBuilder } from "discord.js";
-import { config } from "../config";
 import type { Command } from "../core/Command";
-import { setGuildNoticeChannel } from "../play/noticeChannels";
+import { formatPlayResult } from "../play/playResult";
 import { resolvePlay } from "../play/resolvePlay";
 import {
-	handlePickerTimeout,
-	registerPickerTimeout,
+	RewayahPickerSession,
+	registerPickerSession,
 	renderPicker,
 } from "../play/rewayahPicker";
 
@@ -26,13 +25,13 @@ const playCommand: Command = {
 				.setDescription("Reciter name (defaults to the server default)"),
 		),
 
-	async autocomplete(bot, interaction) {
+	async autocomplete(context, interaction) {
 		const query = interaction.options
 			.getFocused()
 			.toString()
 			.trim()
 			.toLowerCase();
-		const matches = bot.catalog.surahList
+		const matches = context.catalog.surahList
 			.filter(
 				(surah) =>
 					surah.name.toLowerCase().includes(query) ||
@@ -48,9 +47,7 @@ const playCommand: Command = {
 		);
 	},
 
-	async execute(bot, interaction) {
-		if (!interaction.isChatInputCommand()) return;
-
+	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;
 
 		const channel = interaction.member.voice.channel;
@@ -68,7 +65,7 @@ const playCommand: Command = {
 		const surahInput = interaction.options.getString("surah", true);
 		const reciterOption = interaction.options.getString("reciter") ?? undefined;
 
-		const surah = bot.catalog.resolveSurah(surahInput);
+		const surah = context.catalog.resolveSurah(surahInput);
 
 		if (!surah) {
 			await interaction.editReply({
@@ -78,9 +75,9 @@ const playCommand: Command = {
 		}
 
 		const outcome = await resolvePlay(
-			bot.catalog,
-			bot.guildConfigs,
-			config.defaults,
+			context.catalog,
+			context.guildConfigs,
+			context.play.defaults,
 			interaction.guildId,
 			surah,
 			reciterOption,
@@ -91,44 +88,35 @@ const playCommand: Command = {
 			return;
 		}
 
-		const player = bot.players.getOrCreate(interaction.guildId);
+		const player = context.players.getOrCreate(interaction.guildId);
 		await player.join(channel);
 
 		if (interaction.channel) {
-			setGuildNoticeChannel(interaction.guildId, interaction.channel);
+			player.setNoticeChannel(interaction.channel);
 		}
 
 		if (outcome.kind === "play") {
 			const result = await player.play(outcome.recitation);
 
 			await interaction.editReply({
-				content: result.queued
-					? `Added to the queue: ${outcome.recitation.surah.name} by ${outcome.recitation.reciterName} (${outcome.recitation.rewayahName}).`
-					: result.started
-						? `Playing ${outcome.recitation.surah.name} by ${outcome.recitation.reciterName} (${outcome.recitation.rewayahName}).`
-						: `Couldn't play ${outcome.recitation.surah.name}. A notice was posted to the channel.`,
+				content: formatPlayResult(outcome.recitation, result),
 			});
 			return;
 		}
 
 		const message = await interaction.editReply(renderPicker(outcome));
 
-		registerPickerTimeout(message.id, {
-			timeoutMs: config.rewayahPicker.timeoutMs,
-			onTimeout: () =>
-				handlePickerTimeout(
-					{
-						catalog: bot.catalog,
-						player,
-						followUp: (content) =>
-							interaction.followUp({
-								content,
-								flags: MessageFlags.Ephemeral,
-							}),
-					},
-					outcome.defaultChoice,
-				),
+		const session = new RewayahPickerSession(message.id, {
+			timeoutMs: context.play.pickerTimeoutMs,
+			defaultChoice: outcome.defaultChoice,
+			catalog: context.catalog,
+			player,
+			followUp: (content) =>
+				interaction.followUp({ content, flags: MessageFlags.Ephemeral }),
 		});
+
+		registerPickerSession(message.id, session);
+		session.start();
 	},
 };
 

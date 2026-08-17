@@ -6,10 +6,10 @@ const clearCommand: Command = {
 		.setName("clear")
 		.setDescription("Clear the queue"),
 
-	async execute(bot, interaction) {
+	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;
 
-		const player = bot.players.get(interaction.guildId);
+		const player = context.players.get(interaction.guildId);
 
 		if (!player) {
 			await interaction.reply("I'm not in a voice channel!");

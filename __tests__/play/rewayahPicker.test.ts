@@ -2,15 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it, mock } from "node:test";
 import type { Catalog } from "../../src/catalog/Catalog";
 import { resolveSurah } from "../../src/catalog/surahs";
-import type { Player } from "../../src/voice/Player";
 import {
-	clearPickerTimeout,
-	handlePickerTimeout,
 	parsePickerCustomId,
 	pickerCustomId,
-	registerPickerTimeout,
+	pickerSessionFor,
+	RewayahPickerSession,
+	registerPickerSession,
 	renderPicker,
 } from "../../src/play/rewayahPicker";
+import type { Player } from "../../src/voice/Player";
 
 const surah = { number: 18, name: "الكهف" };
 const reciterName = "إبراهيم الأخضر";
@@ -34,7 +34,11 @@ const choices = [
 
 describe("renderPicker", () => {
 	it("lists every choice with one Play button each", () => {
-		const { content, components } = renderPicker({ surah, reciterName, choices });
+		const { content, components } = renderPicker({
+			surah,
+			reciterName,
+			choices,
+		});
 
 		assert.match(content, /Surah الكهف \(18\) by إبراهيم الأخضر/);
 		assert.match(content, /1\. حفص عن عاصم/);
@@ -42,8 +46,14 @@ describe("renderPicker", () => {
 
 		const buttons = components.flatMap((row) => row.components);
 		assert.equal(buttons.length, 2);
-		assert.equal((buttons[0]!.toJSON() as { custom_id?: string }).custom_id, "rewayah-play:18:1:1");
-		assert.equal((buttons[1]!.toJSON() as { custom_id?: string }).custom_id, "rewayah-play:18:1:2");
+		assert.equal(
+			(buttons[0]!.toJSON() as { custom_id?: string }).custom_id,
+			"rewayah-play:18:1:1",
+		);
+		assert.equal(
+			(buttons[1]!.toJSON() as { custom_id?: string }).custom_id,
+			"rewayah-play:18:1:2",
+		);
 	});
 
 	it("splits buttons into rows of at most five", () => {
@@ -75,79 +85,122 @@ describe("parsePickerCustomId", () => {
 	});
 });
 
-describe("registerPickerTimeout", () => {
-	it("fires onTimeout only once after the delay, then removes the entry", () => {
+describe("RewayahPickerSession", () => {
+	function makeSession(
+		overrides: {
+			defaultChoice?: (typeof choices)[number] | undefined;
+			followUps?: string[];
+			player?: ReturnType<typeof makeFakePlayer>;
+		} = {},
+	) {
+		const player = overrides.player ?? makeFakePlayer();
+		const followUps = overrides.followUps ?? [];
+		const hasDefault =
+			"defaultChoice" in overrides ? overrides.defaultChoice : choices[0];
+
+		const session = new RewayahPickerSession("picker-1", {
+			timeoutMs: 100,
+			defaultChoice: hasDefault,
+			catalog: makeFixtureCatalog(),
+			player,
+			followUp: async (content) => followUps.push(content),
+		});
+
+		registerPickerSession("picker-1", session);
+
+		return { session, player, followUps };
+	}
+
+	function flush() {
+		return new Promise<void>((resolve) => setImmediate(resolve));
+	}
+
+	it("fires its timeout once after the delay and auto-plays the default Rewayah", async () => {
 		const timers = mock.timers;
 		timers.enable({ apis: ["setTimeout"] });
 
-		let calls = 0;
-		const entry = registerPickerTimeout("picker-1", {
-			timeoutMs: 100,
-			onTimeout: () => {
-				calls += 1;
-			},
-		});
+		try {
+			const { session, player, followUps } = makeSession();
+			session.start();
 
-		timers.tick(101);
-		timers.tick(200);
+			timers.tick(101);
+			await flush();
+			timers.tick(200);
+			await flush();
 
-		assert.equal(calls, 1);
-		assert.equal(typeof entry.cancel, "function");
-
-		timers.reset();
+			assert.equal(player.calls, 1);
+			assert.match(
+				followUps[0]!,
+				/Playing الكهف by إبراهيم الأخضر \(حفص عن عاصم - مرتل\)/,
+			);
+			assert.equal(session.isPending, false);
+		} finally {
+			timers.reset();
+		}
 	});
 
-	it("cancelling a picker prevents its onTimeout", () => {
+	it("cancels with a notice on timeout when there is no default", async () => {
 		const timers = mock.timers;
 		timers.enable({ apis: ["setTimeout"] });
 
-		let calls = 0;
-		registerPickerTimeout("picker-2", {
-			timeoutMs: 100,
-			onTimeout: () => {
-				calls += 1;
-			},
-		});
+		try {
+			const { session, player, followUps } = makeSession({
+				defaultChoice: undefined,
+			});
+			session.start();
 
-		clearPickerTimeout("picker-2");
-		timers.tick(200);
+			timers.tick(101);
+			await flush();
 
-		assert.equal(calls, 0);
-
-		timers.reset();
+			assert.match(followUps[0]!, /Nothing picked/);
+			assert.equal(player.calls, 0);
+			assert.equal(session.isPending, false);
+		} finally {
+			timers.reset();
+		}
 	});
-});
 
-describe("handlePickerTimeout", () => {
-	it("auto-plays the default Rewayah when present", async () => {
-		const player = makeFakePlayer();
-		const followUps: string[] = [];
-		const catalog = makeFixtureCatalog();
+	it("press resolves the picker and cancels its timer so the timeout never fires", async () => {
+		const timers = mock.timers;
+		timers.enable({ apis: ["setTimeout"] });
 
-		await handlePickerTimeout(
-			{ catalog, player, followUp: async (content) => followUps.push(content) },
-			choices[0],
-		);
+		try {
+			const { session, player, followUps } = makeSession();
+			session.start();
 
-		assert.match(followUps[0]!, /Playing الكهف by إبراهيم الأخضر \(حفص عن عاصم - مرتل\)/);
+			pickerSessionFor("picker-1")?.press();
+			timers.tick(500);
+			await flush();
+
+			assert.equal(player.calls, 0);
+			assert.equal(followUps.length, 0);
+			assert.equal(session.isPending, false);
+		} finally {
+			timers.reset();
+		}
+	});
+
+	it("timeout() drives the auto-play action through the session interface", async () => {
+		const { session, player, followUps } = makeSession();
+
+		await session.timeout();
+
 		assert.equal(player.calls, 1);
+		assert.match(
+			followUps[0]!,
+			/Playing الكهف by إبراهيم الأخضر \(حفص عن عاصم - مرتل\)/,
+		);
+		assert.equal(session.isPending, false);
 	});
 
-	it("cancels with a notice when there is no default", async () => {
-		const player = makeFakePlayer();
-		const followUps: string[] = [];
+	it("timeout() settles exactly once", async () => {
+		const { session, player, followUps } = makeSession();
 
-		await handlePickerTimeout(
-			{
-				catalog: makeFixtureCatalog(),
-				player,
-				followUp: async (content) => followUps.push(content),
-			},
-			undefined,
-		);
+		await session.timeout();
+		await session.timeout();
 
-		assert.match(followUps[0]!, /Nothing picked/);
-		assert.equal(player.calls, 0);
+		assert.equal(player.calls, 1);
+		assert.equal(followUps.length, 1);
 	});
 });
 
@@ -159,8 +212,20 @@ function makeFixtureCatalog() {
 				id,
 				name: reciterName,
 				rewayat: [
-					{ id: 1, name: "حفص عن عاصم - مرتل", server: "https://fixture/a", surahList: new Set([18]), surahCount: 1 },
-					{ id: 2, name: "ورش عن نافع - مرتل", server: "https://fixture/b", surahList: new Set([18]), surahCount: 1 },
+					{
+						id: 1,
+						name: "حفص عن عاصم - مرتل",
+						server: "https://fixture/a",
+						surahList: new Set([18]),
+						surahCount: 1,
+					},
+					{
+						id: 2,
+						name: "ورش عن نافع - مرتل",
+						server: "https://fixture/b",
+						surahList: new Set([18]),
+						surahCount: 1,
+					},
 				],
 			};
 		},

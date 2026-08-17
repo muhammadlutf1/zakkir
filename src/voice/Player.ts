@@ -1,5 +1,5 @@
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
-import type { VoiceChannel } from "discord.js";
+import type { TextBasedChannel, VoiceChannel } from "discord.js";
 import { createLogger } from "../core/logger";
 import { Queue, type RepeatMode } from "./Queue";
 import { type Recitation, recitationLabel } from "./Recitation";
@@ -44,6 +44,7 @@ export class Player {
 	private active: { item: Recitation; retries: number } | null = null;
 	private readonly probeStream: (url: string) => Promise<boolean>;
 	private readonly noticeListeners = new Set<(message: string) => void>();
+	private noticeChannelRef: TextBasedChannel | undefined;
 
 	constructor(
 		public readonly guildId: string,
@@ -84,6 +85,19 @@ export class Player {
 
 	get repeatMode() {
 		return this.queue.repeatMode;
+	}
+
+	/**
+	 * The text channel where this Player's user-facing notices (e.g. a failed
+	 * Recitation) are posted. Notice routing is local to the Player's session
+	 * rather than a module-global map.
+	 */
+	get noticeChannel() {
+		return this.noticeChannelRef;
+	}
+
+	setNoticeChannel(channel: TextBasedChannel) {
+		this.noticeChannelRef = channel;
 	}
 
 	setRepeatMode(mode: RepeatMode) {

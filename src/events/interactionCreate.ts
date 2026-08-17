@@ -1,5 +1,19 @@
+import type {
+	AutocompleteInteraction,
+	CommandInteraction,
+	MessageComponentInteraction,
+} from "discord.js";
 import { Events, MessageFlags } from "discord.js";
+import { config } from "../config";
 import type { BotEvent } from "../core/Event";
+import {
+	decideFailureResponse,
+	type InteractionFailureKind,
+} from "../core/failurePolicy";
+import type {
+	CommandContext,
+	ComponentContext,
+} from "../core/interactionContext";
 import { createLogger } from "../core/logger";
 
 const logger = createLogger("interactionCreate");
@@ -7,20 +21,32 @@ const logger = createLogger("interactionCreate");
 const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 	name: Events.InteractionCreate,
 	async execute(bot, interaction) {
+		const commandContext: CommandContext = {
+			players: bot.players,
+			catalog: bot.catalog,
+			guildConfigs: bot.guildConfigs,
+			play: {
+				defaults: config.defaults,
+				pickerTimeoutMs: config.rewayahPicker.timeoutMs,
+			},
+		};
+
+		const componentContext: ComponentContext = {
+			players: bot.players,
+			catalog: bot.catalog,
+		};
+
 		if (interaction.isAutocomplete()) {
 			const command = bot.commands.get(interaction.commandName);
 
 			if (!command?.autocomplete) return;
 
-			try {
-				await command.autocomplete(bot, interaction);
-			} catch (error) {
-				logger.error(
-					error,
-					"Error handling autocomplete for %s",
-					interaction.commandName,
-				);
-			}
+			await dispatchWithErrorPolicy(
+				"autocomplete",
+				`autocomplete for ${interaction.commandName}`,
+				interaction,
+				() => command.autocomplete?.(commandContext, interaction),
+			);
 
 			return;
 		}
@@ -33,19 +59,12 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 
 			if (!component) return;
 
-			try {
-				await component.execute(bot, interaction);
-			} catch (error) {
-				logger.error(error, "Error executing component %s", interaction.customId);
-
-				const content = "There was an error while handling that component!";
-
-				if (interaction.replied || interaction.deferred) {
-					await interaction.followUp({ content, flags: MessageFlags.Ephemeral });
-				} else {
-					await interaction.reply({ content, flags: MessageFlags.Ephemeral });
-				}
-			}
+			await dispatchWithErrorPolicy(
+				"messageComponent",
+				`component ${interaction.customId}`,
+				interaction,
+				() => component.execute(componentContext, interaction),
+			);
 
 			return;
 		}
@@ -56,29 +75,62 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 
 			if (!command) return;
 
-			try {
-				await command.execute(bot, interaction);
-			} catch (error) {
-				logger.error(
-					error,
-					"Error executing command %s",
-					interaction.commandName,
-				);
-
-				if (interaction.replied || interaction.deferred) {
-					await interaction.followUp({
-						content: "There was an error while executing this command!",
-						flags: MessageFlags.Ephemeral,
-					});
-				} else {
-					await interaction.reply({
-						content: "There was an error while executing this command!",
-						flags: MessageFlags.Ephemeral,
-					});
-				}
-			}
+			await dispatchWithErrorPolicy(
+				"chatInput",
+				`command ${interaction.commandName}`,
+				interaction,
+				() => command.execute(commandContext, interaction),
+			);
 		}
 	},
 } as const;
+
+/**
+ * The single dispatch-and-error path every interaction kind shares: run the
+ * handler, and on failure apply the shared error policy (log-only for
+ * autocomplete; reply, or follow up when already responded to).
+ */
+async function dispatchWithErrorPolicy(
+	kind: InteractionFailureKind,
+	logLabel: string,
+	interaction:
+		| AutocompleteInteraction
+		| MessageComponentInteraction
+		| CommandInteraction,
+	work: () => unknown,
+) {
+	try {
+		await work();
+	} catch (error) {
+		logger.error(error, "Error handling %s", logLabel);
+
+		// Autocomplete never responds; its failure policy is log-only.
+		const decision = decideFailureResponse(
+			kind,
+			"replied" in interaction
+				? interaction.replied || interaction.deferred
+				: false,
+		);
+
+		if (decision.action === "log") return;
+
+		// Only non-autocomplete interactions can reply / follow up.
+		if (!("reply" in interaction)) return;
+
+		const responder = interaction as CommandInteraction;
+
+		if (decision.action === "reply") {
+			await responder.reply({
+				content: decision.content,
+				flags: MessageFlags.Ephemeral,
+			});
+		} else {
+			await responder.followUp({
+				content: decision.content,
+				flags: MessageFlags.Ephemeral,
+			});
+		}
+	}
+}
 
 export default interactionDispatcher;
