@@ -6,10 +6,6 @@ import type {
 import { Events, MessageFlags } from "discord.js";
 import { config } from "../config";
 import type { BotEvent } from "../core/Event";
-import {
-	decideFailureResponse,
-	type InteractionFailureKind,
-} from "../core/failurePolicy";
 import type {
 	CommandContext,
 	ComponentContext,
@@ -97,14 +93,13 @@ async function dispatchWithErrorPolicy(
 		| AutocompleteInteraction
 		| MessageComponentInteraction
 		| CommandInteraction,
-	work: () => unknown,
+	execute: () => unknown,
 ) {
 	try {
-		await work();
+		await execute();
 	} catch (error) {
 		logger.error(error, "Error handling %s", logLabel);
 
-		// Autocomplete never responds; its failure policy is log-only.
 		const decision = decideFailureResponse(
 			kind,
 			"replied" in interaction
@@ -113,9 +108,6 @@ async function dispatchWithErrorPolicy(
 		);
 
 		if (decision.action === "log") return;
-
-		// Only non-autocomplete interactions can reply / follow up.
-		if (!("reply" in interaction)) return;
 
 		const responder = interaction as CommandInteraction;
 
@@ -131,6 +123,24 @@ async function dispatchWithErrorPolicy(
 			});
 		}
 	}
+}
+
+type InteractionFailureKind = "autocomplete" | "messageComponent" | "chatInput";
+
+export function decideFailureResponse(
+	kind: InteractionFailureKind,
+	responsive: boolean,
+) {
+	if (kind === "autocomplete") return { action: "log" };
+
+	const content =
+		kind === "messageComponent"
+			? "There was an error while handling that component!"
+			: "There was an error while executing this command!";
+
+	return responsive
+		? { action: "followUp", content }
+		: { action: "reply", content };
 }
 
 export default interactionDispatcher;

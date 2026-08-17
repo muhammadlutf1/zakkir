@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { decideFailureResponse } from "../../src/core/failurePolicy";
+import { decideFailureResponse } from "../../src/events/interactionCreate";
 
 describe("decideFailureResponse", () => {
 	describe("autocomplete", () => {
