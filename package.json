@@ -8,7 +8,9 @@
 		"build": "node --experimental-strip-types esbuild.config.ts",
 		"dev": "tsx --env-file=.env --watch src/index.ts",
 		"start": "node --env-file=.env dist/index.js",
-		"test": "tsx --test __tests__/**/*.test.ts"
+		"test": "tsx --test __tests__/**/*.test.ts",
+		"lint": "biome lint --error-on-warnings ./src ./__tests__",
+		"lint:fix": "biome lint --write ./src ./__tests__"
 	},
 	"keywords": [],
 	"author": "Muhammad Lutfi <mohamed10lotfy10@gmail.com>",
