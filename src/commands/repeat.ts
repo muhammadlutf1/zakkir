@@ -22,11 +22,10 @@ const repeatCommand: Command = {
 				.addChoices(...REPEAT_CHOICES),
 		),
 
-	async execute(bot, interaction) {
+	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;
-		if (!interaction.isChatInputCommand()) return;
 
-		const player = bot.players.get(interaction.guildId);
+		const player = context.players.get(interaction.guildId);
 
 		if (!player) {
 			await interaction.reply({

@@ -56,7 +56,10 @@ export class Queue<T> {
 	advance() {
 		switch (this._repeatMode) {
 			case RepeatMode.ALL:
-				if (this.items.length > 1) this.items.push(this.items.shift()!);
+				if (this.items.length > 1) {
+					const next = this.items.shift();
+					if (next) this.items.push(next);
+				}
 				break;
 			case RepeatMode.TRACK:
 				break;

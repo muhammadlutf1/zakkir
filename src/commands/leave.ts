@@ -6,10 +6,10 @@ const leaveCommand: Command = {
 		.setName("leave")
 		.setDescription("Leave your voice channel"),
 
-	async execute(bot, interaction) {
+	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;
 
-		const player = bot.players.get(interaction.guildId);
+		const player = context.players.get(interaction.guildId);
 
 		if (!player) {
 			await interaction.reply({
@@ -20,7 +20,7 @@ const leaveCommand: Command = {
 		}
 
 		player.dispose();
-		bot.players.remove(interaction.guildId);
+		context.players.remove(interaction.guildId);
 
 		await interaction.reply("Left your voice channel!");
 	},

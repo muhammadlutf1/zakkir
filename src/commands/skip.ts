@@ -7,10 +7,10 @@ const skipCommand: Command = {
 		.setName("skip")
 		.setDescription("Skip the current recitation"),
 
-	async execute(bot, interaction) {
+	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;
 
-		const player = bot.players.get(interaction.guildId);
+		const player = context.players.get(interaction.guildId);
 
 		if (!player) {
 			await interaction.reply({

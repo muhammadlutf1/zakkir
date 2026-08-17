@@ -6,7 +6,7 @@ const joinCommand: Command = {
 		.setName("join")
 		.setDescription("Join your voice channel"),
 
-	async execute(bot, interaction) {
+	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;
 
 		const channel = interaction.member.voice.channel;
@@ -19,7 +19,7 @@ const joinCommand: Command = {
 			return;
 		}
 
-		const player = bot.players.getOrCreate(interaction.guildId);
+		const player = context.players.getOrCreate(interaction.guildId);
 
 		await player.join(channel);
 

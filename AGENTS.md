@@ -19,3 +19,7 @@ Single-context layout — root `CONTEXT.md` + `docs/adr/`. See `docs/agents/doma
 ### Pull requests
 
 Create PRs with `gh`, and write the body via `--body-file` from a temp file — inline `--body` strings in PowerShell leave literal `\` escapes in the markdown. See `docs/agents/pull-requests.md`.
+
+### Quality gates
+
+Run `pnpm lint`, `pnpm exec tsc --noEmit`, `pnpm test`, and `pnpm build` before finishing any work — all four must pass, and warnings fail lint. Biome rules and the full workflow live in `docs/agents/quality-gates.md`.

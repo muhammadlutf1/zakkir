@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { SqliteGuildConfigStore } from "../../src/guildConfig/SqliteGuildConfigStore";
+import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
 
 function memoryStore() {
 	return new SqliteGuildConfigStore(":memory:");

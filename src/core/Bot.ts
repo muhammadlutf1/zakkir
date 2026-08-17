@@ -3,7 +3,7 @@ import type { Component } from "./Component";
 import type { Command } from "./Command";
 import type { BotEvent } from "./Event";
 import type { PlayerRegistry } from "../voice/PlayerRegistry";
-import type { GuildConfig } from "../guildConfig/GuildConfig";
+import type { GuildConfig } from "../guild/GuildConfig";
 import type { Catalog } from "../catalog/Catalog";
 
 export default class Bot extends Client {

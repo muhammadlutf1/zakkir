@@ -1,13 +1,16 @@
 import type { Component } from "../../core/Component";
-import { setGuildNoticeChannel } from "../../play/noticeChannels";
+import { formatPlayResult } from "../../play/playResult";
 import { buildRecitationFromChoice } from "../../play/resolvePlay";
-import { clearPickerTimeout, parsePickerCustomId } from "../../play/rewayahPicker";
+import {
+	parsePickerCustomId,
+	RewayahPickerSession,
+} from "../../play/rewayahPicker";
 
 const component: Component = {
 	id: "rewayah-play",
 	match: (customId) => customId.startsWith("rewayah-play:"),
 
-	async execute(bot, interaction) {
+	async execute(context, interaction) {
 		const parsed = parsePickerCustomId(interaction.customId);
 
 		if (!parsed) return;
@@ -17,9 +20,10 @@ const component: Component = {
 
 		if (!guildId) return;
 
-		clearPickerTimeout(interaction.message.id);
+		// A button press resolves the picker and cancels its timer.
+		RewayahPickerSession.getSession(interaction.message.id)?.press();
 
-		const player = bot.players.get(guildId);
+		const player = context.players.get(guildId);
 
 		if (!player?.isConnected) {
 			await interaction.editReply({
@@ -29,7 +33,7 @@ const component: Component = {
 			return;
 		}
 
-		const recitation = await buildRecitationFromChoice(bot.catalog, {
+		const recitation = await buildRecitationFromChoice(context.catalog, {
 			surahNumber: parsed.surahNumber,
 			reciterId: parsed.reciterId,
 			reciterName: "",
@@ -45,18 +49,14 @@ const component: Component = {
 			return;
 		}
 
-		if (interaction.channel && guildId) {
-			setGuildNoticeChannel(guildId, interaction.channel);
+		if (interaction.channel) {
+			player.setNoticeChannel(interaction.channel);
 		}
 
 		const result = await player.play(recitation);
 
 		await interaction.editReply({
-			content: result.queued
-				? `Added to the queue: ${recitation.surah.name} by ${recitation.reciterName} (${recitation.rewayahName}).`
-				: result.started
-					? `Playing ${recitation.surah.name} by ${recitation.reciterName} (${recitation.rewayahName}).`
-					: `Couldn't play ${recitation.surah.name}. A notice was posted to the channel.`,
+			content: formatPlayResult(recitation, result),
 			components: [],
 		});
 	},

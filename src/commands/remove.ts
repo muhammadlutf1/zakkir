@@ -13,11 +13,10 @@ const removeCommand: Command = {
 				.setMinValue(1),
 		),
 
-	async execute(bot, interaction) {
+	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;
-		if (!interaction.isChatInputCommand()) return;
 
-		const player = bot.players.get(interaction.guildId);
+		const player = context.players.get(interaction.guildId);
 
 		if (!player) {
 			await interaction.reply({
@@ -42,7 +41,9 @@ const removeCommand: Command = {
 		// upcoming position N maps to queue position N + 1.
 		player.remove(position + 1);
 
-		await interaction.reply(`Removed queued recitation at position ${position}.`);
+		await interaction.reply(
+			`Removed queued recitation at position ${position}.`,
+		);
 	},
 };
 

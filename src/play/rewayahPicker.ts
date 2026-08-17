@@ -3,6 +3,7 @@ import type { Catalog } from "../catalog/Catalog";
 import type { Surah } from "../catalog/surahs";
 import { createLogger } from "../core/logger";
 import type { Player } from "../voice/Player";
+import { formatPlayResult } from "./playResult";
 import { buildRecitationFromChoice, type RewayahChoice } from "./resolvePlay";
 
 const logger = createLogger("rewayahPicker");
@@ -72,76 +73,102 @@ export function renderPicker(options: PickerOptions): {
 	return { content, components };
 }
 
-export interface PendingPicker {
-	cancel(): void;
-}
-
-const pending = new Map<string, PendingPicker>();
-
-export function registerPickerTimeout(
-	messageId: string,
-	options: { timeoutMs: number; onTimeout: () => void },
-): PendingPicker {
-	const timer = setTimeout(() => {
-		pending.delete(messageId);
-		Promise.resolve(options.onTimeout()).catch((error) => {
-			logger.error(error, "Picker timeout action failed");
-		});
-	}, options.timeoutMs);
-
-	timer.unref();
-
-	const entry: PendingPicker = {
-		cancel() {
-			clearTimeout(timer);
-			pending.delete(messageId);
-		},
-	};
-
-	pending.set(messageId, entry);
-
-	return entry;
-}
-
-export function clearPickerTimeout(messageId: string) {
-	pending.get(messageId)?.cancel();
-}
-
-export interface PickerTimeoutContext {
+export interface PickerSessionOptions {
+	timeoutMs: number;
+	defaultChoice: RewayahChoice | undefined;
 	catalog: Catalog;
 	player: Player;
 	followUp: (content: string) => Promise<unknown>;
 }
 
 /**
- * Runs the picker-timeout action: auto-plays the resolved default Rewayah, or
- * cancels with a notice when there is no default.
+ * One picker's whole lifecycle. Constructing a session registers it in the
+ * shared registry and arms its timeout, so "just make the instance" is enough
+ * setup. The session owns its timeout timer, its resolution on a button press,
+ * and its follow-up notice binding — it replaces the module-global timeout /
+ * notice maps. Keyed to the session, not a bare message id, so pressing a
+ * button reliably cancels that picker's timer.
  */
-export async function handlePickerTimeout(
-	context: PickerTimeoutContext,
-	defaultChoice: RewayahChoice | undefined,
-): Promise<void> {
-	if (!defaultChoice) {
-		await context.followUp(
-			"Nothing picked — no default Rewayah is set. Playback cancelled.",
-		);
-		return;
+export class RewayahPickerSession {
+	private static readonly sessions = new Map<string, RewayahPickerSession>();
+
+	private timer: NodeJS.Timeout | null = null;
+	private resolved = false;
+
+	constructor(
+		private readonly messageId: string,
+		private readonly options: PickerSessionOptions,
+	) {
+		RewayahPickerSession.sessions.set(this.messageId, this);
+		this.start();
 	}
 
-	const recitation = await buildRecitationFromChoice(context.catalog, defaultChoice);
-	const result = await context.player.play(recitation);
+	/** The pending picker for a message, or `undefined` if none is active. */
+	static getSession(messageId: string) {
+		return RewayahPickerSession.sessions.get(messageId);
+	}
 
-	if (result.queued) {
-		await context.followUp(
-			`Added to the queue: ${recitation.surah.name} by ${recitation.reciterName} (${recitation.rewayahName}).`,
+	/** True while the picker is still awaiting a button press. */
+	get isPending() {
+		return !this.resolved;
+	}
+
+	/**
+	 * Arms the timeout that auto-plays the resolved default Rewayah, or posts
+	 * the "nothing picked" notice when there is no default. Called on
+	 * construction; idempotent.
+	 */
+	start() {
+		if (this.resolved || this.timer) return;
+
+		this.timer = setTimeout(() => {
+			this.timer = null;
+			this.timeout().catch((error) => {
+				logger.error(error, "Picker timeout action failed");
+			});
+		}, this.options.timeoutMs);
+
+		this.timer.unref();
+	}
+
+	/**
+	 * A button press resolves the picker and cancels its timer, so the timeout
+	 * can never fire after the pick has been made.
+	 */
+	press() {
+		if (this.timer) clearTimeout(this.timer);
+		this.timer = null;
+		this.settle();
+	}
+
+	/**
+	 * Fires the picker's timeout: auto-plays the resolved default Rewayah, or
+	 * posts the "nothing picked" notice when there is no default. Settles the
+	 * picker exactly once.
+	 */
+	async timeout() {
+		if (this.resolved) return;
+
+		this.settle();
+
+		if (!this.options.defaultChoice) {
+			await this.options.followUp(
+				"Nothing picked — no default Rewayah is set. Playback cancelled.",
+			);
+			return;
+		}
+
+		const recitation = await buildRecitationFromChoice(
+			this.options.catalog,
+			this.options.defaultChoice,
 		);
-	} else if (result.started) {
-		await context.followUp(
-			`Playing ${recitation.surah.name} by ${recitation.reciterName} (${recitation.rewayahName}).`,
-		);
-	} else {
-		await context.followUp(
-			`Couldn't auto-play ${recitation.rewayahName}. A notice was posted to the channel.`,
-		);
+		const result = await this.options.player.play(recitation);
+
+		await this.options.followUp(formatPlayResult(recitation, result));
+	}
+
+	private settle() {
+		this.resolved = true;
+		RewayahPickerSession.sessions.delete(this.messageId);
 	}
 }

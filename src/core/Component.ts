@@ -1,5 +1,5 @@
 import type { MessageComponentInteraction } from "discord.js";
-import type Bot from "./Bot";
+import type { ComponentContext } from "./interactionContext";
 
 export interface Component {
 	readonly id: string;
@@ -8,7 +8,7 @@ export interface Component {
 	 */
 	match(customId: string): boolean;
 	execute(
-		bot: Bot,
+		context: ComponentContext,
 		interaction: MessageComponentInteraction,
 	): Promise<void> | void;
 }
