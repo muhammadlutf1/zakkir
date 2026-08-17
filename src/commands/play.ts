@@ -4,7 +4,6 @@ import { formatPlayResult } from "../play/playResult";
 import { resolvePlay } from "../play/resolvePlay";
 import {
 	RewayahPickerSession,
-	registerPickerSession,
 	renderPicker,
 } from "../play/rewayahPicker";
 
@@ -106,7 +105,7 @@ const playCommand: Command = {
 
 		const message = await interaction.editReply(renderPicker(outcome));
 
-		const session = new RewayahPickerSession(message.id, {
+		new RewayahPickerSession(message.id, {
 			timeoutMs: context.play.pickerTimeoutMs,
 			defaultChoice: outcome.defaultChoice,
 			catalog: context.catalog,
@@ -114,9 +113,6 @@ const playCommand: Command = {
 			followUp: (content) =>
 				interaction.followUp({ content, flags: MessageFlags.Ephemeral }),
 		});
-
-		registerPickerSession(message.id, session);
-		session.start();
 	},
 };
 

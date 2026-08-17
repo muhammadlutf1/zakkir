@@ -5,9 +5,7 @@ import { resolveSurah } from "../../src/catalog/surahs";
 import {
 	parsePickerCustomId,
 	pickerCustomId,
-	pickerSessionFor,
 	RewayahPickerSession,
-	registerPickerSession,
 	renderPicker,
 } from "../../src/play/rewayahPicker";
 import type { Player } from "../../src/voice/Player";
@@ -106,8 +104,6 @@ describe("RewayahPickerSession", () => {
 			followUp: async (content) => followUps.push(content),
 		});
 
-		registerPickerSession("picker-1", session);
-
 		return { session, player, followUps };
 	}
 
@@ -121,8 +117,6 @@ describe("RewayahPickerSession", () => {
 
 		try {
 			const { session, player, followUps } = makeSession();
-			session.start();
-
 			timers.tick(101);
 			await flush();
 			timers.tick(200);
@@ -147,8 +141,6 @@ describe("RewayahPickerSession", () => {
 			const { session, player, followUps } = makeSession({
 				defaultChoice: undefined,
 			});
-			session.start();
-
 			timers.tick(101);
 			await flush();
 
@@ -166,9 +158,7 @@ describe("RewayahPickerSession", () => {
 
 		try {
 			const { session, player, followUps } = makeSession();
-			session.start();
-
-			pickerSessionFor("picker-1")?.press();
+			RewayahPickerSession.getSession("picker-1")?.press();
 			timers.tick(500);
 			await flush();
 

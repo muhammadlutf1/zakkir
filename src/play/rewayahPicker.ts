@@ -82,19 +82,31 @@ export interface PickerSessionOptions {
 }
 
 /**
- * One picker's whole lifecycle. The session owns its timeout timer, its
- * resolution on a button press, and its follow-up notice binding — it replaces
- * the module-global timeout / notice maps. Keyed to the session, not a bare
- * message id, so pressing a button reliably cancels that picker's timer.
+ * One picker's whole lifecycle. Constructing a session registers it in the
+ * shared registry and arms its timeout, so "just make the instance" is enough
+ * setup. The session owns its timeout timer, its resolution on a button press,
+ * and its follow-up notice binding — it replaces the module-global timeout /
+ * notice maps. Keyed to the session, not a bare message id, so pressing a
+ * button reliably cancels that picker's timer.
  */
 export class RewayahPickerSession {
+	private static readonly sessions = new Map<string, RewayahPickerSession>();
+
 	private timer: NodeJS.Timeout | null = null;
 	private resolved = false;
 
 	constructor(
 		private readonly messageId: string,
 		private readonly options: PickerSessionOptions,
-	) {}
+	) {
+		RewayahPickerSession.sessions.set(this.messageId, this);
+		this.start();
+	}
+
+	/** The pending picker for a message, or `undefined` if none is active. */
+	static getSession(messageId: string) {
+		return RewayahPickerSession.sessions.get(messageId);
+	}
 
 	/** True while the picker is still awaiting a button press. */
 	get isPending() {
@@ -103,7 +115,8 @@ export class RewayahPickerSession {
 
 	/**
 	 * Arms the timeout that auto-plays the resolved default Rewayah, or posts
-	 * the "nothing picked" notice when there is no default.
+	 * the "nothing picked" notice when there is no default. Called on
+	 * construction; idempotent.
 	 */
 	start() {
 		if (this.resolved || this.timer) return;
@@ -156,21 +169,6 @@ export class RewayahPickerSession {
 
 	private settle() {
 		this.resolved = true;
-		sessions.delete(this.messageId);
+		RewayahPickerSession.sessions.delete(this.messageId);
 	}
-}
-
-const sessions = new Map<string, RewayahPickerSession>();
-
-/** Registers a picker so its button can find and press it by message id. */
-export function registerPickerSession(
-	messageId: string,
-	session: RewayahPickerSession,
-) {
-	sessions.set(messageId, session);
-	return session;
-}
-
-export function pickerSessionFor(messageId: string) {
-	return sessions.get(messageId);
 }

@@ -3,7 +3,7 @@ import { formatPlayResult } from "../../play/playResult";
 import { buildRecitationFromChoice } from "../../play/resolvePlay";
 import {
 	parsePickerCustomId,
-	pickerSessionFor,
+	RewayahPickerSession,
 } from "../../play/rewayahPicker";
 
 const component: Component = {
@@ -21,7 +21,7 @@ const component: Component = {
 		if (!guildId) return;
 
 		// A button press resolves the picker and cancels its timer.
-		pickerSessionFor(interaction.message.id)?.press();
+		RewayahPickerSession.getSession(interaction.message.id)?.press();
 
 		const player = context.players.get(guildId);
 
