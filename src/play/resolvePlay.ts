@@ -1,7 +1,7 @@
 import type { Catalog, Rewayah } from "../catalog/Catalog";
 import type { Surah } from "../catalog/surahs";
-import type { GuildConfig } from "../guildConfig/GuildConfig";
-import type { GlobalDefaults, RewayahCoverage } from "../guildConfig/types";
+import type { GuildConfig } from "../guild/GuildConfig";
+import type { GlobalDefaults, RewayahCoverage } from "../guild/types";
 import type { Recitation } from "../voice/Recitation";
 
 /**

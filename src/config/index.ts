@@ -1,4 +1,4 @@
-import type { GlobalDefaults } from "../guildConfig/types";
+import type { GlobalDefaults } from "../guild/types";
 
 export interface BotConfig {
 	clientId: string;

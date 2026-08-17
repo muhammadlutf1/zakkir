@@ -1,6 +1,6 @@
 import type { Catalog } from "../catalog/Catalog";
-import type { GuildConfig } from "../guildConfig/GuildConfig";
-import type { GlobalDefaults } from "../guildConfig/types";
+import type { GuildConfig } from "../guild/GuildConfig";
+import type { GlobalDefaults } from "../guild/types";
 import type { PlayerRegistry } from "../voice/PlayerRegistry";
 
 /**

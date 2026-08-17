@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog";
 import { resolveSurah } from "../../src/catalog/surahs";
-import { GuildConfig } from "../../src/guildConfig/GuildConfig";
-import { SqliteGuildConfigStore } from "../../src/guildConfig/SqliteGuildConfigStore";
-import type { GlobalDefaults } from "../../src/guildConfig/types";
+import { GuildConfig } from "../../src/guild/GuildConfig";
+import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
+import type { GlobalDefaults } from "../../src/guild/types";
 import {
 	buildRecitationFromChoice,
 	resolvePlay,

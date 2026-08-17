@@ -5,9 +5,9 @@ import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog";
 import { resolveSurah, SURAH_LIST } from "../../src/catalog/surahs";
 import playCommand from "../../src/commands/play";
 import type { CommandContext } from "../../src/core/interactionContext";
-import { GuildConfig } from "../../src/guildConfig/GuildConfig";
-import { SqliteGuildConfigStore } from "../../src/guildConfig/SqliteGuildConfigStore";
-import type { GlobalDefaults } from "../../src/guildConfig/types";
+import { GuildConfig } from "../../src/guild/GuildConfig";
+import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
+import type { GlobalDefaults } from "../../src/guild/types";
 import type { Player } from "../../src/voice/Player";
 
 const NO_DEFAULTS: GlobalDefaults = {
