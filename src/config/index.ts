@@ -12,6 +12,13 @@ export interface BotConfig {
 	rewayahPicker: {
 		timeoutMs: number;
 	};
+	voice: {
+		/**
+		 * How long to wait for a human to return before ending the session
+		 * once the last human leaves the voice channel.
+		 */
+		gracePeriodMs: number;
+	};
 }
 
 export const config: BotConfig = {
@@ -29,5 +36,8 @@ export const config: BotConfig = {
 	},
 	rewayahPicker: {
 		timeoutMs: 30_000,
+	},
+	voice: {
+		gracePeriodMs: Number(process.env.GRACE_PERIOD_MS ?? 60_000),
 	},
 };

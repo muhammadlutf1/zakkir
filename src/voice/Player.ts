@@ -22,6 +22,16 @@ export interface PlayerOptions {
 	 * notice, and advances the Queue. Defaults to a HEAD request.
 	 */
 	probeStream?: (url: string) => Promise<boolean>;
+	/**
+	 * How long to wait for a human to return before ending the session once
+	 * the last human leaves the voice channel. Defaults to 60s.
+	 */
+	gracePeriodMs?: number;
+	/**
+	 * Invoked once the session ends (the grace timer fired). Lets the owner
+	 * dispose this Player from the registry.
+	 */
+	onSessionEnd?: (guildId: string) => void;
 }
 
 async function defaultProbeStream(url: string): Promise<boolean> {
@@ -43,8 +53,12 @@ export class Player {
 	private readonly queue = new Queue<Recitation>();
 	private active: { item: Recitation; retries: number } | null = null;
 	private readonly probeStream: (url: string) => Promise<boolean>;
+	private readonly gracePeriodMs: number;
+	private readonly onSessionEnd?: (guildId: string) => void;
 	private readonly noticeListeners = new Set<(message: string) => void>();
 	private noticeChannelRef: TextBasedChannel | undefined;
+	private channel: VoiceChannel | undefined;
+	private graceTimer: NodeJS.Timeout | undefined;
 
 	constructor(
 		public readonly guildId: string,
@@ -52,6 +66,8 @@ export class Player {
 		options: PlayerOptions = {},
 	) {
 		this.probeStream = options.probeStream ?? defaultProbeStream;
+		this.gracePeriodMs = options.gracePeriodMs ?? 60_000;
+		this.onSessionEnd = options.onSessionEnd;
 
 		port.on("error", (error) => {
 			logger.error(error, "Voice error in guild %s", this.guildId);
@@ -123,6 +139,7 @@ export class Player {
 	}
 
 	async join(channel: VoiceChannel): Promise<void> {
+		this.channel = channel;
 		logger.info(
 			"Player joining voice channel %s in guild %s",
 			channel.id,
@@ -133,8 +150,40 @@ export class Player {
 
 	leave(): void {
 		logger.info("Player leaving voice channel in guild %s", this.guildId);
+		this.cancelGraceTimer();
+		this.channel = undefined;
+		this.connectionState = VoiceConnectionStatus.Destroyed;
 		this.active = null;
 		this.port.leave();
+	}
+
+	/**
+	 * Reports the current number of human (non-bot) members in the Player's
+	 * voice channel. The last human leaving (while connected) starts the grace
+	 * timer; a human returning before it fires is the only thing that cancels
+	 * it.
+	 */
+	updateVoiceMembership(humanCount: number) {
+		if (humanCount > 0) {
+			this.cancelGraceTimer();
+			return;
+		}
+
+		if (this.isConnected) this.startGraceTimer();
+	}
+
+	/**
+	 * Re-reads the current channel's membership and feeds the human count
+	 * into the grace timer. Called by the bot on every voice-state change.
+	 */
+	refreshVoiceMembership() {
+		if (!this.channel) return;
+
+		const humans = this.channel.members.filter(
+			(member) => !member.user.bot,
+		).size;
+
+		this.updateVoiceMembership(humans);
 	}
 
 	stop(): void {
@@ -175,10 +224,38 @@ export class Player {
 		this.port.unpause();
 	}
 
-	dispose(): void {
-		this.active = null;
-		this.port.leave();
+	/**
+	 * Ends the playback session: disconnects, clears the Queue, and disposes
+	 * this Player from the registry. Session-end paths (the grace timer today;
+	 * the panel's Stop button in the future) converge on this single action.
+	 */
+	endSession() {
+		this.leave();
+		this.queue.clear();
 		this.port.destroy();
+		this.onSessionEnd?.(this.guildId);
+	}
+
+	private startGraceTimer() {
+		if (this.graceTimer) return;
+
+		this.graceTimer = setTimeout(() => {
+			this.graceTimer = undefined;
+			logger.info(
+				"Grace period elapsed in guild %s — ending session",
+				this.guildId,
+			);
+			this.endSession();
+		}, this.gracePeriodMs);
+
+		this.graceTimer.unref?.();
+	}
+
+	private cancelGraceTimer() {
+		if (!this.graceTimer) return;
+
+		clearTimeout(this.graceTimer);
+		this.graceTimer = undefined;
 	}
 
 	private async startCurrent(): Promise<PlayResult> {
