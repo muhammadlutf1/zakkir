@@ -1,18 +1,25 @@
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { TextBasedChannel, VoiceChannel } from "discord.js";
 import { createLogger } from "../core/logger";
-import {
-	DEFAULT_LOCALE,
-	type Locale,
-	localizable,
-} from "../i18n/locale";
 import { Queue, type RepeatMode } from "./Queue";
-import { type Recitation, recitationLabel } from "./Recitation";
+import type { Recitation } from "./Recitation";
 import type { VoicePort } from "./VoicePort";
 
 const logger = createLogger("player");
 
 const MAX_STREAM_RETRIES = 1;
+
+/** The playback-failure notices a Player can emit. */
+export type PlayerNoticeKind = "unreachable" | "playbackFailed";
+
+/**
+ * Renders a Player's playback-failure notice in the guild's locale. Injected
+ * into the Player so the voice layer stays free of localization logic; the
+ * composition root builds it from the guild's effective locale.
+ */
+export interface PlayerNoticeFormatter {
+	render(kind: PlayerNoticeKind, recitation: Recitation): string;
+}
 
 export interface PlayResult {
 	started: boolean;
@@ -38,10 +45,11 @@ export interface PlayerOptions {
 	 */
 	onSessionEnd?: (guildId: string) => void;
 	/**
-	 * The locale this guild's notices and labels render in. Defaults to the
-	 * bot-wide default (English); the Player factory sets it per guild.
+	 * Renders this guild's playback-failure notices in the guild's locale.
+	 * Defaults to none (no user-facing notice); the composition root injects
+	 * it per guild so the voice layer holds no localization logic.
 	 */
-	locale?: Locale;
+	notices?: PlayerNoticeFormatter;
 }
 
 async function defaultProbeStream(url: string): Promise<boolean> {
@@ -65,7 +73,7 @@ export class Player {
 	private readonly probeStream: (url: string) => Promise<boolean>;
 	private readonly gracePeriodMs: number;
 	private readonly onSessionEnd?: (guildId: string) => void;
-	private locale: Locale;
+	private notices?: PlayerNoticeFormatter;
 	private readonly noticeListeners = new Set<(message: string) => void>();
 	private noticeChannelRef: TextBasedChannel | undefined;
 	private channel: VoiceChannel | undefined;
@@ -79,7 +87,7 @@ export class Player {
 		this.probeStream = options.probeStream ?? defaultProbeStream;
 		this.gracePeriodMs = options.gracePeriodMs ?? 60_000;
 		this.onSessionEnd = options.onSessionEnd;
-		this.locale = options.locale ?? DEFAULT_LOCALE;
+		this.notices = options.notices;
 
 		port.on("error", (error) => {
 			logger.error(error, "Voice error in guild %s", this.guildId);
@@ -133,14 +141,13 @@ export class Player {
 	}
 
 	/**
-	 * Swaps the guild's UI locale — called only when the guild changes its
-	 * language. No-op when the locale is unchanged. The translator is derived
-	 * from `locale` on each use, so notices render in the new language without
-	 * rebuilding anything.
+	 * Swaps the Player's notice renderer — called when the guild changes its
+	 * UI language. Localization ownership stays with the injected formatter,
+	 * so a locale change is expressed as exchanging it rather than teaching
+	 * the Player about locales.
 	 */
-	setLocale(locale: Locale) {
-		if (locale === this.locale) return;
-		this.locale = locale;
+	setNotices(notices: PlayerNoticeFormatter) {
+		this.notices = notices;
 	}
 
 	/**
@@ -289,12 +296,7 @@ export class Player {
 		const reachable = await this.probeStream(current.url);
 
 		if (!reachable) {
-			const { t } = localizable(this.locale);
-			this.emitNotice(
-				t("notice.unreachable", {
-					label: recitationLabel(current, this.locale),
-				}),
-			);
+			this.emitNotice(this.notices?.render("unreachable", current));
 			this.queue.skip();
 			return this.startCurrent();
 		}
@@ -322,12 +324,7 @@ export class Player {
 			return;
 		}
 
-		const { t } = localizable(this.locale);
-		this.emitNotice(
-			t("notice.playbackFailed", {
-				label: recitationLabel(active.item, this.locale),
-			}),
-		);
+		this.emitNotice(this.notices?.render("playbackFailed", active.item));
 
 		void this.advance();
 	}
@@ -344,7 +341,15 @@ export class Player {
 		void this.advance();
 	}
 
-	private emitNotice(message: string) {
+	private emitNotice(message?: string) {
+		if (!message) {
+			logger.warn(
+				"No notice formatter injected — playback failure in guild %s produced no user-facing notice",
+				this.guildId,
+			);
+			return;
+		}
+
 		logger.info("Notice in guild %s: %s", this.guildId, message);
 
 		for (const listener of this.noticeListeners) listener(message);

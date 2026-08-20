@@ -11,6 +11,11 @@ import type {
 	ComponentContext,
 } from "../core/interactionContext";
 import { createLogger } from "../core/logger";
+import {
+	DEFAULT_LOCALE,
+	localizable,
+	type Localizable,
+} from "../i18n/locale";
 
 const logger = createLogger("interactionCreate");
 
@@ -33,6 +38,13 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 			guildConfigs: bot.guildConfigs,
 		};
 
+		// The guild's UI locale for every reactive reply in this dispatch.
+		const t = localizable(
+			interaction.guildId
+				? bot.guildConfigs.language(interaction.guildId)
+				: DEFAULT_LOCALE,
+		);
+
 		if (interaction.isAutocomplete()) {
 			const command = bot.commands.get(interaction.commandName);
 
@@ -43,6 +55,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				`autocomplete for ${interaction.commandName}`,
 				interaction,
 				() => command.autocomplete?.(commandContext, interaction),
+				t,
 			);
 
 			return;
@@ -61,6 +74,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				`component ${interaction.customId}`,
 				interaction,
 				() => component.execute(componentContext, interaction),
+				t,
 			);
 
 			return;
@@ -77,6 +91,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				`command ${interaction.commandName}`,
 				interaction,
 				() => command.execute(commandContext, interaction),
+				t,
 			);
 		}
 	},
@@ -95,6 +110,7 @@ async function dispatchWithErrorPolicy(
 		| MessageComponentInteraction
 		| CommandInteraction,
 	execute: () => unknown,
+	t: Localizable,
 ) {
 	try {
 		await execute();
@@ -106,6 +122,7 @@ async function dispatchWithErrorPolicy(
 			"replied" in interaction
 				? interaction.replied || interaction.deferred
 				: false,
+			t,
 		);
 
 		if (decision.action === "log") return;
@@ -131,13 +148,14 @@ type InteractionFailureKind = "autocomplete" | "messageComponent" | "chatInput";
 export function decideFailureResponse(
 	kind: InteractionFailureKind,
 	responsive: boolean,
+	t: Localizable,
 ) {
 	if (kind === "autocomplete") return { action: "log" };
 
 	const content =
 		kind === "messageComponent"
-			? "There was an error while handling that component!"
-			: "There was an error while executing this command!";
+			? t.t("error.componentGeneric")
+			: t.t("error.commandGeneric");
 
 	return responsive
 		? { action: "followUp", content }

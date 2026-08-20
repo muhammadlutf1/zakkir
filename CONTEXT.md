@@ -99,3 +99,17 @@ _Avoid_: command logic
 **Notice channel**:
 The text channel where a guild's Player posts user-facing notices (e.g. a failed Recitation). Set to the channel of the guild's most recent `/play`.
 _Avoid_: notification channel
+
+## Localization
+
+**Locale**:
+The language a guild's UI renders in, resolved from the guild's saved `language` via `GuildConfig.language` with English as the bot-wide default. A `Localizable` translator bound to the locale resolves every user-facing message through the catalog.
+_Avoid_: language, lang, translation
+
+**Message key**:
+The identifier in the message catalog (e.g. `notice.unreachable`) that maps to the string a user-facing site renders. The English catalog defines the full set of keys; every other locale covers the same set, enforced by `as const satisfies MessageCatalog`.
+_Avoid_: string id, translation key, text key
+
+**Config command**:
+The slash command that persists a guild's preferences through the guild-config layer, including its UI language — the `/preferences` command (`language`, `default-reciter`, `default-rewayah` subcommands). A language change applies to the live Player by swapping its injected notice formatter rather than teaching the Player about locales.
+_Avoid_: settings command, preferences command, guild settings

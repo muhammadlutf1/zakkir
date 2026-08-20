@@ -1,7 +1,8 @@
 import { surahName } from "../catalog/suwar";
 import { DEFAULT_LOCALE, localizable, type Locale } from "../i18n/locale";
+import { recitationLabel } from "../i18n/recitationLabel";
 import type { PlayResult } from "../voice/Player";
-import { type Recitation, recitationLabel } from "../voice/Recitation";
+import type { Recitation } from "../voice/Recitation";
 
 /**
  * The single user-facing wording for the outcome of playing a Recitation,

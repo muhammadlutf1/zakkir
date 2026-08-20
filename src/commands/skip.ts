@@ -1,6 +1,6 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../core/Command";
-import { recitationLabel } from "../voice/Recitation";
+import { recitationLabel } from "../i18n/recitationLabel";
 
 const skipCommand: Command = {
 	data: new SlashCommandBuilder()
