@@ -5,7 +5,7 @@ import preferencesCommand from "../../src/commands/preferences";
 import type { CommandContext } from "../../src/core/interactionContext";
 import { GuildConfig } from "../../src/guild/GuildConfig";
 import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
-import { en } from "../../src/i18n/messages";
+import { ar, en } from "../../src/i18n/messages";
 import { localizable, t } from "../../src/i18n/locale";
 
 const rewayah = (id: number, name: string): Rewayah => ({
@@ -59,7 +59,7 @@ interface MockInteraction {
 	inCachedGuild: () => boolean;
 	guildId: string;
 	options: {
-		getSubcommand: () => string;
+		getSubcommand: () => string | null;
 		getString: (key: string) => string | undefined;
 	};
 	reply: (payload: string) => Promise<void>;
@@ -89,6 +89,51 @@ async function capture(): Promise<{
 }
 
 describe("preferences command", () => {
+	it("shows the current preferences when invoked with no subcommand", async () => {
+		const context = makeContext();
+		const { replies, interaction } = await capture();
+		interaction.options.getSubcommand = () => null;
+
+		await run(context, interaction);
+
+		assert.equal(
+			replies[0],
+			[
+				en["preferences.current"],
+				t(en["preferences.showLanguage"], { lang: en["language.name.en"] }),
+				t(en["preferences.showReciter"], { reciter: en["preferences.unset"] }),
+				t(en["preferences.showRewayah"], { rewayah: en["preferences.unset"] }),
+			].join("\n"),
+		);
+	});
+
+	it("shows the saved defaults in the summary when set", async () => {
+		const context = makeContext();
+		context.guildConfigs.set("g-1", {
+			language: "ar",
+			defaultReciter: 10,
+			defaultRewayah: 100,
+		});
+		// The summary resolves names in the guild's (now Arabic) locale.
+		context.locale = "ar";
+		context.translator = localizable("ar");
+
+		const { replies, interaction } = await capture();
+		interaction.options.getSubcommand = () => null;
+
+		await run(context, interaction);
+
+		assert.equal(
+			replies[0],
+			[
+				ar["preferences.current"],
+				t(ar["preferences.showLanguage"], { lang: ar["language.name.ar"] }),
+				t(ar["preferences.showReciter"], { reciter: "أكرم العلاقمي" }),
+				t(ar["preferences.showRewayah"], { rewayah: "حفص عن عاصم - مرتل" }),
+			].join("\n"),
+		);
+	});
+
 	it("persists the UI language and confirms publicly in the guild's locale", async () => {
 		const context = makeContext();
 		const { replies, interaction } = await capture();

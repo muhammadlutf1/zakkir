@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from "discord.js";
+import { DEFAULT_LOCALE } from "../config";
 import type { Command } from "../core/Command";
 import { LOCALES, type Locale, type Localizable } from "../i18n/locale";
 import type { MessageKey } from "../i18n/messages";
@@ -101,8 +102,46 @@ const preferencesCommand: Command = {
 	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;
 
-		const subcommand = interaction.options.getSubcommand();
+		const subcommand = interaction.options.getSubcommand(false);
 		const { translator, guildConfigs } = context;
+
+		// Invoked with no subcommand — show the guild's current preferences.
+		// Values read straight from the config layer; reciter/rewayah names are
+		// resolved through the localized Catalog so they render in the locale.
+		if (subcommand === null) {
+			const data = guildConfigs.get(interaction.guildId);
+			const language = data?.language ?? DEFAULT_LOCALE;
+			const reciter =
+				data?.defaultReciter !== undefined
+					? await context.catalog.resolveReciterById(
+							data.defaultReciter,
+							context.locale,
+						)
+					: undefined;
+			const rewayah =
+				data?.defaultRewayah !== undefined
+					? await context.catalog.resolveRewayahById(
+							data.defaultRewayah,
+							context.locale,
+						)
+					: undefined;
+
+			await interaction.reply(
+				[
+					translator.t("preferences.current"),
+					translator.t("preferences.showLanguage", {
+						lang: languageName(translator, language),
+					}),
+					translator.t("preferences.showReciter", {
+						reciter: reciter?.name ?? translator.t("preferences.unset"),
+					}),
+					translator.t("preferences.showRewayah", {
+						rewayah: rewayah?.name ?? translator.t("preferences.unset"),
+					}),
+				].join("\n"),
+			);
+			return;
+		}
 
 		if (subcommand === "language") {
 			const locale = interaction.options.getString("locale", true) as Locale;

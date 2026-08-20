@@ -63,6 +63,12 @@ export const ar = {
 		"<:error:1385171040098979961> تعذّر العثور على {what}.",
 	"preferences.reciter": "القارئ",
 	"preferences.rewayah": "الرواية",
+	// `/preferences` summary shown when no subcommand is selected
+	"preferences.current": "🎛️ **التفضيلات الحالية للخادم**",
+	"preferences.showLanguage": "اللغة: **{lang}**",
+	"preferences.showReciter": "القارئ الافتراضي: **{reciter}**",
+	"preferences.showRewayah": "الرواية الافتراضية: **{rewayah}**",
+	"preferences.unset": "غير محدد",
 	"language.name.en": "الإنجليزية",
 	"language.name.ar": "العربية",
 	// Generic interaction error fallbacks

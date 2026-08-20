@@ -62,6 +62,12 @@ export const en = {
 		"<:error:1385171040098979961> That {what} couldn't be found.",
 	"preferences.reciter": "reciter",
 	"preferences.rewayah": "rewayah",
+	// `/preferences` summary shown when no subcommand is selected
+	"preferences.current": "🎛️ **Current server preferences**",
+	"preferences.showLanguage": "Language: **{lang}**",
+	"preferences.showReciter": "Default reciter: **{reciter}**",
+	"preferences.showRewayah": "Default rewayah: **{rewayah}**",
+	"preferences.unset": "not set",
 	"language.name.en": "English",
 	"language.name.ar": "العربية",
 	// Generic interaction error fallbacks
