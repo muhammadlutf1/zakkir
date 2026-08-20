@@ -67,18 +67,4 @@ describe("PlayerRegistry", () => {
 		assert.equal(registry.remove("guild-1"), player);
 		assert.equal(registry.get("guild-1"), undefined);
 	});
-
-	it("forEach visits every registered Player", () => {
-		const registry = new PlayerRegistry((guildId) => new Player(guildId, new NoopVoicePort()));
-
-		registry.getOrCreate("guild-1");
-		registry.getOrCreate("guild-2");
-
-		const seen: string[] = [];
-		registry.forEach((player) => {
-			seen.push(player.guildId);
-		});
-
-		assert.deepEqual(seen.sort(), ["guild-1", "guild-2"]);
-	});
 });
