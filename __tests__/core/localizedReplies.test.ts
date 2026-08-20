@@ -12,7 +12,7 @@ function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 		guildConfigs: {} as CommandContext["guildConfigs"],
 		play: {} as CommandContext["play"],
 		locale: "en",
-		t: localizable("en"),
+		translator: localizable("en"),
 		...overrides,
 	};
 }
@@ -37,7 +37,7 @@ async function runClear(
 	return captured[0];
 }
 
-describe("command replies are localized through context.t", () => {
+describe("command replies are localized through context.translator", () => {
 	it("clear reports the cleared state in the guild's locale", async () => {
 		const shared = {
 			players: {
@@ -46,7 +46,7 @@ describe("command replies are localized through context.t", () => {
 		};
 
 		const enReply = await runClear(makeContext(shared));
-		const arReply = await runClear(makeContext({ ...shared, locale: "ar", t: localizable("ar") }));
+		const arReply = await runClear(makeContext({ ...shared, locale: "ar", translator: localizable("ar") }));
 
 		assert.equal(enReply, en["command.queueCleared"]);
 		assert.equal(arReply, ar["command.queueCleared"]);

@@ -24,7 +24,7 @@ export interface CommandContext {
 	/** The guild's UI locale for this dispatch. */
 	locale: Locale;
 	/** The locale-bound message key resolver for every reply in this dispatch. */
-	t: Localizable;
+	translator: Localizable;
 }
 
 /** Collaborators a message-component handler may touch. */
@@ -35,5 +35,5 @@ export interface ComponentContext {
 	/** The guild's UI locale for this dispatch. */
 	locale: Locale;
 	/** The locale-bound message key resolver for every reply in this dispatch. */
-	t: Localizable;
+	translator: Localizable;
 }

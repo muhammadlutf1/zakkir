@@ -20,7 +20,7 @@ const removeCommand: Command = {
 
 		if (!player) {
 			await interaction.reply({
-				content: context.t.t("command.notInVoice"),
+				content: context.translator.t("command.notInVoice"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -31,7 +31,7 @@ const removeCommand: Command = {
 
 		if (position > upcoming.length) {
 			await interaction.reply({
-				content: context.t.t("command.onlyQueued", {
+				content: context.translator.t("command.onlyQueued", {
 					count: upcoming.length,
 					s: upcoming.length === 1 ? "" : "s",
 				}),
@@ -45,7 +45,7 @@ const removeCommand: Command = {
 		player.remove(position + 1);
 
 		await interaction.reply(
-			context.t.t("command.removed", { position: String(position) }),
+			context.translator.t("command.removed", { position: String(position) }),
 		);
 	},
 };

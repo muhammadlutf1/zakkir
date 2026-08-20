@@ -26,7 +26,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 		const locale = interaction.guildId
 			? bot.guildConfigs.language(interaction.guildId)
 			: DEFAULT_LOCALE;
-		const t = localizable(locale);
+		const translator = localizable(locale);
 
 		const commandContext: CommandContext = {
 			players: bot.players,
@@ -37,7 +37,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				pickerTimeoutMs: config.rewayahPicker.timeoutMs,
 			},
 			locale,
-			t,
+			translator,
 		};
 
 		const componentContext: ComponentContext = {
@@ -45,7 +45,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 			catalog: bot.catalog,
 			guildConfigs: bot.guildConfigs,
 			locale,
-			t,
+			translator,
 		};
 
 		if (interaction.isAutocomplete()) {
@@ -58,7 +58,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				`autocomplete for ${interaction.commandName}`,
 				interaction,
 				() => command.autocomplete?.(commandContext, interaction),
-				t,
+				translator,
 			);
 
 			return;
@@ -77,7 +77,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				`component ${interaction.customId}`,
 				interaction,
 				() => component.execute(componentContext, interaction),
-				t,
+				translator,
 			);
 
 			return;
@@ -94,7 +94,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				`command ${interaction.commandName}`,
 				interaction,
 				() => command.execute(commandContext, interaction),
-				t,
+				translator,
 			);
 		}
 	},
@@ -113,7 +113,7 @@ async function dispatchWithErrorPolicy(
 		| MessageComponentInteraction
 		| CommandInteraction,
 	execute: () => unknown,
-	t: Localizable,
+	translator: Localizable,
 ) {
 	try {
 		await execute();
@@ -125,7 +125,7 @@ async function dispatchWithErrorPolicy(
 			"replied" in interaction
 				? interaction.replied || interaction.deferred
 				: false,
-			t,
+			translator,
 		);
 
 		if (decision.action === "log") return;
@@ -151,14 +151,14 @@ type InteractionFailureKind = "autocomplete" | "messageComponent" | "chatInput";
 export function decideFailureResponse(
 	kind: InteractionFailureKind,
 	responsive: boolean,
-	t: Localizable,
+	translator: Localizable,
 ) {
 	if (kind === "autocomplete") return { action: "log" };
 
 	const content =
 		kind === "messageComponent"
-			? t.t("error.componentGeneric")
-			: t.t("error.commandGeneric");
+			? translator.t("error.componentGeneric")
+			: translator.t("error.commandGeneric");
 
 	return responsive
 		? { action: "followUp", content }

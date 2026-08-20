@@ -14,7 +14,7 @@ const skipCommand: Command = {
 
 		if (!player) {
 			await interaction.reply({
-				content: context.t.t("command.notInVoice"),
+				content: context.translator.t("command.notInVoice"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -25,14 +25,14 @@ const skipCommand: Command = {
 
 		if (!wasPlaying) {
 			await interaction.reply({
-				content: context.t.t("command.nothingToSkip"),
+				content: context.translator.t("command.nothingToSkip"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
 
 		if (!result.started) {
-			await interaction.reply(context.t.t("command.playbackEnded"));
+			await interaction.reply(context.translator.t("command.playbackEnded"));
 			return;
 		}
 
@@ -40,10 +40,10 @@ const skipCommand: Command = {
 
 		await interaction.reply(
 			current
-				? context.t.t("command.nowPlaying", {
+				? context.translator.t("command.nowPlaying", {
 						label: recitationLabel(current, context.locale),
 					})
-				: context.t.t("command.skipped"),
+				: context.translator.t("command.skipped"),
 		);
 	},
 };

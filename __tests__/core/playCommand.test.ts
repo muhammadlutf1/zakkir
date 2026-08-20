@@ -106,7 +106,7 @@ describe("play command with a fabricated context", () => {
 			guildConfigs: new GuildConfig(new SqliteGuildConfigStore(":memory:")),
 			play: { defaults: NO_DEFAULTS, pickerTimeoutMs: 100 },
 			locale: "en",
-			t: localizable("en"),
+			translator: localizable("en"),
 		};
 
 		const interaction = {

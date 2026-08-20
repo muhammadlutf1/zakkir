@@ -53,7 +53,7 @@ const playCommand: Command = {
 
 		if (!channel || channel.type === ChannelType.GuildStageVoice) {
 			await interaction.reply({
-				content: context.t.t("command.needVoice"),
+				content: context.translator.t("command.needVoice"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -68,7 +68,7 @@ const playCommand: Command = {
 
 		if (!surah) {
 			await interaction.editReply({
-				content: context.t.t("command.playNotFound", {
+				content: context.translator.t("command.playNotFound", {
 					input: surahInput,
 				}),
 			});

@@ -3,15 +3,15 @@ import { describe, it } from "node:test";
 import { decideFailureResponse } from "../../src/events/interactionCreate";
 import { localizable } from "../../src/i18n/locale";
 
-const t = localizable("en");
+const translator = localizable("en");
 
 describe("decideFailureResponse", () => {
 	describe("autocomplete", () => {
 		it("logs with no response whether or not it is responsive", () => {
-			assert.deepEqual(decideFailureResponse("autocomplete", false, t), {
+			assert.deepEqual(decideFailureResponse("autocomplete", false, translator), {
 				action: "log",
 			});
-			assert.deepEqual(decideFailureResponse("autocomplete", true, t), {
+			assert.deepEqual(decideFailureResponse("autocomplete", true, translator), {
 				action: "log",
 			});
 		});
@@ -19,32 +19,32 @@ describe("decideFailureResponse", () => {
 
 	describe("messageComponent", () => {
 		it("replies when nothing was responded to yet", () => {
-			assert.deepEqual(decideFailureResponse("messageComponent", false, t), {
+			assert.deepEqual(decideFailureResponse("messageComponent", false, translator), {
 				action: "reply",
-				content: t.t("error.componentGeneric"),
+				content: translator.t("error.componentGeneric"),
 			});
 		});
 
 		it("follows up when already responded to", () => {
-			assert.deepEqual(decideFailureResponse("messageComponent", true, t), {
+			assert.deepEqual(decideFailureResponse("messageComponent", true, translator), {
 				action: "followUp",
-				content: t.t("error.componentGeneric"),
+				content: translator.t("error.componentGeneric"),
 			});
 		});
 	});
 
 	describe("chatInput", () => {
 		it("replies when nothing was responded to yet", () => {
-			assert.deepEqual(decideFailureResponse("chatInput", false, t), {
+			assert.deepEqual(decideFailureResponse("chatInput", false, translator), {
 				action: "reply",
-				content: t.t("error.commandGeneric"),
+				content: translator.t("error.commandGeneric"),
 			});
 		});
 
 		it("follows up when already responded to", () => {
-			assert.deepEqual(decideFailureResponse("chatInput", true, t), {
+			assert.deepEqual(decideFailureResponse("chatInput", true, translator), {
 				action: "followUp",
-				content: t.t("error.commandGeneric"),
+				content: translator.t("error.commandGeneric"),
 			});
 		});
 	});

@@ -13,7 +13,7 @@ const joinCommand: Command = {
 
 		if (!channel || channel.type === ChannelType.GuildStageVoice) {
 			await interaction.reply({
-				content: context.t.t("command.needVoice"),
+				content: context.translator.t("command.needVoice"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -24,7 +24,7 @@ const joinCommand: Command = {
 		await player.join(channel);
 
 		await interaction.reply(
-			context.t.t("command.joined", { channel: channel.name }),
+			context.translator.t("command.joined", { channel: channel.name }),
 		);
 	},
 };

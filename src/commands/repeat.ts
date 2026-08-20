@@ -29,7 +29,7 @@ const repeatCommand: Command = {
 
 		if (!player) {
 			await interaction.reply({
-				content: context.t.t("command.notInVoice"),
+				content: context.translator.t("command.notInVoice"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -40,7 +40,7 @@ const repeatCommand: Command = {
 		player.setRepeatMode(mode);
 
 		await interaction.reply(
-			context.t.t("command.repeatSet", { mode: String(mode) }),
+			context.translator.t("command.repeatSet", { mode: String(mode) }),
 		);
 	},
 };

@@ -12,13 +12,13 @@ const clearCommand: Command = {
 		const player = context.players.get(interaction.guildId);
 
 		if (!player) {
-			await interaction.reply(context.t.t("command.notInVoice"));
+			await interaction.reply(context.translator.t("command.notInVoice"));
 			return;
 		}
 
 		player.clearQueue();
 
-		await interaction.reply(context.t.t("command.queueCleared"));
+		await interaction.reply(context.translator.t("command.queueCleared"));
 	},
 };
 

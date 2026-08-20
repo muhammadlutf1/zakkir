@@ -29,7 +29,7 @@ const component: Component = {
 
 		if (!player?.isConnected) {
 			await interaction.editReply({
-				content: context.t.t("command.notConnected"),
+				content: context.translator.t("command.notConnected"),
 				components: [],
 			});
 			return;
@@ -49,7 +49,7 @@ const component: Component = {
 
 		if (!recitation) {
 			await interaction.editReply({
-				content: context.t.t("command.resolveFailed"),
+				content: context.translator.t("command.resolveFailed"),
 				components: [],
 			});
 			return;
