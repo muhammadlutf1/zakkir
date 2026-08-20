@@ -59,7 +59,7 @@ interface MockInteraction {
 	inCachedGuild: () => boolean;
 	guildId: string;
 	options: {
-		getSubcommand: () => string | null;
+		getSubcommand: () => string;
 		getString: (key: string) => string | undefined;
 	};
 	reply: (payload: string) => Promise<void>;
@@ -89,10 +89,10 @@ async function capture(): Promise<{
 }
 
 describe("preferences command", () => {
-	it("shows the current preferences when invoked with no subcommand", async () => {
+	it("lists the current preferences with nothing saved yet", async () => {
 		const context = makeContext();
 		const { replies, interaction } = await capture();
-		interaction.options.getSubcommand = () => null;
+		interaction.options.getSubcommand = () => "list";
 
 		await run(context, interaction);
 
@@ -107,7 +107,7 @@ describe("preferences command", () => {
 		);
 	});
 
-	it("shows the saved defaults in the summary when set", async () => {
+	it("lists the saved defaults in the current locale when set", async () => {
 		const context = makeContext();
 		context.guildConfigs.set("g-1", {
 			language: "ar",
@@ -119,7 +119,7 @@ describe("preferences command", () => {
 		context.translator = localizable("ar");
 
 		const { replies, interaction } = await capture();
-		interaction.options.getSubcommand = () => null;
+		interaction.options.getSubcommand = () => "list";
 
 		await run(context, interaction);
 

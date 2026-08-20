@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from "discord.js";
+import type { Reciter, Rewayah } from "../catalog/Catalog";
 import { DEFAULT_LOCALE } from "../config";
 import type { Command } from "../core/Command";
 import { LOCALES, type Locale, type Localizable } from "../i18n/locale";
@@ -34,6 +35,11 @@ const preferencesCommand: Command = {
 	data: new SlashCommandBuilder()
 		.setName("preferences")
 		.setDescription("View or change this server's playback preferences")
+		.addSubcommand((subcommand) =>
+			subcommand
+				.setName("list")
+				.setDescription("Show the server's current preferences"),
+		)
 		.addSubcommand((subcommand) =>
 			subcommand
 				.setName("language")
@@ -102,29 +108,25 @@ const preferencesCommand: Command = {
 	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;
 
-		const subcommand = interaction.options.getSubcommand(false);
+		const subcommand = interaction.options.getSubcommand();
 		const { translator, guildConfigs } = context;
 
-		// Invoked with no subcommand — show the guild's current preferences.
-		// Values read straight from the config layer; reciter/rewayah names are
-		// resolved through the localized Catalog so they render in the locale.
-		if (subcommand === null) {
+		// `list` — the short, falsy-guarded resolve: a default reciter/rewayah
+		// exists or not, and no reciter/rewayah id is ever 0, so the guarded
+		// `&&` short-circuits cleanly when unset.
+		if (subcommand === "list") {
 			const data = guildConfigs.get(interaction.guildId);
 			const language = data?.language ?? DEFAULT_LOCALE;
-			const reciter =
-				data?.defaultReciter !== undefined
-					? await context.catalog.resolveReciterById(
-							data.defaultReciter,
-							context.locale,
-						)
-					: undefined;
-			const rewayah =
-				data?.defaultRewayah !== undefined
-					? await context.catalog.resolveRewayahById(
-							data.defaultRewayah,
-							context.locale,
-						)
-					: undefined;
+			const reciter = (data?.defaultReciter &&
+				(await context.catalog.resolveReciterById(
+					data.defaultReciter,
+					context.locale,
+				))) as Reciter | undefined;
+			const rewayah = (data?.defaultRewayah &&
+				(await context.catalog.resolveRewayahById(
+					data.defaultRewayah,
+					context.locale,
+				))) as Rewayah | undefined;
 
 			await interaction.reply(
 				[
