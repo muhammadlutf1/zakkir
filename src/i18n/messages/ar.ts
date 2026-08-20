@@ -51,6 +51,26 @@ export const ar = {
 	"command.removed": "تمت إزالة التلاوة من الموضع {position}.",
 	"command.repeatSet":
 		"**<:repeat:1384278335114449060> تم ضبط وضع التكرار على {mode}.**",
+	// Repeat-mode names fed into `command.repeatSet`
+	"repeat.mode.off": "إيقاف",
+	"repeat.mode.track": "تكرار التلاوة",
+	"repeat.mode.all": "تكرار القائمة",
+	// `/preferences` confirmations and notices
+	"preferences.languageSet": "🌐 تم ضبط لغة واجهة الخادم على **{lang}**.",
+	"preferences.reciterSet": "🎙️ تم ضبط القارئ الافتراضي على **{reciter}**.",
+	"preferences.rewayahSet": "📖 تم ضبط الرواية الافتراضية على **{rewayah}**.",
+	"preferences.notFound":
+		"<:error:1385171040098979961> تعذّر العثور على {what}.",
+	"preferences.reciter": "القارئ",
+	"preferences.rewayah": "الرواية",
+	// `/preferences` summary shown when no subcommand is selected
+	"preferences.current": "🎛️ **التفضيلات الحالية للخادم**",
+	"preferences.showLanguage": "اللغة: **{lang}**",
+	"preferences.showReciter": "القارئ الافتراضي: **{reciter}**",
+	"preferences.showRewayah": "الرواية الافتراضية: **{rewayah}**",
+	"preferences.unset": "غير محدد",
+	"language.name.en": "الإنجليزية",
+	"language.name.ar": "العربية",
 	// Generic interaction error fallbacks
 	"error.componentGeneric": "حدث خطأ أثناء معالجة هذا المكوّن!",
 	"error.commandGeneric": "حدث خطأ أثناء تنفيذ هذا الأمر!",

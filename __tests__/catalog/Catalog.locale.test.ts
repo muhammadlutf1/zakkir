@@ -57,4 +57,20 @@ describe("Catalog locale threading", () => {
 		assert.equal(reciter?.id, 1);
 		assert.match(urls[0]!, /language=en$/);
 	});
+
+	it("resolves a rewayah by id across reciters, in the locale", async () => {
+		const reciter = {
+			id: 1,
+			name: "إبراهيم الأخضر",
+			moshaf: [{ id: 7, name: "حفص عن عاصم - مرتل", server: "s", surah_total: 1, surah_list: "1" }],
+		};
+		const { urls } = stubApi([reciter]);
+		const catalog = new Catalog();
+
+		const rewayah = await catalog.resolveRewayahById(7, "ar");
+
+		assert.equal(rewayah?.id, 7);
+		assert.equal(rewayah?.name, "حفص عن عاصم - مرتل");
+		assert.match(urls[0]!, /language=ar$/);
+	});
 });

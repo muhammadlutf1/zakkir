@@ -21,15 +21,31 @@ const playCommand: Command = {
 		.addStringOption((option) =>
 			option
 				.setName("reciter")
-				.setDescription("Reciter name (defaults to the server default)"),
+				.setDescription("Reciter name (defaults to the server default)")
+				.setAutocomplete(true),
 		),
 
 	async autocomplete(context, interaction) {
-		const query = interaction.options
-			.getFocused()
-			.toString()
-			.trim()
-			.toLowerCase();
+		const focused = interaction.options.getFocused(true);
+		const query = focused.value.trim().toLowerCase();
+
+		// Reciters come from the localized Catalog; the value carries the
+		// localized name so `/play`'s name-based resolution picks it up.
+		if (focused.name === "reciter") {
+			const reciters = await context.catalog.fetchReciters(context.locale);
+			const matches = reciters
+				.filter((reciter) => reciter.name.toLowerCase().includes(query))
+				.slice(0, 25);
+
+			await interaction.respond(
+				matches.map((reciter) => ({
+					name: reciter.name,
+					value: reciter.name,
+				})),
+			);
+			return;
+		}
+
 		const matches = context.catalog.surahList
 			.filter(
 				(surah) =>
