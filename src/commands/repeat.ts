@@ -1,5 +1,6 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../core/Command";
+import { repeatModeLabel } from "../i18n/repeatModeLabel";
 import { RepeatMode } from "../voice/Queue";
 
 const REPEAT_CHOICES = [
@@ -40,7 +41,9 @@ const repeatCommand: Command = {
 		player.setRepeatMode(mode);
 
 		await interaction.reply(
-			context.translator.t("command.repeatSet", { mode: String(mode) }),
+			context.translator.t("command.repeatSet", {
+				mode: repeatModeLabel(context.translator, mode),
+			}),
 		);
 	},
 };

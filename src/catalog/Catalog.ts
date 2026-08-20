@@ -98,6 +98,21 @@ export class Catalog {
 	}
 
 	/**
+	 * Resolves a rewayah by its id across every reciter, returning the first
+	 * match — used by `/preferences` to confirm a saved default rewayah name.
+	 */
+	async resolveRewayahById(rewayahId: number, locale?: Locale) {
+		const reciters = await this.fetchReciters(locale);
+
+		for (const reciter of reciters) {
+			const rewayah = reciter.rewayat.find((r) => r.id === rewayahId);
+			if (rewayah) return rewayah;
+		}
+
+		return undefined;
+	}
+
+	/**
 	 * get the different rewayat of a reciter that list a specific surah
 	 */
 	async resolveRewayat(reciterId: number, surahNumber: number, locale?: Locale) {

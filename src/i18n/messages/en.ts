@@ -50,6 +50,20 @@ export const en = {
 	"command.removed": "Removed queued recitation at position {position}.",
 	"command.repeatSet":
 		"**<:repeat:1384278335114449060> Loop mode set to {mode}.**",
+	// Repeat-mode names fed into `command.repeatSet`
+	"repeat.mode.off": "Off",
+	"repeat.mode.track": "Repeat Track",
+	"repeat.mode.all": "Repeat All",
+	// `/preferences` confirmations and notices
+	"preferences.languageSet": "🌐 Server UI language set to **{lang}**.",
+	"preferences.reciterSet": "🎙️ Default reciter set to **{reciter}**.",
+	"preferences.rewayahSet": "📖 Default rewayah set to **{rewayah}**.",
+	"preferences.notFound":
+		"<:error:1385171040098979961> That {what} couldn't be found.",
+	"preferences.reciter": "reciter",
+	"preferences.rewayah": "rewayah",
+	"language.name.en": "English",
+	"language.name.ar": "العربية",
 	// Generic interaction error fallbacks
 	"error.componentGeneric": "There was an error while handling that component!",
 	"error.commandGeneric": "There was an error while executing this command!",
