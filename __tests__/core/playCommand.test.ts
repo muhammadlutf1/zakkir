@@ -34,6 +34,10 @@ const FIXTURES: Reciter[] = [
 ];
 
 class FakeCatalog {
+	fetchReciters() {
+		return FIXTURES;
+	}
+
 	async resolveReciterByName(name: string) {
 		return FIXTURES.find((r) => r.name === name);
 	}
@@ -138,6 +142,37 @@ describe("play command with a fabricated context", () => {
 			"join:voice-1",
 			"setNoticeChannel",
 			"play",
+		]);
+	});
+});
+
+describe("play command autocomplete", () => {
+	it("offers localized reciters whose value is the localized name", async () => {
+		const context: CommandContext = {
+			players: {} as CommandContext["players"],
+			catalog: new FakeCatalog() as unknown as Catalog,
+			guildConfigs: new GuildConfig(new SqliteGuildConfigStore(":memory:")),
+			play: { defaults: NO_DEFAULTS, pickerTimeoutMs: 100 },
+			locale: "en",
+			translator: localizable("en"),
+		};
+
+		const responses: Array<{ name: string; value: string }> = [];
+
+		await playCommand.autocomplete?.(
+			context,
+			{
+				options: {
+					getFocused: () => ({ name: "reciter", value: "أكرم" }),
+				},
+				respond: async (payload: Array<{ name: string; value: string }>) => {
+					responses.push(...payload);
+				},
+			} as never,
+		);
+
+		assert.deepEqual(responses, [
+			{ name: "أكرم العلاقمي", value: "أكرم العلاقمي" },
 		]);
 	});
 });

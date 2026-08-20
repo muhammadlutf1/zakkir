@@ -107,7 +107,7 @@ describe("preferences command", () => {
 	it("persists the default reciter and confirms with its localized name", async () => {
 		const context = makeContext();
 		const { replies, interaction } = await capture();
-		interaction.options.getSubcommand = () => "default-reciter";
+		interaction.options.getSubcommand = () => "reciter";
 		interaction.options.getString = (key) =>
 			key === "reciter" ? "10" : undefined;
 
@@ -123,7 +123,7 @@ describe("preferences command", () => {
 	it("persists the default rewayah and confirms with its localized name", async () => {
 		const context = makeContext();
 		const { replies, interaction } = await capture();
-		interaction.options.getSubcommand = () => "default-rewayah";
+		interaction.options.getSubcommand = () => "rewayah";
 		interaction.options.getString = (key) =>
 			key === "rewayah" ? "100" : undefined;
 
@@ -139,7 +139,7 @@ describe("preferences command", () => {
 	it("rejects an unknown reciter with a localized notice", async () => {
 		const context = makeContext();
 		const { replies, interaction } = await capture();
-		interaction.options.getSubcommand = () => "default-reciter";
+		interaction.options.getSubcommand = () => "reciter";
 		interaction.options.getString = (key) =>
 			key === "reciter" ? "999" : undefined;
 

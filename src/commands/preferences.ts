@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import type { Command } from "../core/Command";
-import { type Localizable, LOCALES, type Locale } from "../i18n/locale";
+import { LOCALES, type Locale, type Localizable } from "../i18n/locale";
 import type { MessageKey } from "../i18n/messages";
 
 const LANGUAGE_NAME_KEYS: Record<Locale, MessageKey> = {
@@ -26,7 +26,7 @@ function languageName(translator: Localizable, locale: Locale) {
 /**
  * The `/preferences` command — persists the guild's UI language and playback
  * defaults through the guild-config layer. Every reply is public and
- * localized; `default-reciter` and `default-rewayah` autocomplete from the
+ * localized; `reciter` and `rewayah` autocomplete from the
  * localized Catalog.
  */
 const preferencesCommand: Command = {
@@ -52,7 +52,7 @@ const preferencesCommand: Command = {
 		)
 		.addSubcommand((subcommand) =>
 			subcommand
-				.setName("default-reciter")
+				.setName("reciter")
 				.setDescription("Set the server's default reciter")
 				.addStringOption((option) =>
 					option
@@ -64,7 +64,7 @@ const preferencesCommand: Command = {
 		)
 		.addSubcommand((subcommand) =>
 			subcommand
-				.setName("default-rewayah")
+				.setName("rewayah")
 				.setDescription("Set the server's default rewayah")
 				.addStringOption((option) =>
 					option
@@ -117,7 +117,7 @@ const preferencesCommand: Command = {
 			return;
 		}
 
-		if (subcommand === "default-reciter") {
+		if (subcommand === "reciter") {
 			const id = Number(interaction.options.getString("reciter", true));
 			const reciter = await context.catalog.resolveReciterById(
 				id,
@@ -141,9 +141,12 @@ const preferencesCommand: Command = {
 			return;
 		}
 
-		// default-rewayah
+		// rewayah
 		const id = Number(interaction.options.getString("rewayah", true));
-		const rewayah = await context.catalog.resolveRewayahById(id, context.locale);
+		const rewayah = await context.catalog.resolveRewayahById(
+			id,
+			context.locale,
+		);
 
 		if (!rewayah) {
 			await interaction.reply(
