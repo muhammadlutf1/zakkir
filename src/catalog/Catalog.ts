@@ -1,10 +1,12 @@
 import { config } from "../config";
 import { createLogger } from "../core/logger";
-import { resolveSurah, SURAH_LIST, type Surah } from "./surahs";
+import type { Locale } from "../i18n/locale";
+import { resolveSurah, SURAH_LIST, type Surah } from "./suwar";
 
 const logger = createLogger("catalog");
 
-const DEFAULT_LANGUAGE = "ar";
+/** The canonical language for reciter/rewayah names when no locale is given. */
+const DEFAULT_LANGUAGE: Locale = "ar";
 
 export interface Radio {
 	id: number;
@@ -27,7 +29,7 @@ export interface Reciter {
 }
 
 export interface CatalogOptions {
-	language?: string;
+	language?: Locale;
 }
 
 // Raw types mirror the MP3Quran API response, so the "moshaf" naming is kept
@@ -47,20 +49,23 @@ interface RawReciter {
 }
 
 export class Catalog {
-	private readonly language: string;
+	private readonly language: Locale;
 
 	constructor(options: CatalogOptions = {}) {
 		this.language = options.language ?? DEFAULT_LANGUAGE;
 	}
 
-	async fetchRadios() {
-		const data = await this.get<{ radios: Radio[] }>("radios");
+	async fetchRadios(locale?: Locale) {
+		const data = await this.get<{ radios: Radio[] }>("radios", locale);
 
 		return data.radios;
 	}
 
-	async fetchReciters() {
-		const data = await this.get<{ reciters: RawReciter[] }>("reciters");
+	async fetchReciters(locale?: Locale) {
+		const data = await this.get<{ reciters: RawReciter[] }>(
+			"reciters",
+			locale,
+		);
 
 		return data.reciters.map(normalizeReciter);
 	}
@@ -73,20 +78,21 @@ export class Catalog {
 	}
 
 	/**
-	 * Resolves a surah given by number (1-114), numeric string, or name.
+	 * Resolves a surah given by number (1-114), numeric string, or name in any
+	 * known locale.
 	 */
 	resolveSurah(input: string | number): Surah | undefined {
 		return resolveSurah(input);
 	}
 
-	async resolveReciterByName(name: string) {
-		const reciters = await this.fetchReciters();
+	async resolveReciterByName(name: string, locale?: Locale) {
+		const reciters = await this.fetchReciters(locale);
 
 		return reciters.find((r) => r.name === name.trim());
 	}
 
-	async resolveReciterById(reciterId: number) {
-		const reciters = await this.fetchReciters();
+	async resolveReciterById(reciterId: number, locale?: Locale) {
+		const reciters = await this.fetchReciters(locale);
 
 		return reciters.find((r) => r.id === reciterId);
 	}
@@ -94,8 +100,8 @@ export class Catalog {
 	/**
 	 * get the different rewayat of a reciter that list a specific surah
 	 */
-	async resolveRewayat(reciterId: number, surahNumber: number) {
-		const reciters = await this.fetchReciters();
+	async resolveRewayat(reciterId: number, surahNumber: number, locale?: Locale) {
+		const reciters = await this.fetchReciters(locale);
 		const reciter = reciters.find((r) => r.id === reciterId);
 
 		if (!reciter) return [];
@@ -107,8 +113,9 @@ export class Catalog {
 		reciterId: number,
 		rewayahId: number,
 		surahNumber: number,
+		locale?: Locale,
 	) {
-		const reciters = await this.fetchReciters();
+		const reciters = await this.fetchReciters(locale);
 		const reciter = reciters.find((r) => r.id === reciterId);
 		const rewayah = reciter?.rewayat.find(
 			(r) => r.id === rewayahId && r.surahList.has(surahNumber),
@@ -119,14 +126,16 @@ export class Catalog {
 		return buildSurahStreamUrl(rewayah.server, surahNumber);
 	}
 
-	async resolveRadioUrl(radioId: number) {
-		const radios = await this.fetchRadios();
+	async resolveRadioUrl(radioId: number, locale?: Locale) {
+		const radios = await this.fetchRadios(locale);
 
 		return radios.find((radio) => radio.id === radioId)?.url;
 	}
 
-	private async get<T>(endpoint: string) {
-		const url = `${config.mp3Quran.baseUrl}/${endpoint}?language=${this.language}`;
+	private async get<T>(endpoint: string, locale?: Locale) {
+		const url = `${config.mp3Quran.baseUrl}/${endpoint}?language=${
+			locale ?? this.language
+		}`;
 		const response = await fetch(url);
 
 		if (!response.ok) {

@@ -1,12 +1,14 @@
+import type { Locale } from "../i18n/locale";
+
 export interface GuildConfigData {
 	guildId: string;
-	language: string | undefined;
+	language: Locale | undefined;
 	defaultReciter: number | undefined;
 	defaultRewayah: number | undefined;
 }
 
 export interface GlobalDefaults {
-	language: string;
+	language: Locale;
 	defaultReciter: number | undefined;
 	defaultRewayah: number | undefined;
 }

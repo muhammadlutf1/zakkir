@@ -206,12 +206,27 @@ describe("Player", () => {
 			assert.equal(player.isPlaying, false);
 			assert.deepEqual(port.calls, []);
 			assert.deepEqual(messages, [
-				"Couldn't play الكهف by إبراهيم الأخضر (حفص عن عاصم) — the stream is unreachable.",
+				"<:error:1385171040098979961> Couldn't play الكهف by إبراهيم الأخضر (حفص عن عاصم) — the stream is unreachable.",
 			]);
 		});
 
-		it("advances to the next reachable Recitation when the first is unreachable", async () => {
+		it("renders notices in the locale set via setLocale", async () => {
 			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, { probeStream: async () => false });
+			const messages = notices(player);
+
+			await player.play(recitation());
+
+			player.setLocale("ar");
+			await player.play(recitation());
+
+			assert.deepEqual(messages, [
+				"<:error:1385171040098979961> Couldn't play الكهف by إبراهيم الأخضر (حفص عن عاصم) — the stream is unreachable.",
+				"<:error:1385171040098979961> تعذّر تشغيل الكهف بصوت إبراهيم الأخضر (حفص عن عاصم) — البث غير متاح.",
+			]);
+		});
+
+		it("advances to the next reachable Recitation when the first is unreachable", async () => {			const port = new FakeVoicePort();
 			const player = new Player("guild-1", port, {
 				probeStream: async (url) => url.includes("019"),
 			});
@@ -249,7 +264,7 @@ describe("Player", () => {
 				"play:https://example.com/019.mp3",
 			]);
 			assert.deepEqual(messages, [
-				"Playback of الكهف by إبراهيم الأخضر (حفص عن عاصم) failed.",
+				"<:error:1385171040098979961> Playback of الكهف by إبراهيم الأخضر (حفص عن عاصم) failed.",
 			]);
 		});
 
@@ -267,7 +282,7 @@ describe("Player", () => {
 			assert.equal(player.isPlaying, false);
 			assert.deepEqual(port.calls, ["play:https://example.com/018.mp3", "play:https://example.com/018.mp3"]);
 			assert.deepEqual(messages, [
-				"Playback of الكهف by إبراهيم الأخضر (حفص عن عاصم) failed.",
+				"<:error:1385171040098979961> Playback of الكهف by إبراهيم الأخضر (حفص عن عاصم) failed.",
 			]);
 		});
 

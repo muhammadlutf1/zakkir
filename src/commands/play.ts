@@ -73,6 +73,8 @@ const playCommand: Command = {
 			return;
 		}
 
+		const locale = context.guildConfigs.language(interaction.guildId);
+
 		const outcome = await resolvePlay(
 			context.catalog,
 			context.guildConfigs,
@@ -80,6 +82,7 @@ const playCommand: Command = {
 			interaction.guildId,
 			surah,
 			reciterOption,
+			locale,
 		);
 
 		if (outcome.kind === "error") {
@@ -98,7 +101,7 @@ const playCommand: Command = {
 			const result = await player.play(outcome.recitation);
 
 			await interaction.editReply({
-				content: formatPlayResult(outcome.recitation, result),
+				content: formatPlayResult(outcome.recitation, result, locale),
 			});
 			return;
 		}
@@ -110,6 +113,7 @@ const playCommand: Command = {
 			defaultChoice: outcome.defaultChoice,
 			catalog: context.catalog,
 			player,
+			locale: outcome.locale,
 			followUp: (content) =>
 				interaction.followUp({ content, flags: MessageFlags.Ephemeral }),
 		});

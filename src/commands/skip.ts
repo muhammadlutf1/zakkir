@@ -39,7 +39,12 @@ const skipCommand: Command = {
 		const current = player.queueView.current;
 
 		await interaction.reply(
-			current ? `Now playing ${recitationLabel(current)}.` : "Skipped.",
+			current
+				? `Now playing ${recitationLabel(
+						current,
+						context.guildConfigs.language(interaction.guildId),
+					)}.`
+				: "Skipped.",
 		);
 	},
 };

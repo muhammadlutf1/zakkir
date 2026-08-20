@@ -14,9 +14,14 @@ import { PlayerRegistry } from "./voice/PlayerRegistry";
 
 const logger = createLogger("index");
 
+const store = new SqliteGuildConfigStore(config.database.path);
+const guildConfig = new GuildConfig(store);
+const catalog = new Catalog();
+
 const playerRegistry = new PlayerRegistry((guildId) => {
 	const player = new Player(guildId, new DiscordVoicePort(), {
 		gracePeriodMs: config.voice.gracePeriodMs,
+		locale: guildConfig.language(guildId),
 		onSessionEnd: () => {
 			playerRegistry.remove(guildId);
 		},
@@ -26,10 +31,6 @@ const playerRegistry = new PlayerRegistry((guildId) => {
 
 	return player;
 });
-
-const store = new SqliteGuildConfigStore(config.database.path);
-const guildConfig = new GuildConfig(store);
-const catalog = new Catalog();
 
 const bot = new Bot(
 	commandLoader,

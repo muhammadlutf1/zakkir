@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog";
-import { resolveSurah } from "../../src/catalog/surahs";
+import { resolveSurah } from "../../src/catalog/suwar";
 import { GuildConfig } from "../../src/guild/GuildConfig";
 import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
 import type { GlobalDefaults } from "../../src/guild/types";
@@ -104,7 +104,7 @@ describe("resolvePlay", () => {
 
 	it("resolves the reciter through the guild config", async () => {
 		const store = memoryStore();
-		await store.set({ guildId: "g-1", language: "ar", defaultReciter: 10, defaultRewayah: 10 });
+		store.set({ guildId: "g-1", language: "ar", defaultReciter: 10, defaultRewayah: 10 });
 		const config = new GuildConfig(store);
 
 		const outcome = await resolvePlay(catalog, config, NO_DEFAULTS, "g-1", alKahf);
@@ -114,7 +114,11 @@ describe("resolvePlay", () => {
 	});
 
 	it("resolves the reciter through the global defaults", async () => {
-		const defaults = { language: "ar", defaultReciter: 10, defaultRewayah: 10 };
+		const defaults: GlobalDefaults = {
+		language: "ar",
+		defaultReciter: 10,
+		defaultRewayah: 10,
+	};
 
 		const outcome = await resolvePlay(catalog, guildConfig(defaults), defaults, "g-1", alKahf);
 
@@ -124,7 +128,7 @@ describe("resolvePlay", () => {
 
 	it("plays the resolved default Rewayah directly when it covers and is the only one", async () => {
 		const store = memoryStore();
-		await store.set({ guildId: "g-1", language: "ar", defaultReciter: 10, defaultRewayah: 10 });
+		store.set({ guildId: "g-1", language: "ar", defaultReciter: 10, defaultRewayah: 10 });
 		const config = new GuildConfig(store);
 
 		const outcome = await resolvePlay(catalog, config, NO_DEFAULTS, "g-1", alKahf);
@@ -135,7 +139,7 @@ describe("resolvePlay", () => {
 
 	it("shows the picker when more than one Rewayah covers, defaulting to the resolved default", async () => {
 		const store = memoryStore();
-		await store.set({ guildId: "g-1", language: "ar", defaultReciter: 1, defaultRewayah: 1 });
+		store.set({ guildId: "g-1", language: "ar", defaultReciter: 1, defaultRewayah: 1 });
 		const config = new GuildConfig(store);
 
 		const outcome = await resolvePlay(catalog, config, NO_DEFAULTS, "g-1", alKahf);
@@ -157,7 +161,7 @@ describe("resolvePlay", () => {
 
 	it("shows the picker when the default Rewayah does not cover, as unresolved not an error", async () => {
 		const store = memoryStore();
-		await store.set({ guildId: "g-1", language: "ar", defaultReciter: 10, defaultRewayah: 99 });
+		store.set({ guildId: "g-1", language: "ar", defaultReciter: 10, defaultRewayah: 99 });
 		const config = new GuildConfig(store);
 
 		const outcome = await resolvePlay(catalog, config, NO_DEFAULTS, "g-1", alKahf);
@@ -173,7 +177,7 @@ describe("resolvePlay", () => {
 
 	it("prefers the command reciter option over the guild default", async () => {
 		const store = memoryStore();
-		await store.set({ guildId: "g-1", language: "ar", defaultReciter: 10, defaultRewayah: 10 });
+		store.set({ guildId: "g-1", language: "ar", defaultReciter: 10, defaultRewayah: 10 });
 		const config = new GuildConfig(store);
 
 		const outcome = await resolvePlay(catalog, config, NO_DEFAULTS, "g-1", alKahf, "إبراهيم الأخضر");
@@ -217,7 +221,7 @@ describe("buildRecitationFromChoice", () => {
 		const recitation = await buildRecitationFromChoice(catalog, choice);
 
 		assert.deepEqual(recitation, {
-			surah: alKahf,
+			surah: { number: 18, name: "الكهف", names: { en: "Al-Kahf" } },
 			reciterId: 10,
 			reciterName: "أكرم العلاقمي",
 			rewayahId: 10,
