@@ -53,7 +53,7 @@ const playCommand: Command = {
 
 		if (!channel || channel.type === ChannelType.GuildStageVoice) {
 			await interaction.reply({
-				content: "You need to be in a voice channel to use this command!",
+				content: context.t.t("command.needVoice"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -68,12 +68,14 @@ const playCommand: Command = {
 
 		if (!surah) {
 			await interaction.editReply({
-				content: `Couldn't find surah "${surahInput}". Use the autocomplete or a number 1-114.`,
+				content: context.t.t("command.playNotFound", {
+					input: surahInput,
+				}),
 			});
 			return;
 		}
 
-		const locale = context.guildConfigs.language(interaction.guildId);
+		const locale = context.locale;
 
 		const outcome = await resolvePlay(
 			context.catalog,

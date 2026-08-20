@@ -12,13 +12,13 @@ const clearCommand: Command = {
 		const player = context.players.get(interaction.guildId);
 
 		if (!player) {
-			await interaction.reply("I'm not in a voice channel!");
+			await interaction.reply(context.t.t("command.notInVoice"));
 			return;
 		}
 
 		player.clearQueue();
 
-		await interaction.reply("Cleared the queue.");
+		await interaction.reply(context.t.t("command.queueCleared"));
 	},
 };
 

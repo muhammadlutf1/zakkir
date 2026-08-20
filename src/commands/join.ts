@@ -13,7 +13,7 @@ const joinCommand: Command = {
 
 		if (!channel || channel.type === ChannelType.GuildStageVoice) {
 			await interaction.reply({
-				content: "You need to be in a voice channel to use this command!",
+				content: context.t.t("command.needVoice"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -23,7 +23,9 @@ const joinCommand: Command = {
 
 		await player.join(channel);
 
-		await interaction.reply(`Joined ${channel.name}!`);
+		await interaction.reply(
+			context.t.t("command.joined", { channel: channel.name }),
+		);
 	},
 };
 

@@ -20,7 +20,7 @@ const component: Component = {
 
 		if (!guildId) return;
 
-		const locale = context.guildConfigs.language(guildId);
+		const locale = context.locale;
 
 		// A button press resolves the picker and cancels its timer.
 		RewayahPickerSession.getSession(interaction.message.id)?.press();
@@ -29,7 +29,7 @@ const component: Component = {
 
 		if (!player?.isConnected) {
 			await interaction.editReply({
-				content: "I'm not connected to a voice channel in this server.",
+				content: context.t.t("command.notConnected"),
 				components: [],
 			});
 			return;
@@ -49,7 +49,7 @@ const component: Component = {
 
 		if (!recitation) {
 			await interaction.editReply({
-				content: "Couldn't resolve that recitation.",
+				content: context.t.t("command.resolveFailed"),
 				components: [],
 			});
 			return;

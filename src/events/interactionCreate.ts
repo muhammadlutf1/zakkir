@@ -22,6 +22,12 @@ const logger = createLogger("interactionCreate");
 const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 	name: Events.InteractionCreate,
 	async execute(bot, interaction) {
+		// The guild's UI locale for every reactive reply in this dispatch.
+		const locale = interaction.guildId
+			? bot.guildConfigs.language(interaction.guildId)
+			: DEFAULT_LOCALE;
+		const t = localizable(locale);
+
 		const commandContext: CommandContext = {
 			players: bot.players,
 			catalog: bot.catalog,
@@ -30,20 +36,17 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				defaults: config.defaults,
 				pickerTimeoutMs: config.rewayahPicker.timeoutMs,
 			},
+			locale,
+			t,
 		};
 
 		const componentContext: ComponentContext = {
 			players: bot.players,
 			catalog: bot.catalog,
 			guildConfigs: bot.guildConfigs,
+			locale,
+			t,
 		};
-
-		// The guild's UI locale for every reactive reply in this dispatch.
-		const t = localizable(
-			interaction.guildId
-				? bot.guildConfigs.language(interaction.guildId)
-				: DEFAULT_LOCALE,
-		);
 
 		if (interaction.isAutocomplete()) {
 			const command = bot.commands.get(interaction.commandName);

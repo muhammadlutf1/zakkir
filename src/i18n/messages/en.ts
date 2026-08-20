@@ -39,6 +39,7 @@ export const en = {
 	"command.noStream":
 		"No stream available for Surah {surah} by {reciter} ({rewayah}).",
 	"command.resolveStreamFailed": "Could not resolve a stream for surah {number}.",
+	"command.resolveFailed": "Couldn't resolve that recitation.",
 	"command.notConnected": "I'm not connected to a voice channel in this server.",
 	"command.skipped": "**<:forward:1384273873427759278> Skipped**",
 	"command.nowPlaying": "**<:play:1384273884622229514> Now playing** {label}.",

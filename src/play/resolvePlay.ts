@@ -2,7 +2,11 @@ import type { Catalog, Rewayah } from "../catalog/Catalog";
 import type { Surah } from "../catalog/suwar";
 import type { GuildConfig } from "../guild/GuildConfig";
 import type { GlobalDefaults, RewayahCoverage } from "../guild/types";
-import { DEFAULT_LOCALE, type Locale } from "../i18n/locale";
+import {
+	DEFAULT_LOCALE,
+	localizable,
+	type Locale,
+} from "../i18n/locale";
 import type { Recitation } from "../voice/Recitation";
 
 /**
@@ -47,6 +51,7 @@ export async function resolvePlay(
 	reciterOption?: string,
 	locale: Locale = DEFAULT_LOCALE,
 ): Promise<PlayOutcome> {
+	const { t } = localizable(locale);
 	let reciterId: number | undefined;
 
 	if (reciterOption) {
@@ -55,7 +60,7 @@ export async function resolvePlay(
 		if (!reciter) {
 			return {
 				kind: "error",
-				message: `Reciter "${reciterOption}" not found.`,
+				message: t("command.reciterNotFound", { reciter: reciterOption }),
 			};
 		}
 
@@ -85,15 +90,14 @@ export async function resolvePlay(
 	if (resolved.reciter === undefined) {
 		return {
 			kind: "error",
-			message:
-				"No default reciter is set for this server. Pass a <reciter> to play.",
+			message: t("command.noDefaultReciter"),
 		};
 	}
 
 	const reciter = await catalog.resolveReciterById(resolved.reciter, locale);
 
 	if (!reciter) {
-		return { kind: "error", message: "Reciter not found." };
+		return { kind: "error", message: t("command.reciterMissing") };
 	}
 
 	// rewayah
@@ -102,7 +106,11 @@ export async function resolvePlay(
 	if (rewayat.length === 0) {
 		return {
 			kind: "error",
-			message: `${reciter.name} has no recitation of Surah ${surah.name} (${surah.number}).`,
+			message: t("command.noRecitation", {
+				reciter: reciter.name,
+				surah: surah.name,
+				number: String(surah.number),
+			}),
 		};
 	}
 
@@ -146,7 +154,11 @@ export async function resolvePlay(
 	if (!url) {
 		return {
 			kind: "error",
-			message: `No stream available for Surah ${surah.name} by ${reciter.name} (${rewayah.name}).`,
+			message: t("command.noStream", {
+				surah: surah.name,
+				reciter: reciter.name,
+				rewayah: rewayah.name,
+			}),
 		};
 	}
 
@@ -184,8 +196,11 @@ export async function buildRecitationFromChoice(
 	);
 
 	if (!surah || !reciter || !rewayah || !url) {
+		const { t } = localizable(locale);
 		throw new Error(
-			`Could not resolve a stream for surah ${choice.surahNumber}.`,
+			t("command.resolveStreamFailed", {
+				number: String(choice.surahNumber),
+			}),
 		);
 	}
 
