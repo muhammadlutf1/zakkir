@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { dirname } from "node:path";
+import { isLocale } from "../i18n/locale";
 import type { GuildConfigData } from "./types";
 
 interface Row {
@@ -27,7 +28,11 @@ export class SqliteGuildConfigStore {
 		`);
 	}
 
-	async get(guildId: string) {
+	/**
+	 * The stored GuildConfigData for a guild, or undefined when none is saved.
+	 * SQLite is synchronous, so this never yields.
+	 */
+	get(guildId: string): GuildConfigData | undefined {
 		const row = this.db
 			.prepare(
 				"SELECT language, default_reciter, default_rewayah FROM guild_configs WHERE guild_id = ?",
@@ -38,13 +43,13 @@ export class SqliteGuildConfigStore {
 
 		return {
 			guildId,
-			language: row.language ?? undefined,
+			language: isLocale(row.language) ? row.language : undefined,
 			defaultReciter: row.default_reciter ?? undefined,
 			defaultRewayah: row.default_rewayah ?? undefined,
 		};
 	}
 
-	async set(config: GuildConfigData) {
+	set(config: GuildConfigData): void {
 		this.db
 			.prepare(
 				`INSERT INTO guild_configs (guild_id, language, default_reciter, default_rewayah)

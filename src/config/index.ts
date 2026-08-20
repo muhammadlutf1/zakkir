@@ -30,7 +30,7 @@ export const config: BotConfig = {
 		path: process.env.DATABASE_PATH ?? "data/zakkir.db",
 	},
 	defaults: {
-		language: "ar",
+		language: "en",
 		defaultReciter: undefined,
 		defaultRewayah: undefined,
 	},

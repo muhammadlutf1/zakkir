@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ChannelType } from "discord.js";
 import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog";
-import { resolveSurah, SURAH_LIST } from "../../src/catalog/surahs";
+import { resolveSurah, SURAH_LIST } from "../../src/catalog/suwar";
 import playCommand from "../../src/commands/play";
 import type { CommandContext } from "../../src/core/interactionContext";
 import { GuildConfig } from "../../src/guild/GuildConfig";
@@ -129,7 +129,7 @@ describe("play command with a fabricated context", () => {
 		assert.equal(edits.length, 1);
 		assert.equal(
 			edits[0]!.content,
-			"Playing الكهف by أكرم العلاقمي (حفص عن عاصم - مرتل).",
+			"**<:play:1384273884622229514> Playing** Al-Kahf by أكرم العلاقمي (حفص عن عاصم - مرتل).",
 		);
 		assert.deepEqual(player.calls, [
 			"join:voice-1",

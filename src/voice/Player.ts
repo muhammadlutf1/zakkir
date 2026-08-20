@@ -1,6 +1,11 @@
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { TextBasedChannel, VoiceChannel } from "discord.js";
 import { createLogger } from "../core/logger";
+import {
+	DEFAULT_LOCALE,
+	type Locale,
+	localizable,
+} from "../i18n/locale";
 import { Queue, type RepeatMode } from "./Queue";
 import { type Recitation, recitationLabel } from "./Recitation";
 import type { VoicePort } from "./VoicePort";
@@ -32,6 +37,11 @@ export interface PlayerOptions {
 	 * dispose this Player from the registry.
 	 */
 	onSessionEnd?: (guildId: string) => void;
+	/**
+	 * The locale this guild's notices and labels render in. Defaults to the
+	 * bot-wide default (English); the Player factory sets it per guild.
+	 */
+	locale?: Locale;
 }
 
 async function defaultProbeStream(url: string): Promise<boolean> {
@@ -55,6 +65,7 @@ export class Player {
 	private readonly probeStream: (url: string) => Promise<boolean>;
 	private readonly gracePeriodMs: number;
 	private readonly onSessionEnd?: (guildId: string) => void;
+	private locale: Locale;
 	private readonly noticeListeners = new Set<(message: string) => void>();
 	private noticeChannelRef: TextBasedChannel | undefined;
 	private channel: VoiceChannel | undefined;
@@ -68,6 +79,7 @@ export class Player {
 		this.probeStream = options.probeStream ?? defaultProbeStream;
 		this.gracePeriodMs = options.gracePeriodMs ?? 60_000;
 		this.onSessionEnd = options.onSessionEnd;
+		this.locale = options.locale ?? DEFAULT_LOCALE;
 
 		port.on("error", (error) => {
 			logger.error(error, "Voice error in guild %s", this.guildId);
@@ -118,6 +130,17 @@ export class Player {
 
 	setRepeatMode(mode: RepeatMode) {
 		this.queue.setRepeatMode(mode);
+	}
+
+	/**
+	 * Swaps the guild's UI locale — called only when the guild changes its
+	 * language. No-op when the locale is unchanged. The translator is derived
+	 * from `locale` on each use, so notices render in the new language without
+	 * rebuilding anything.
+	 */
+	setLocale(locale: Locale) {
+		if (locale === this.locale) return;
+		this.locale = locale;
 	}
 
 	/**
@@ -266,8 +289,11 @@ export class Player {
 		const reachable = await this.probeStream(current.url);
 
 		if (!reachable) {
+			const { t } = localizable(this.locale);
 			this.emitNotice(
-				`Couldn't play ${recitationLabel(current)} — the stream is unreachable.`,
+				t("notice.unreachable", {
+					label: recitationLabel(current, this.locale),
+				}),
 			);
 			this.queue.skip();
 			return this.startCurrent();
@@ -296,7 +322,13 @@ export class Player {
 			return;
 		}
 
-		this.emitNotice(`Playback of ${recitationLabel(active.item)} failed.`);
+		const { t } = localizable(this.locale);
+		this.emitNotice(
+			t("notice.playbackFailed", {
+				label: recitationLabel(active.item, this.locale),
+			}),
+		);
+
 		void this.advance();
 	}
 

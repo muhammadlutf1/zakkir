@@ -1,4 +1,5 @@
 import { config } from "../config";
+import { isLocale, type Locale } from "../i18n/locale";
 import type { SqliteGuildConfigStore } from "./SqliteGuildConfigStore";
 import type {
 	GlobalDefaults,
@@ -18,18 +19,18 @@ export class GuildConfig {
 		this.defaults = defaults;
 	}
 
-	async get(guildId: string) {
+	get(guildId: string): GuildConfigData | undefined {
 		if (this.cache.has(guildId)) return this.cache.get(guildId);
 
-		const saved = await this.store.get(guildId);
+		const saved = this.store.get(guildId);
 
 		if (saved) this.cache.set(guildId, saved);
 
 		return saved;
 	}
 
-	async set(guildId: string, patch: Partial<GuildConfigData>) {
-		const current = (await this.get(guildId)) ?? {
+	set(guildId: string, patch: Partial<GuildConfigData>): GuildConfigData {
+		const current = this.get(guildId) ?? {
 			guildId,
 			language: undefined,
 			defaultReciter: undefined,
@@ -43,23 +44,34 @@ export class GuildConfig {
 			defaultRewayah: patch.defaultRewayah ?? current.defaultRewayah,
 		};
 
-		await this.store.set(data);
+		this.store.set(data);
 		this.cache.set(guildId, data);
 
 		return data;
 	}
 
 	/**
+	 * The guild's effective UI locale — its saved language when that names a
+	 * known locale, otherwise the bot-wide default (English).
+	 */
+	language(guildId: string): Locale {
+		const saved = this.get(guildId)?.language;
+
+		return isLocale(saved) ? saved : this.defaults.language;
+	}
+
+	/**
 	 * Resolves the playback defaults for a play request: which reciter and
 	 * rewayah to use. Precedence is the command option, then the guild config,
 	 * then the bot-wide defaults; the rewayah is kept only if it covers the surah.
+	 * Async because the coverage probe queries the Catalog.
 	 */
 	async resolve(
 		guildId: string,
 		request: ResolveRequest,
 		rewayahCovers: RewayahCoverage,
 	) {
-		const guildConfig = await this.get(guildId);
+		const guildConfig = this.get(guildId);
 		const option = request.option ?? {};
 
 		const reciter =

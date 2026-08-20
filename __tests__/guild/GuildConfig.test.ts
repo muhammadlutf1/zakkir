@@ -11,28 +11,28 @@ const savedConfig = {
 	language: "en",
 	defaultReciter: 12,
 	defaultRewayah: 22,
-};
+} as const;
 
 describe("GuildConfig.get", () => {
-	it("loads a saved config from the store", async () => {
+	it("loads a saved config from the store synchronously", () => {
 		const store = memoryStore();
-		await store.set({ guildId: "guild-1", ...savedConfig });
+		store.set({ guildId: "guild-1", ...savedConfig });
 		const configs = new GuildConfig(store);
 
-		const config = await configs.get("guild-1");
+		const config = configs.get("guild-1");
 
 		assert.deepEqual(config, { guildId: "guild-1", ...savedConfig });
 	});
 
-	it("returns undefined for a guild with no saved config", async () => {
+	it("returns undefined for a guild with no saved config", () => {
 		const configs = new GuildConfig(memoryStore());
 
-		assert.equal(await configs.get("guild-1"), undefined);
+		assert.equal(configs.get("guild-1"), undefined);
 	});
 
-	it("caches the store value on first access", async () => {
+	it("caches the store value on first access", () => {
 		const store = memoryStore();
-		await store.set({
+		store.set({
 			guildId: "guild-1",
 			language: "en",
 			defaultReciter: undefined,
@@ -40,14 +40,14 @@ describe("GuildConfig.get", () => {
 		});
 		const configs = new GuildConfig(store);
 
-		const first = await configs.get("guild-1");
-		await store.set({
+		const first = configs.get("guild-1");
+		store.set({
 			guildId: "guild-1",
-			language: "fr",
+			language: "ar",
 			defaultReciter: undefined,
 			defaultRewayah: undefined,
 		});
-		const second = await configs.get("guild-1");
+		const second = configs.get("guild-1");
 
 		assert.equal(first, second);
 		assert.equal(second!.language, "en");
@@ -55,11 +55,11 @@ describe("GuildConfig.get", () => {
 });
 
 describe("GuildConfig.set", () => {
-	it("persists a merged config to the store and returns it", async () => {
+	it("persists a merged config to the store and returns it synchronously", () => {
 		const store = memoryStore();
 		const configs = new GuildConfig(store);
 
-		const config = await configs.set("guild-1", { defaultReciter: 12 });
+		const config = configs.set("guild-1", { defaultReciter: 12 });
 
 		assert.deepEqual(config, {
 			guildId: "guild-1",
@@ -67,15 +67,15 @@ describe("GuildConfig.set", () => {
 			defaultReciter: 12,
 			defaultRewayah: undefined,
 		});
-		assert.deepEqual(await store.get("guild-1"), config);
+		assert.deepEqual(store.get("guild-1"), config);
 	});
 
-	it("a fresh GuildConfig over the same store sees saved values (survives restart)", async () => {
+	it("a fresh GuildConfig over the same store sees saved values (survives restart)", () => {
 		const store = memoryStore();
 
-		await new GuildConfig(store).set("guild-1", savedConfig);
+		new GuildConfig(store).set("guild-1", savedConfig);
 
-		const config = await new GuildConfig(store).get("guild-1");
+		const config = new GuildConfig(store).get("guild-1");
 
 		assert.deepEqual(config, { guildId: "guild-1", ...savedConfig });
 	});
@@ -84,7 +84,7 @@ describe("GuildConfig.set", () => {
 describe("GuildConfig.resolve", () => {
 	it("applies the guild config defaults", async () => {
 		const store = memoryStore();
-		await store.set({ guildId: "guild-1", ...savedConfig });
+		store.set({ guildId: "guild-1", ...savedConfig });
 		const configs = new GuildConfig(store);
 
 		const resolved = await configs.resolve(
@@ -98,7 +98,7 @@ describe("GuildConfig.resolve", () => {
 
 	it("prefers command options over the guild config", async () => {
 		const store = memoryStore();
-		await store.set({ guildId: "guild-1", ...savedConfig });
+		store.set({ guildId: "guild-1", ...savedConfig });
 		const configs = new GuildConfig(store);
 
 		const resolved = await configs.resolve(
@@ -112,7 +112,7 @@ describe("GuildConfig.resolve", () => {
 
 	it("falls omitted option fields through to the guild config", async () => {
 		const store = memoryStore();
-		await store.set({ guildId: "guild-1", ...savedConfig });
+		store.set({ guildId: "guild-1", ...savedConfig });
 		const configs = new GuildConfig(store);
 
 		const resolved = await configs.resolve(
@@ -138,7 +138,7 @@ describe("GuildConfig.resolve", () => {
 
 	it("a default rewayah that does not cover the surah is unresolved, not an error", async () => {
 		const store = memoryStore();
-		await store.set({ guildId: "guild-1", ...savedConfig });
+		store.set({ guildId: "guild-1", ...savedConfig });
 		const configs = new GuildConfig(store);
 
 		const resolved = await configs.resolve(
@@ -152,7 +152,7 @@ describe("GuildConfig.resolve", () => {
 
 	it("rewayah is unresolved when no reciter resolves", async () => {
 		const store = memoryStore();
-		await store.set({
+		store.set({
 			guildId: "guild-1",
 			language: "en",
 			defaultReciter: undefined,
@@ -167,5 +167,29 @@ describe("GuildConfig.resolve", () => {
 		);
 
 		assert.deepEqual(resolved, { reciter: undefined, rewayah: undefined });
+	});
+});
+
+describe("GuildConfig.language", () => {
+	it("returns the guild's saved locale", () => {
+		const store = memoryStore();
+		store.set({ guildId: "guild-1", language: "ar", defaultReciter: 12, defaultRewayah: 22 });
+		const configs = new GuildConfig(store);
+
+		assert.equal(configs.language("guild-1"), "ar");
+	});
+
+	it("falls back to the global default (English) for a guild with no saved locale", () => {
+		const configs = new GuildConfig(memoryStore());
+
+		assert.equal(configs.language("guild-1"), "en");
+	});
+
+	it("falls back to the default when the saved language is not a known locale", () => {
+		const store = memoryStore();
+		store.set({ guildId: "guild-1", language: undefined, defaultReciter: undefined, defaultRewayah: undefined });
+		const configs = new GuildConfig(store);
+
+		assert.equal(configs.language("guild-1"), "en");
 	});
 });

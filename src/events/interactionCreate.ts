@@ -30,6 +30,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 		const componentContext: ComponentContext = {
 			players: bot.players,
 			catalog: bot.catalog,
+			guildConfigs: bot.guildConfigs,
 		};
 
 		if (interaction.isAutocomplete()) {

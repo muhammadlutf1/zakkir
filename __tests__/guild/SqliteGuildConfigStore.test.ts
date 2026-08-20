@@ -10,17 +10,17 @@ function memoryStore() {
 }
 
 describe("SqliteGuildConfigStore", () => {
-	it("round-trips a full config through set then get", async () => {
+	it("round-trips a full config through set then get synchronously", () => {
 		const store = memoryStore();
 
-		await store.set({
+		store.set({
 			guildId: "guild-1",
 			language: "en",
 			defaultReciter: 12,
 			defaultRewayah: 22,
 		});
 
-		const config = await store.get("guild-1");
+		const config = store.get("guild-1");
 
 		assert.deepEqual(config, {
 			guildId: "guild-1",
@@ -30,23 +30,23 @@ describe("SqliteGuildConfigStore", () => {
 		});
 	});
 
-	it("returns undefined from get for a guild with no saved config", async () => {
+	it("returns undefined from get for a guild with no saved config", () => {
 		const store = memoryStore();
 
-		assert.equal(await store.get("guild-1"), undefined);
+		assert.equal(store.get("guild-1"), undefined);
 	});
 
-	it("round-trips unset fields as undefined, not null", async () => {
+	it("round-trips unset fields as undefined, not null", () => {
 		const store = memoryStore();
 
-		await store.set({
+		store.set({
 			guildId: "guild-1",
 			language: undefined,
 			defaultReciter: undefined,
 			defaultRewayah: undefined,
 		});
 
-		assert.deepEqual(await store.get("guild-1"), {
+		assert.deepEqual(store.get("guild-1"), {
 			guildId: "guild-1",
 			language: undefined,
 			defaultReciter: undefined,
@@ -54,29 +54,29 @@ describe("SqliteGuildConfigStore", () => {
 		});
 	});
 
-	it("set upserts rather than duplicates a guild row", async () => {
+	it("set upserts rather than duplicates a guild row", () => {
 		const store = memoryStore();
 
-		await store.set({ guildId: "guild-1", language: "en", defaultReciter: 12, defaultRewayah: 22 });
-		await store.set({ guildId: "guild-1", language: "fr", defaultReciter: 13, defaultRewayah: 23 });
+		store.set({ guildId: "guild-1", language: "en", defaultReciter: 12, defaultRewayah: 22 });
+		store.set({ guildId: "guild-1", language: "ar", defaultReciter: 13, defaultRewayah: 23 });
 
-		const config = await store.get("guild-1");
+		const config = store.get("guild-1");
 
 		assert.deepEqual(config, {
 			guildId: "guild-1",
-			language: "fr",
+			language: "ar",
 			defaultReciter: 13,
 			defaultRewayah: 23,
 		});
 	});
 
-	it("a persisted config survives a fresh store over the same file (restart)", async () => {
+	it("a persisted config survives a fresh store over the same file (restart)", () => {
 		const dir = mkdtempSync(join(tmpdir(), "guildconfig-"));
 		const path = join(dir, "guilds.db");
 
 		try {
 			const first = new SqliteGuildConfigStore(path);
-			await first.set({
+			first.set({
 				guildId: "guild-1",
 				language: "en",
 				defaultReciter: 12,
@@ -85,7 +85,7 @@ describe("SqliteGuildConfigStore", () => {
 			first.close();
 
 			const second = new SqliteGuildConfigStore(path);
-			const config = await second.get("guild-1");
+			const config = second.get("guild-1");
 			second.close();
 
 			assert.deepEqual(config, {

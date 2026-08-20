@@ -26,4 +26,5 @@ export interface CommandContext {
 export interface ComponentContext {
 	players: Pick<PlayerRegistryView, "get">;
 	catalog: Catalog;
+	guildConfigs: GuildConfig;
 }

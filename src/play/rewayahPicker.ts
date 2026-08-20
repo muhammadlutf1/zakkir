@@ -1,7 +1,9 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import type { Catalog } from "../catalog/Catalog";
-import type { Surah } from "../catalog/surahs";
+import type { Surah } from "../catalog/suwar";
+import { surahName } from "../catalog/suwar";
 import { createLogger } from "../core/logger";
+import { DEFAULT_LOCALE, localizable, type Locale } from "../i18n/locale";
 import type { Player } from "../voice/Player";
 import { formatPlayResult } from "./playResult";
 import { buildRecitationFromChoice, type RewayahChoice } from "./resolvePlay";
@@ -39,18 +41,27 @@ export interface PickerOptions {
 	surah: Surah;
 	reciterName: string;
 	choices: RewayahChoice[];
+	locale?: Locale;
 }
 
 export function renderPicker(options: PickerOptions): {
 	content: string;
 	components: ActionRowBuilder<ButtonBuilder>[];
 } {
+	const locale = options.locale ?? DEFAULT_LOCALE;
+	const { t } = localizable(locale);
+	const surah = surahName(options.surah, locale);
+
 	const content = [
-		`Available Riwayat for Surah ${options.surah.name} (${options.surah.number}) by ${options.reciterName}:`,
+		t("picker.header", {
+			surah,
+			number: String(options.surah.number),
+			reciter: options.reciterName,
+		}),
 		...options.choices.map(
 			(choice, index) => `${index + 1}. ${choice.rewayahName}`,
 		),
-		"Pick a Rewayah to play it.",
+		t("picker.prompt"),
 	].join("\n");
 
 	const buttons = options.choices.map((choice) =>
@@ -79,6 +90,7 @@ export interface PickerSessionOptions {
 	catalog: Catalog;
 	player: Player;
 	followUp: (content: string) => Promise<unknown>;
+	locale?: Locale;
 }
 
 /**
@@ -152,19 +164,21 @@ export class RewayahPickerSession {
 		this.settle();
 
 		if (!this.options.defaultChoice) {
-			await this.options.followUp(
-				"Nothing picked — no default Rewayah is set. Playback cancelled.",
-			);
+			const { t } = localizable(this.options.locale ?? DEFAULT_LOCALE);
+			await this.options.followUp(t("picker.timeoutNoDefault"));
 			return;
 		}
 
 		const recitation = await buildRecitationFromChoice(
 			this.options.catalog,
 			this.options.defaultChoice,
+			this.options.locale,
 		);
 		const result = await this.options.player.play(recitation);
 
-		await this.options.followUp(formatPlayResult(recitation, result));
+		await this.options.followUp(
+			formatPlayResult(recitation, result, this.options.locale),
+		);
 	}
 
 	private settle() {

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it, mock } from "node:test";
 import type { Catalog } from "../../src/catalog/Catalog";
-import { resolveSurah } from "../../src/catalog/surahs";
+import { resolveSurah } from "../../src/catalog/suwar";
 import {
 	parsePickerCustomId,
 	pickerCustomId,
@@ -38,7 +38,7 @@ describe("renderPicker", () => {
 			choices,
 		});
 
-		assert.match(content, /Surah الكهف \(18\) by إبراهيم الأخضر/);
+		assert.match(content, /Surah \*\*الكهف \(18\)\*\* by \*\*إبراهيم الأخضر\*\*/);
 		assert.match(content, /1\. حفص عن عاصم/);
 		assert.match(content, /2\. ورش عن نافع/);
 
@@ -67,6 +67,16 @@ describe("renderPicker", () => {
 		assert.equal(components[0]!.components.length, 5);
 		assert.equal(components[1]!.components.length, 5);
 		assert.equal(components[2]!.components.length, 2);
+	});
+
+	it("renders the header in the requesting locale", () => {
+		const { content } = renderPicker({ surah, reciterName, choices, locale: "ar" });
+
+		assert.match(
+			content,
+			/الروايات المتاحة لسورة \*\*الكهف \(18\)\*\* للقارئ \*\*إبراهيم الأخضر\*\*/,
+		);
+		assert.match(content, /اختر رواية لتشغيلها/);
 	});
 });
 
@@ -125,7 +135,7 @@ describe("RewayahPickerSession", () => {
 			assert.equal(player.calls, 1);
 			assert.match(
 				followUps[0]!,
-				/Playing الكهف by إبراهيم الأخضر \(حفص عن عاصم - مرتل\)/,
+				/Playing\*\* Al-Kahf by إبراهيم الأخضر \(حفص عن عاصم - مرتل\)/,
 			);
 			assert.equal(session.isPending, false);
 		} finally {
@@ -178,7 +188,7 @@ describe("RewayahPickerSession", () => {
 		assert.equal(player.calls, 1);
 		assert.match(
 			followUps[0]!,
-			/Playing الكهف by إبراهيم الأخضر \(حفص عن عاصم - مرتل\)/,
+			/Playing\*\* Al-Kahf by إبراهيم الأخضر \(حفص عن عاصم - مرتل\)/,
 		);
 		assert.equal(session.isPending, false);
 	});

@@ -20,6 +20,8 @@ const component: Component = {
 
 		if (!guildId) return;
 
+		const locale = context.guildConfigs.language(guildId);
+
 		// A button press resolves the picker and cancels its timer.
 		RewayahPickerSession.getSession(interaction.message.id)?.press();
 
@@ -33,13 +35,17 @@ const component: Component = {
 			return;
 		}
 
-		const recitation = await buildRecitationFromChoice(context.catalog, {
-			surahNumber: parsed.surahNumber,
-			reciterId: parsed.reciterId,
-			reciterName: "",
-			rewayahId: parsed.rewayahId,
-			rewayahName: "",
-		}).catch(() => undefined);
+		const recitation = await buildRecitationFromChoice(
+			context.catalog,
+			{
+				surahNumber: parsed.surahNumber,
+				reciterId: parsed.reciterId,
+				reciterName: "",
+				rewayahId: parsed.rewayahId,
+				rewayahName: "",
+			},
+			locale,
+		).catch(() => undefined);
 
 		if (!recitation) {
 			await interaction.editReply({
@@ -56,7 +62,7 @@ const component: Component = {
 		const result = await player.play(recitation);
 
 		await interaction.editReply({
-			content: formatPlayResult(recitation, result),
+			content: formatPlayResult(recitation, result, locale),
 			components: [],
 		});
 	},
