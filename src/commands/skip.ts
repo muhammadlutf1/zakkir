@@ -1,6 +1,6 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../core/Command";
-import { recitationLabel } from "../voice/Recitation";
+import { recitationLabel } from "../i18n/recitationLabel";
 
 const skipCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -14,7 +14,7 @@ const skipCommand: Command = {
 
 		if (!player) {
 			await interaction.reply({
-				content: "I'm not in a voice channel!",
+				content: context.translator.t("command.notInVoice"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -25,14 +25,14 @@ const skipCommand: Command = {
 
 		if (!wasPlaying) {
 			await interaction.reply({
-				content: "Nothing is playing to skip.",
+				content: context.translator.t("command.nothingToSkip"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
 
 		if (!result.started) {
-			await interaction.reply("Playback ended — nothing is queued.");
+			await interaction.reply(context.translator.t("command.playbackEnded"));
 			return;
 		}
 
@@ -40,11 +40,10 @@ const skipCommand: Command = {
 
 		await interaction.reply(
 			current
-				? `Now playing ${recitationLabel(
-						current,
-						context.guildConfigs.language(interaction.guildId),
-					)}.`
-				: "Skipped.",
+				? context.translator.t("command.nowPlaying", {
+						label: recitationLabel(current, context.locale),
+					})
+				: context.translator.t("command.skipped"),
 		);
 	},
 };

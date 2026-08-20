@@ -20,7 +20,7 @@ const removeCommand: Command = {
 
 		if (!player) {
 			await interaction.reply({
-				content: "I'm not in a voice channel!",
+				content: context.translator.t("command.notInVoice"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -31,7 +31,10 @@ const removeCommand: Command = {
 
 		if (position > upcoming.length) {
 			await interaction.reply({
-				content: `There are only ${upcoming.length} queued recitation${upcoming.length === 1 ? "" : "s"}.`,
+				content: context.translator.t("command.onlyQueued", {
+					count: upcoming.length,
+					s: upcoming.length === 1 ? "" : "s",
+				}),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;
@@ -42,7 +45,7 @@ const removeCommand: Command = {
 		player.remove(position + 1);
 
 		await interaction.reply(
-			`Removed queued recitation at position ${position}.`,
+			context.translator.t("command.removed", { position: String(position) }),
 		);
 	},
 };

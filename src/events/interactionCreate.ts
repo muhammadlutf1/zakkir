@@ -4,19 +4,26 @@ import type {
 	MessageComponentInteraction,
 } from "discord.js";
 import { Events, MessageFlags } from "discord.js";
-import { config } from "../config";
+import { config, DEFAULT_LOCALE } from "../config";
 import type { BotEvent } from "../core/Event";
 import type {
 	CommandContext,
 	ComponentContext,
 } from "../core/interactionContext";
 import { createLogger } from "../core/logger";
+import { type Localizable, localizable } from "../i18n/locale";
 
 const logger = createLogger("interactionCreate");
 
 const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 	name: Events.InteractionCreate,
 	async execute(bot, interaction) {
+		// The guild's UI locale for every reactive reply in this dispatch.
+		const locale = interaction.guildId
+			? bot.guildConfigs.language(interaction.guildId)
+			: DEFAULT_LOCALE;
+		const translator = localizable(locale);
+
 		const commandContext: CommandContext = {
 			players: bot.players,
 			catalog: bot.catalog,
@@ -25,12 +32,16 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				defaults: config.defaults,
 				pickerTimeoutMs: config.rewayahPicker.timeoutMs,
 			},
+			locale,
+			translator,
 		};
 
 		const componentContext: ComponentContext = {
 			players: bot.players,
 			catalog: bot.catalog,
 			guildConfigs: bot.guildConfigs,
+			locale,
+			translator,
 		};
 
 		if (interaction.isAutocomplete()) {
@@ -43,6 +54,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				`autocomplete for ${interaction.commandName}`,
 				interaction,
 				() => command.autocomplete?.(commandContext, interaction),
+				translator,
 			);
 
 			return;
@@ -61,6 +73,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				`component ${interaction.customId}`,
 				interaction,
 				() => component.execute(componentContext, interaction),
+				translator,
 			);
 
 			return;
@@ -77,6 +90,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 				`command ${interaction.commandName}`,
 				interaction,
 				() => command.execute(commandContext, interaction),
+				translator,
 			);
 		}
 	},
@@ -95,6 +109,7 @@ async function dispatchWithErrorPolicy(
 		| MessageComponentInteraction
 		| CommandInteraction,
 	execute: () => unknown,
+	translator: Localizable,
 ) {
 	try {
 		await execute();
@@ -106,6 +121,7 @@ async function dispatchWithErrorPolicy(
 			"replied" in interaction
 				? interaction.replied || interaction.deferred
 				: false,
+			translator,
 		);
 
 		if (decision.action === "log") return;
@@ -131,13 +147,14 @@ type InteractionFailureKind = "autocomplete" | "messageComponent" | "chatInput";
 export function decideFailureResponse(
 	kind: InteractionFailureKind,
 	responsive: boolean,
+	translator: Localizable,
 ) {
 	if (kind === "autocomplete") return { action: "log" };
 
 	const content =
 		kind === "messageComponent"
-			? "There was an error while handling that component!"
-			: "There was an error while executing this command!";
+			? translator.t("error.componentGeneric")
+			: translator.t("error.commandGeneric");
 
 	return responsive
 		? { action: "followUp", content }

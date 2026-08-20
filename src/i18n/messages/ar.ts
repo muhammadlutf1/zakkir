@@ -40,6 +40,7 @@ export const ar = {
 	"command.noStream":
 		"لا يوجد بث متاح لسورة {surah} بصوت {reciter} ({rewayah}).",
 	"command.resolveStreamFailed": "تعذر تحليل بث سورة {number}.",
+	"command.resolveFailed": "تعذّر حلّ هذه التلاوة.",
 	"command.notConnected": "أنا لست متصلًا بقناة صوتية في هذا الخادم.",
 	"command.skipped": "**<:forward:1384273873427759278> تم التخطي**",
 	"command.nowPlaying": "**<:play:1384273884622229514> يُشغَّل الآن** {label}.",

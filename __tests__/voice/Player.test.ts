@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 import { after, before, describe, it } from "node:test";
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
+import { playbackNotices } from "../../src/play/playbackNotices";
 import { Player } from "../../src/voice/Player";
 import { RepeatMode } from "../../src/voice/Queue";
 import type { Recitation } from "../../src/voice/Recitation";
@@ -197,7 +198,10 @@ describe("Player", () => {
 	describe("failure handling", () => {
 		it("skips an unreachable stream (404/5xx) with a notice and no playback", async () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port, { probeStream: async () => false });
+			const player = new Player("guild-1", port, {
+				probeStream: async () => false,
+				notices: playbackNotices("en"),
+			});
 			const messages = notices(player);
 
 			const result = await player.play(recitation());
@@ -210,14 +214,17 @@ describe("Player", () => {
 			]);
 		});
 
-		it("renders notices in the locale set via setLocale", async () => {
+		it("renders notices in the guild's locale via the injected formatter", async () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port, { probeStream: async () => false });
+			const player = new Player("guild-1", port, {
+				probeStream: async () => false,
+				notices: playbackNotices("en"),
+			});
 			const messages = notices(player);
 
 			await player.play(recitation());
 
-			player.setLocale("ar");
+			player.setNotices(playbackNotices("ar"));
 			await player.play(recitation());
 
 			assert.deepEqual(messages, [
@@ -244,7 +251,10 @@ describe("Player", () => {
 
 		it("retries once on a recoverable mid-play failure, then continues to the next Recitation", async () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port, { probeStream: async () => true });
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+				notices: playbackNotices("en"),
+			});
 			const messages = notices(player);
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
@@ -270,7 +280,10 @@ describe("Player", () => {
 
 		it("retries then gives up cleanly on a recoverable failure on the only Recitation", async () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port, { probeStream: async () => true });
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+				notices: playbackNotices("en"),
+			});
 			const messages = notices(player);
 
 			await player.play(recitation());
@@ -605,7 +618,9 @@ describe("Player", () => {
 
 		it("rejects 404 and 5xx streams", async () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port);
+			const player = new Player("guild-1", port, {
+				notices: playbackNotices("en"),
+			});
 			const messages = notices(player);
 
 			await player.play(recitation({ url: `${probeBaseUrl}/404/018.mp3` }));

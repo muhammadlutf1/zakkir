@@ -8,6 +8,7 @@ import { createLogger } from "./core/logger";
 import { GuildConfig } from "./guild/GuildConfig";
 import { SqliteGuildConfigStore } from "./guild/SqliteGuildConfigStore";
 import { attachPlayerNotices } from "./play/noticeChannels";
+import { playbackNotices } from "./play/playbackNotices";
 import { DiscordVoicePort } from "./voice/DiscordVoicePort";
 import { Player } from "./voice/Player";
 import { PlayerRegistry } from "./voice/PlayerRegistry";
@@ -21,7 +22,7 @@ const catalog = new Catalog();
 const playerRegistry = new PlayerRegistry((guildId) => {
 	const player = new Player(guildId, new DiscordVoicePort(), {
 		gracePeriodMs: config.voice.gracePeriodMs,
-		locale: guildConfig.language(guildId),
+		notices: playbackNotices(guildConfig.language(guildId)),
 		onSessionEnd: () => {
 			playerRegistry.remove(guildId);
 		},
