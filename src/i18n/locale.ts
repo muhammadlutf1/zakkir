@@ -6,9 +6,6 @@ export const LOCALES = ["ar", "en"] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
-/** The locale a guild/Player falls back to when none is configured. */
-export const DEFAULT_LOCALE: Locale = "en";
-
 const catalogs: Record<Locale, MessageCatalog> = { ar, en };
 
 /** Narrowing guard for stored/unknown locale strings. */
@@ -45,4 +42,3 @@ export function localizable(locale: Locale): Localizable {
 		},
 	};
 }
-

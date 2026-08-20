@@ -1,12 +1,9 @@
 import type { Catalog, Rewayah } from "../catalog/Catalog";
 import type { Surah } from "../catalog/suwar";
+import { DEFAULT_LOCALE } from "../config";
 import type { GuildConfig } from "../guild/GuildConfig";
 import type { GlobalDefaults, RewayahCoverage } from "../guild/types";
-import {
-	DEFAULT_LOCALE,
-	localizable,
-	type Locale,
-} from "../i18n/locale";
+import { localizable, type Locale } from "../i18n/locale";
 import type { Recitation } from "../voice/Recitation";
 
 /**

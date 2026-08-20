@@ -1,11 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-	DEFAULT_LOCALE,
-	isLocale,
-	localizable,
-	t,
-} from "../../src/i18n/locale";
+import { config, DEFAULT_LOCALE } from "../../src/config";
+import { isLocale, localizable, t } from "../../src/i18n/locale";
 import { ar, en } from "../../src/i18n/messages";
 
 function catalogKeys(catalog: object) {
@@ -48,7 +44,8 @@ describe("isLocale", () => {
 });
 
 describe("message catalogs", () => {
-	it("ship English as the default locale", () => {
+	it("ships English as the default locale", () => {
+		assert.equal(DEFAULT_LOCALE, config.defaults.language);
 		assert.equal(DEFAULT_LOCALE, "en");
 	});
 

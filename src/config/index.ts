@@ -1,3 +1,4 @@
+import type { Locale } from "../i18n/locale";
 import type { GlobalDefaults } from "../guild/types";
 
 export interface BotConfig {
@@ -41,3 +42,6 @@ export const config: BotConfig = {
 		gracePeriodMs: Number(process.env.GRACE_PERIOD_MS ?? 60_000),
 	},
 };
+
+/** The bot-wide default UI locale, sourced from the config's `defaults.language`. */
+export const DEFAULT_LOCALE: Locale = config.defaults.language;

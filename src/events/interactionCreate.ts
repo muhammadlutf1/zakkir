@@ -4,18 +4,14 @@ import type {
 	MessageComponentInteraction,
 } from "discord.js";
 import { Events, MessageFlags } from "discord.js";
-import { config } from "../config";
+import { config, DEFAULT_LOCALE } from "../config";
 import type { BotEvent } from "../core/Event";
 import type {
 	CommandContext,
 	ComponentContext,
 } from "../core/interactionContext";
 import { createLogger } from "../core/logger";
-import {
-	DEFAULT_LOCALE,
-	localizable,
-	type Localizable,
-} from "../i18n/locale";
+import { type Localizable, localizable } from "../i18n/locale";
 
 const logger = createLogger("interactionCreate");
 
