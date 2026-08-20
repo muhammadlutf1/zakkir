@@ -111,9 +111,6 @@ const preferencesCommand: Command = {
 		const subcommand = interaction.options.getSubcommand();
 		const { translator, guildConfigs } = context;
 
-		// `list` — the short, falsy-guarded resolve: a default reciter/rewayah
-		// exists or not, and no reciter/rewayah id is ever 0, so the guarded
-		// `&&` short-circuits cleanly when unset.
 		if (subcommand === "list") {
 			const data = guildConfigs.get(interaction.guildId);
 			const language = data?.language ?? DEFAULT_LOCALE;
