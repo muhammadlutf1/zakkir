@@ -1,15 +1,5 @@
 import type { GlobalDefaults } from "../guild/types";
 
-/**
- * Reads a positive millisecond duration from an env var, falling back when
- * the var is absent, empty, or not a positive number.
- */
-function envMs(value: string | undefined, fallback: number) {
-	if (value === undefined) return fallback;
-	const parsed = Number(value);
-	return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
 export interface BotConfig {
 	clientId: string;
 	mp3Quran: {
@@ -48,6 +38,6 @@ export const config: BotConfig = {
 		timeoutMs: 30_000,
 	},
 	voice: {
-		gracePeriodMs: envMs(process.env.GRACE_PERIOD_MS, 60_000),
+		gracePeriodMs: Number(process.env.GRACE_PERIOD_MS ?? 60_000),
 	},
 };
