@@ -1,5 +1,13 @@
-import { ChannelType, MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	ChannelType,
+	MessageFlags,
+	SlashCommandBuilder,
+} from "discord.js";
 import type { Command } from "../core/Command";
+import { recitationLabel } from "../i18n/recitationLabel";
 import { formatPlayResult } from "../play/playResult";
 import { resolvePlay } from "../play/resolvePlay";
 import {
@@ -116,6 +124,29 @@ const playCommand: Command = {
 		}
 
 		if (outcome.kind === "play") {
+			if (player.isRadioPlaying) {
+				player.setPendingRadioConfirm(outcome.recitation);
+				const station = player.radioInfo?.name ?? "radio";
+				const label = recitationLabel(outcome.recitation, locale);
+				const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+					new ButtonBuilder()
+						.setCustomId("radio:confirm")
+						.setLabel(context.translator.t("command.radioConfirmYes"))
+						.setStyle(ButtonStyle.Success),
+					new ButtonBuilder()
+						.setCustomId("radio:cancel")
+						.setLabel(context.translator.t("command.radioConfirmNo"))
+						.setStyle(ButtonStyle.Secondary),
+				);
+				await interaction.editReply({
+					content: context.translator.t("command.radioConfirmPrompt", {
+						station,
+						label,
+					}),
+					components: [row],
+				});
+				return;
+			}
 			const result = await player.play(outcome.recitation);
 
 			await interaction.editReply({

@@ -54,6 +54,18 @@ export const en = {
 	"repeat.mode.off": "Off",
 	"repeat.mode.track": "Repeat Track",
 	"repeat.mode.all": "Repeat All",
+	// Radio
+	"command.radioStationNotFound":
+		'<:error:1385171040098979961> Radio station "{station}" not found.',
+	"command.radioStarted": "📻 Now playing radio **{station}**.",
+	"command.radioConfirmPrompt":
+		'📻 Radio **{station}** is playing. Do you want to stop the radio and play **{label}**?',
+	"command.radioConfirmYes": "Yes, play it",
+	"command.radioConfirmNo": "No, keep radio",
+	"command.radioContinuing": "📻 Continuing radio **{station}**.",
+	"command.radioStopped": "📻 Radio stopped.",
+	"notice.radioFailed":
+		"<:error:1385171040098979961> Radio **{station}** failed after retries — stopped.",
 	// `/preferences` confirmations and notices
 	"preferences.languageSet": "🌐 Server UI language set to **{lang}**.",
 	"preferences.reciterSet": "🎙️ Default reciter set to **{reciter}**.",

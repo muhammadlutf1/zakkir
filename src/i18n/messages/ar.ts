@@ -55,6 +55,18 @@ export const ar = {
 	"repeat.mode.off": "إيقاف",
 	"repeat.mode.track": "تكرار التلاوة",
 	"repeat.mode.all": "تكرار القائمة",
+	// Radio
+	"command.radioStationNotFound":
+		'<:error:1385171040098979961> محطة الراديو "{station}" غير موجودة.',
+	"command.radioStarted": "📻 يتم الآن تشغيل راديو **{station}**.",
+	"command.radioConfirmPrompt":
+		'📻 راديو **{station}** قيد التشغيل. هل تريد إيقاف الراديو وتشغيل **{label}**؟',
+	"command.radioConfirmYes": "نعم، شغّلها",
+	"command.radioConfirmNo": "لا، استمر في الراديو",
+	"command.radioContinuing": "📻 مستمر في راديو **{station}**.",
+	"command.radioStopped": "📻 تم إيقاف الراديو.",
+	"notice.radioFailed":
+		"<:error:1385171040098979961> فشل راديو **{station}** بعد عدة محاولات — تم إيقافه.",
 	// `/preferences` confirmations and notices
 	"preferences.languageSet": "🌐 تم ضبط لغة واجهة الخادم على **{lang}**.",
 	"preferences.reciterSet": "🎙️ تم ضبط القارئ الافتراضي على **{reciter}**.",
