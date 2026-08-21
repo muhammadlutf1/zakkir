@@ -75,7 +75,7 @@ An endless streaming channel the Player can play instead of the Queue. Exclusive
 _Avoid_: station, live stream, radio station
 
 **Catalog**:
-The client that resolves Reciter/Surah names and numbers to stream URLs, via the MP3Quran API.
+The client that resolves Reciter/Surah/Radio names and numbers to stream URLs, via the MP3Quran API. Its endpoint data is cached per Locale with bounded freshness and served from memory; the Dispatcher puts a Catalog bound to the guild's Locale on the interaction context.
 _Avoid_: API client, radio API, Quran API
 
 ## Play
