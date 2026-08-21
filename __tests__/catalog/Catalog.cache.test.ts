@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { Catalog } from "../../src/catalog/Catalog";
 import { config } from "../../src/config";
+import { isolateEndpointCache } from "./isolateEndpointCache";
 
 /**
  * Stubs the global fetch so both Catalog endpoints run offline, counting
@@ -35,17 +36,8 @@ function stubApi() {
 	};
 }
 
-// The endpoint cache is module-level and shared across tests in this file,
-// and mock.timers restarts at epoch 0 for every test. Each test therefore
-// jumps the mocked clock well past everything earlier tests could have
-// written (their ticks plus one TTL of freshness), so no stale entry is
-// ever served as fresh.
-let clock = 0;
-
 beforeEach(() => {
-	mock.timers.enable({ apis: ["Date"] });
-	clock += config.catalog.ttlMs * 10;
-	mock.timers.tick(clock);
+	isolateEndpointCache();
 });
 
 afterEach(() => {
@@ -110,6 +102,21 @@ describe("Catalog endpoint cache", () => {
 		await catalog.forLocale("en").fetchReciters();
 
 		assert.equal(api.calls.reciters, 1);
+	});
+
+	it("pays one fetch when resolves race on a cold cache", async () => {
+		const api = stubApi();
+		const catalog = new Catalog();
+
+		await Promise.all([
+			catalog.fetchReciters(),
+			catalog.fetchReciters(),
+			catalog.fetchRadios(),
+			catalog.fetchRadios(),
+		]);
+
+		assert.equal(api.calls.reciters, 1);
+		assert.equal(api.calls.radios, 1);
 	});
 
 	it("refetches exactly once once the TTL has lapsed", async () => {

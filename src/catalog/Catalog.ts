@@ -54,9 +54,13 @@ interface CacheEntry {
 }
 
 // Module-level cache shared by every Catalog instance and locale-bound view,
-// keyed by `${endpoint}:${language}` — each endpoint entry is fully
+// keyed by `${endpoint}:${locale}` — each endpoint entry is fully
 // independent, so traffic on one never forces a refetch of the other.
 const endpointCache = new Map<string, CacheEntry>();
+
+// In-flight refetches, keyed the same way, so concurrent resolves on a cold
+// or expired entry share one fetch instead of racing a herd of them.
+const inflightFetches = new Map<string, Promise<unknown>>();
 
 export class Catalog {
 	private readonly language: Locale;
@@ -179,14 +183,32 @@ export class Catalog {
 	 * falls back to the stale copy when the refetch keeps failing. A cold
 	 * cache with no stale copy propagates the error.
 	 */
-	private async get<T>(endpoint: string, language: Locale): Promise<T> {
-		const key = `${endpoint}:${language}`;
+	private async get<T>(endpoint: string, locale: Locale) {
+		const key = `${endpoint}:${locale}`;
 		const cached = endpointCache.get(key);
 
 		if (cached && cached.expiresAt > Date.now()) return cached.data as T;
 
+		let pending = inflightFetches.get(key);
+
+		if (!pending) {
+			pending = this.refresh(endpoint, key, locale, cached).finally(() => {
+				inflightFetches.delete(key);
+			});
+			inflightFetches.set(key, pending);
+		}
+
+		return pending as Promise<T>;
+	}
+
+	private async refresh<T>(
+		endpoint: string,
+		key: string,
+		locale: Locale,
+		cached: CacheEntry | undefined,
+	) {
 		try {
-			const data = await this.fetchEndpoint<T>(endpoint, language);
+			const data = await this.fetchEndpoint<T>(endpoint, locale);
 			endpointCache.set(key, {
 				data,
 				expiresAt: Date.now() + config.catalog.ttlMs,
@@ -200,16 +222,16 @@ export class Catalog {
 				"MP3Quran refresh failed for %s; serving stale cache",
 				key,
 			);
-			return cached.data as T;
+			return cached.data;
 		}
 	}
 
-	private async fetchEndpoint<T>(endpoint: string, language: Locale) {
+	private async fetchEndpoint<T>(endpoint: string, locale: Locale) {
 		let lastError: unknown;
 
 		for (let attempt = 0; attempt < config.catalog.fetchAttempts; attempt++) {
 			try {
-				const url = `${config.mp3Quran.baseUrl}/${endpoint}?language=${language}`;
+				const url = `${config.mp3Quran.baseUrl}/${endpoint}?language=${locale}`;
 				const response = await fetch(url);
 
 				if (!response.ok) {

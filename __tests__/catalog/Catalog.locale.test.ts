@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { Catalog } from "../../src/catalog/Catalog";
-import { config } from "../../src/config";
+import { isolateEndpointCache } from "./isolateEndpointCache";
 
 /**
  * Stubs the global fetch so the Catalog's API lookups run offline, and
@@ -21,16 +21,8 @@ function stubApi(reciters: unknown) {
 	return { urls, fetchMock };
 }
 
-// The endpoint cache is module-level and shared across tests in this file,
-// and mock.timers restarts at epoch 0 for every test. Each test therefore
-// jumps the mocked clock well past everything earlier tests could have
-// written, so every test's stub is actually fetched.
-let clock = 0;
-
 beforeEach(() => {
-	mock.timers.enable({ apis: ["Date"] });
-	clock += config.catalog.ttlMs * 10;
-	mock.timers.tick(clock);
+	isolateEndpointCache();
 });
 
 afterEach(() => {
