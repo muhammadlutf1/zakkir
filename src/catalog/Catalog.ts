@@ -51,6 +51,12 @@ interface RawReciter {
 interface CacheEntry {
 	data: unknown;
 	expiresAt: number;
+	/**
+	 * Until when to keep serving this stale copy without attempting another
+	 * refresh — armed after a failed refresh so an outage costs one retry
+	 * burst per cooldown window instead of one per call.
+	 */
+	cooldownUntil?: number;
 }
 
 // Module-level cache shared by every Catalog instance and locale-bound view,
@@ -180,6 +186,10 @@ export class Catalog {
 
 		if (cached && cached.expiresAt > Date.now()) return cached.data as T;
 
+		if (cached?.cooldownUntil && cached.cooldownUntil > Date.now()) {
+			return cached.data as T;
+		}
+
 		let pending = inflightFetches.get(key);
 
 		if (!pending) {
@@ -213,6 +223,10 @@ export class Catalog {
 				"MP3Quran refresh failed for %s; serving stale cache",
 				key,
 			);
+			endpointCache.set(key, {
+				...cached,
+				cooldownUntil: Date.now() + config.catalog.failureCooldownMs,
+			});
 			return cached.data;
 		}
 	}

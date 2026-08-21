@@ -143,6 +143,31 @@ describe("Catalog endpoint cache", () => {
 		assert.equal(api.calls.reciters, 1 + config.catalog.fetchAttempts);
 	});
 
+	it("stops refetching while the failure cooldown lasts", async () => {
+		const api = stubApi();
+		const catalog = new Catalog();
+
+		const fresh = await catalog.fetchReciters();
+		mock.timers.tick(config.catalog.ttlMs + 1);
+		api.failAlways();
+		await catalog.fetchReciters();
+		const callsAfterFailure = api.calls.reciters;
+
+		mock.timers.tick(config.catalog.failureCooldownMs - 1);
+		const stale = await catalog.fetchReciters();
+
+		assert.deepEqual(stale, fresh);
+		assert.equal(api.calls.reciters, callsAfterFailure);
+
+		mock.timers.tick(1);
+		await catalog.fetchReciters();
+
+		assert.equal(
+			api.calls.reciters,
+			callsAfterFailure + config.catalog.fetchAttempts,
+		);
+	});
+
 	it("propagates the error when a cold cache fails", async () => {
 		const api = stubApi();
 		api.failAlways();
