@@ -24,6 +24,11 @@ const logger = createLogger("discordVoicePort");
 export class DiscordVoicePort implements VoicePort {
 	private connection: VoiceConnection | null = null;
 	private audioPlayer: AudioPlayer | null = null;
+	private channelId: string | null = null;
+
+	get joinedChannelId() {
+		return this.channelId;
+	}
 
 	private readonly listeners: {
 		[K in VoicePortEventName]: Set<VoicePortEvents[K]>;
@@ -35,6 +40,8 @@ export class DiscordVoicePort implements VoicePort {
 	};
 
 	async join(channel: VoiceChannel): Promise<void> {
+		this.channelId = channel.id;
+
 		if (this.connection) {
 			this.connection.rejoin({
 				channelId: channel.id,
@@ -88,6 +95,7 @@ export class DiscordVoicePort implements VoicePort {
 		this.connection?.destroy();
 		this.connection = null;
 		this.audioPlayer = null;
+		this.channelId = null;
 	}
 
 	play(url: string): void {

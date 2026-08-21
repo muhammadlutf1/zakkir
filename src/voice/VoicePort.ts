@@ -23,6 +23,8 @@ export type VoicePortEventPayload<K extends VoicePortEventName> =
  * never touches the voice library directly.
  */
 export interface VoicePort {
+	/** The id of the voice channel this port is currently joined to, if any. */
+	readonly joinedChannelId: string | null;
 	join(channel: VoiceChannel): Promise<void>;
 	leave(): void;
 	play(url: string): void;

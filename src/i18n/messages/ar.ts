@@ -52,6 +52,8 @@ export const ar = {
 	"command.removed": "تمت إزالة التلاوة من الموضع {position}.",
 	"command.repeatSet":
 		"**<:repeat:1384278335114449060> تم ضبط وضع التكرار على {mode}.**",
+	// Player panel (`/panel` and auto-post)
+	"panel.showing": "🎛️ لوحة المشغّل معروضة الآن.",
 	// Repeat-mode names fed into `command.repeatSet`
 	"repeat.mode.off": "إيقاف",
 	"repeat.mode.track": "تكرار التلاوة",

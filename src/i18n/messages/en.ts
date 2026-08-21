@@ -52,6 +52,8 @@ export const en = {
 	"command.removed": "Removed queued recitation at position {position}.",
 	"command.repeatSet":
 		"**<:repeat:1384278335114449060> Loop mode set to {mode}.**",
+	// Player panel (`/panel` and auto-post)
+	"panel.showing": "🎛️ The player panel is up.",
 	// Repeat-mode names fed into `command.repeatSet`
 	"repeat.mode.off": "Off",
 	"repeat.mode.track": "Repeat Track",

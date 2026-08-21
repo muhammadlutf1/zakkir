@@ -81,9 +81,12 @@ export class Player {
 	private readonly onSessionEnd?: (guildId: string) => void;
 	private notices?: PlayerNoticeFormatter;
 	private readonly noticeListeners = new Set<(message: string) => void>();
+	private readonly changeListeners = new Set<() => void>();
+	private readonly endListeners = new Set<() => void>();
 	private noticeChannelRef: TextBasedChannel | undefined;
 	private channel: VoiceChannel | undefined;
 	private graceTimer: NodeJS.Timeout | undefined;
+	private paused = false;
 
 	constructor(
 		public readonly guildId: string,
@@ -105,6 +108,7 @@ export class Player {
 		});
 
 		port.on("playerStateChange", (state) => {
+			this.paused = state === AudioPlayerStatus.Paused;
 			if (state === AudioPlayerStatus.Idle) this.onTrackEnd();
 		});
 
@@ -119,6 +123,14 @@ export class Player {
 
 	get isPlaying() {
 		return this.active !== null;
+	}
+
+	get isPaused() {
+		return this.paused;
+	}
+
+	get voiceChannelId() {
+		return this.channel?.id ?? this.port.joinedChannelId ?? null;
 	}
 
 	get isRadioPlaying() {
@@ -172,6 +184,23 @@ export class Player {
 
 	setRepeatMode(mode: RepeatMode) {
 		this.queue.setRepeatMode(mode);
+		this.emitChange();
+	}
+
+	/**
+	 * Makes the queued Recitation at the given 0-based index current, dropping
+	 * everything before it, and restarts playback of the now-current track.
+	 * A no-op when nothing sits at that index.
+	 */
+	async jumpTo(index: number) {
+		if (this.isRadioPlaying) return { started: false, queued: false };
+		if (!this.queue.jumpTo(index)) return { started: false, queued: false };
+
+		this.active = null;
+		this.port.stop();
+		const result = await this.startCurrent();
+		this.emitChange();
+		return result;
 	}
 
 	/**
@@ -197,7 +226,11 @@ export class Player {
 
 		if (this.isPlaying) return { started: false, queued: true };
 
-		return this.startCurrent();
+		const result = await this.startCurrent();
+
+		if (result.started) this.emitChange();
+
+		return result;
 	}
 
 	async playRadio(radio: Radio): Promise<void> {
@@ -223,6 +256,24 @@ export class Player {
 		this.noticeListeners.add(listener);
 
 		return () => this.noticeListeners.delete(listener);
+	}
+
+	/**
+	 * Subscribes to playback-state changes (something started, advanced,
+	 * skipped, paused, unpaused, repeat mode changed, jumped). Returns an
+	 * unsubscribe function.
+	 */
+	onChange(listener: () => void): () => void {
+		this.changeListeners.add(listener);
+
+		return () => this.changeListeners.delete(listener);
+	}
+
+	/** Subscribes to session end. Returns an unsubscribe function. */
+	onEnd(listener: () => void): () => void {
+		this.endListeners.add(listener);
+
+		return () => this.endListeners.delete(listener);
 	}
 
 	async join(channel: VoiceChannel): Promise<void> {
@@ -313,10 +364,14 @@ export class Player {
 
 	pause(): void {
 		this.port.pause();
+		this.paused = true;
+		this.emitChange();
 	}
 
 	unpause(): void {
 		this.port.unpause();
+		this.paused = false;
+		this.emitChange();
 	}
 
 	/**
@@ -331,6 +386,7 @@ export class Player {
 		this.leave();
 		this.queue.clear();
 		this.port.destroy();
+		for (const listener of this.endListeners) listener();
 		this.onSessionEnd?.(this.guildId);
 	}
 
@@ -444,7 +500,9 @@ export class Player {
 	private async advance() {
 		this.active = null;
 		this.queue.advance();
-		return this.startCurrent();
+		const result = await this.startCurrent();
+		this.emitChange();
+		return result;
 	}
 
 	private onTrackEnd() {
@@ -466,5 +524,9 @@ export class Player {
 		logger.info("Notice in guild %s: %s", this.guildId, message);
 
 		for (const listener of this.noticeListeners) listener(message);
+	}
+
+	private emitChange() {
+		for (const listener of this.changeListeners) listener();
 	}
 }
