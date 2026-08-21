@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { afterEach, describe, it, mock } from "node:test";
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { Catalog } from "../../src/catalog/Catalog";
+import { isolateEndpointCache } from "./isolateEndpointCache";
 
 /**
  * Stubs the global fetch so the Catalog's API lookups run offline, and
@@ -20,7 +21,12 @@ function stubApi(reciters: unknown) {
 	return { urls, fetchMock };
 }
 
+beforeEach(() => {
+	isolateEndpointCache();
+});
+
 afterEach(() => {
+	mock.timers.reset();
 	mock.restoreAll();
 });
 

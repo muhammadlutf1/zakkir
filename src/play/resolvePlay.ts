@@ -36,8 +36,8 @@ export type PlayOutcome =
  * Resolves a `/play` request: which Reciter plays the given Surah (option >
  * GuildConfig > global default), and whether that resolves to a single
  * Recitation (play it directly) or to a real Rewayah choice (show the picker).
- * The locale threads into the Catalog lookups so Reciter/Rewayah names come
- * back in the requesting locale.
+ * The Catalog is expected to be bound to the requesting locale, so
+ * Reciter/Rewayah names come back localized; `locale` localizes the messages.
  */
 export async function resolvePlay(
 	catalog: Catalog,
@@ -52,7 +52,7 @@ export async function resolvePlay(
 	let reciterId: number | undefined;
 
 	if (reciterOption) {
-		const reciter = await catalog.resolveReciterByName(reciterOption, locale);
+		const reciter = await catalog.resolveReciterByName(reciterOption);
 
 		if (!reciter) {
 			return {
@@ -69,7 +69,7 @@ export async function resolvePlay(
 		surahNumber,
 		rewayahId,
 	) => {
-		const rewayat = await catalog.resolveRewayat(rId, surahNumber, locale);
+		const rewayat = await catalog.resolveRewayat(rId, surahNumber);
 
 		return rewayat.some((r) => r.id === rewayahId);
 	};
@@ -91,18 +91,14 @@ export async function resolvePlay(
 		};
 	}
 
-	const reciter = await catalog.resolveReciterById(resolved.reciter, locale);
+	const reciter = await catalog.resolveReciterById(resolved.reciter);
 
 	if (!reciter) {
 		return { kind: "error", message: t("command.reciterMissing") };
 	}
 
 	// rewayah
-	const rewayat = await catalog.resolveRewayat(
-		reciter.id,
-		surah.number,
-		locale,
-	);
+	const rewayat = await catalog.resolveRewayat(reciter.id, surah.number);
 
 	if (rewayat.length === 0) {
 		return {
@@ -149,7 +145,6 @@ export async function resolvePlay(
 		reciter.id,
 		rewayah.id,
 		surah.number,
-		locale,
 	);
 
 	if (!url) {
@@ -178,8 +173,8 @@ export async function resolvePlay(
 
 /**
  * Turns a 'picker' choice into a full Recitation (resolving the stream URL
- * through the Catalog) at the moment playback actually starts. The locale is
- * fed through to the Catalog so the resolved names match the picker's locale.
+ * through the Catalog) at the moment playback actually starts. The Catalog is
+ * expected to be bound to the picker's locale; `locale` localizes the error.
  */
 export async function buildRecitationFromChoice(
 	catalog: Catalog,
@@ -187,13 +182,12 @@ export async function buildRecitationFromChoice(
 	locale: Locale = DEFAULT_LOCALE,
 ): Promise<Recitation> {
 	const surah = catalog.resolveSurah(choice.surahNumber);
-	const reciter = await catalog.resolveReciterById(choice.reciterId, locale);
+	const reciter = await catalog.resolveReciterById(choice.reciterId);
 	const rewayah = reciter?.rewayat.find((r) => r.id === choice.rewayahId);
 	const url = await catalog.resolveStreamUrl(
 		choice.reciterId,
 		choice.rewayahId,
 		choice.surahNumber,
-		locale,
 	);
 
 	if (!surah || !reciter || !rewayah || !url) {

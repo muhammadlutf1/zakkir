@@ -86,7 +86,7 @@ const preferencesCommand: Command = {
 		const focused = interaction.options.getFocused(true);
 		const query = focused.value.trim().toLowerCase();
 
-		const reciters = await context.catalog.fetchReciters(context.locale);
+		const reciters = await context.catalog.fetchReciters();
 
 		// Reciter and rewayah names arrive in the guild's locale; match against
 		// the localized name while the value carries the stable numeric id.
@@ -115,15 +115,13 @@ const preferencesCommand: Command = {
 			const data = guildConfigs.get(interaction.guildId);
 			const language = data?.language ?? DEFAULT_LOCALE;
 			const reciter = (data?.defaultReciter &&
-				(await context.catalog.resolveReciterById(
-					data.defaultReciter,
-					context.locale,
-				))) as Reciter | undefined;
+				(await context.catalog.resolveReciterById(data.defaultReciter))) as
+				| Reciter
+				| undefined;
 			const rewayah = (data?.defaultRewayah &&
-				(await context.catalog.resolveRewayahById(
-					data.defaultRewayah,
-					context.locale,
-				))) as Rewayah | undefined;
+				(await context.catalog.resolveRewayahById(data.defaultRewayah))) as
+				| Rewayah
+				| undefined;
 
 			await interaction.reply(
 				[
@@ -157,10 +155,7 @@ const preferencesCommand: Command = {
 
 		if (subcommand === "reciter") {
 			const id = Number(interaction.options.getString("reciter", true));
-			const reciter = await context.catalog.resolveReciterById(
-				id,
-				context.locale,
-			);
+			const reciter = await context.catalog.resolveReciterById(id);
 
 			if (!reciter) {
 				await interaction.reply(
@@ -181,10 +176,7 @@ const preferencesCommand: Command = {
 
 		// rewayah
 		const id = Number(interaction.options.getString("rewayah", true));
-		const rewayah = await context.catalog.resolveRewayahById(
-			id,
-			context.locale,
-		);
+		const rewayah = await context.catalog.resolveRewayahById(id);
 
 		if (!rewayah) {
 			await interaction.reply(

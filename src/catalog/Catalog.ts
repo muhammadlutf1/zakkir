@@ -48,6 +48,26 @@ interface RawReciter {
 	moshaf: RawMoshaf[];
 }
 
+interface CacheEntry {
+	data: unknown;
+	expiresAt: number;
+	/**
+	 * Until when to keep serving this stale copy without attempting another
+	 * refresh — armed after a failed refresh so an outage costs one retry
+	 * burst per cooldown window instead of one per call.
+	 */
+	cooldownUntil?: number;
+}
+
+// Module-level cache shared by every Catalog instance and locale-bound view,
+// keyed by `${endpoint}:${locale}` — each endpoint entry is fully
+// independent, so traffic on one never forces a refetch of the other.
+const endpointCache = new Map<string, CacheEntry>();
+
+// In-flight refetches, keyed the same way, so concurrent resolves on a cold
+// or expired entry share one fetch instead of racing a herd of them.
+const inflightFetches = new Map<string, Promise<unknown>>();
+
 export class Catalog {
 	private readonly language: Locale;
 
@@ -56,13 +76,19 @@ export class Catalog {
 	}
 
 	async fetchRadios(locale?: Locale) {
-		const data = await this.get<{ radios: Radio[] }>("radios", locale);
+		const data = await this.get<{ radios: Radio[] }>(
+			"radios",
+			locale ?? this.language,
+		);
 
 		return data.radios;
 	}
 
 	async fetchReciters(locale?: Locale) {
-		const data = await this.get<{ reciters: RawReciter[] }>("reciters", locale);
+		const data = await this.get<{ reciters: RawReciter[] }>(
+			"reciters",
+			locale ?? this.language,
+		);
 
 		return data.reciters.map(normalizeReciter);
 	}
@@ -148,18 +174,88 @@ export class Catalog {
 		return radios.find((radio) => radio.id === radioId)?.url;
 	}
 
-	private async get<T>(endpoint: string, locale?: Locale) {
-		const url = `${config.mp3Quran.baseUrl}/${endpoint}?language=${
-			locale ?? this.language
-		}`;
-		const response = await fetch(url);
+	/**
+	 * Serves an endpoint payload from the shared cache while it is fresh;
+	 * on a miss or expiry, refetches (retrying up to `fetchAttempts`), and
+	 * falls back to the stale copy when the refetch keeps failing. A cold
+	 * cache with no stale copy propagates the error.
+	 */
+	private async get<T>(endpoint: string, locale: Locale) {
+		const key = `${endpoint}:${locale}`;
+		const cached = endpointCache.get(key);
 
-		if (!response.ok) {
-			logger.error({ status: response.status, url }, "MP3Quran request failed");
-			throw new Error(`MP3Quran request failed with status ${response.status}`);
+		if (cached && cached.expiresAt > Date.now()) return cached.data as T;
+
+		if (cached?.cooldownUntil && cached.cooldownUntil > Date.now()) {
+			return cached.data as T;
 		}
 
-		return (await response.json()) as T;
+		let pending = inflightFetches.get(key);
+
+		if (!pending) {
+			pending = this.refresh(endpoint, key, locale, cached).finally(() => {
+				inflightFetches.delete(key);
+			});
+			inflightFetches.set(key, pending);
+		}
+
+		return pending as Promise<T>;
+	}
+
+	private async refresh<T>(
+		endpoint: string,
+		key: string,
+		locale: Locale,
+		cached: CacheEntry | undefined,
+	) {
+		try {
+			const data = await this.fetchEndpoint<T>(endpoint, locale);
+			endpointCache.set(key, {
+				data,
+				expiresAt: Date.now() + config.catalog.ttlMs,
+			});
+			return data;
+		} catch (error) {
+			if (!cached) throw error;
+
+			logger.warn(
+				error,
+				"MP3Quran refresh failed for %s; serving stale cache",
+				key,
+			);
+			endpointCache.set(key, {
+				...cached,
+				cooldownUntil: Date.now() + config.catalog.failureCooldownMs,
+			});
+			return cached.data;
+		}
+	}
+
+	private async fetchEndpoint<T>(endpoint: string, locale: Locale) {
+		let lastError: unknown;
+
+		for (let attempt = 0; attempt < config.catalog.fetchAttempts; attempt++) {
+			try {
+				const url = `${config.mp3Quran.baseUrl}/${endpoint}?language=${locale}`;
+				const response = await fetch(url);
+
+				if (!response.ok) {
+					logger.error(
+						{ status: response.status, url },
+						"MP3Quran request failed",
+					);
+					throw new Error(
+						`MP3Quran request failed with status ${response.status}`,
+					);
+				}
+
+				return (await response.json()) as T;
+			} catch (error) {
+				lastError = error;
+			}
+		}
+
+		throw lastError;
 	}
 }
 

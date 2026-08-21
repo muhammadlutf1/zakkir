@@ -6,6 +6,17 @@ export interface BotConfig {
 	mp3Quran: {
 		baseUrl: string;
 	};
+	catalog: {
+		/** How long a fetched endpoint payload stays fresh before a refetch. */
+		ttlMs: number;
+		/** How many times a failing refetch is attempted before giving up. */
+		fetchAttempts: number;
+		/**
+		 * After a failed refresh of a stale entry, how long to keep serving
+		 * that stale copy without attempting another refresh.
+		 */
+		failureCooldownMs: number;
+	};
 	database: {
 		path: string;
 	};
@@ -26,6 +37,11 @@ export const config: BotConfig = {
 	clientId: "881841846312116234",
 	mp3Quran: {
 		baseUrl: "https://www.mp3quran.net/api/v3",
+	},
+	catalog: {
+		ttlMs: 24 * 60 * 60 * 1000,
+		fetchAttempts: 3,
+		failureCooldownMs: 60 * 60 * 1000,
 	},
 	database: {
 		path: process.env.DATABASE_PATH ?? "data/zakkir.db",

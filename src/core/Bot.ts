@@ -1,5 +1,4 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import type { Catalog } from "../catalog/Catalog";
 import type { GuildConfig } from "../guild/GuildConfig";
 import type { PlayerRegistry } from "../voice/PlayerRegistry";
 import type { Command } from "./Command";
@@ -18,7 +17,6 @@ export default class Bot extends Client {
 		private componentLoader: () => Promise<Collection<string, Component>>,
 		private playerRegistry: PlayerRegistry,
 		private guildConfig: GuildConfig,
-		public readonly catalog: Catalog,
 	) {
 		super({
 			intents: [

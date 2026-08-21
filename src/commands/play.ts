@@ -30,7 +30,7 @@ const playCommand: Command = {
 		// Reciters come from the localized Catalog; the value carries the
 		// localized name so `/play`'s name-based resolution picks it up.
 		if (focused.name === "reciter") {
-			const reciters = await context.catalog.fetchReciters(context.locale);
+			const reciters = await context.catalog.fetchReciters();
 			const matches = reciters
 				.filter((reciter) => reciter.name.toLowerCase().includes(query))
 				.slice(0, 25);

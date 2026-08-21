@@ -1,4 +1,3 @@
-import { Catalog } from "./catalog/Catalog";
 import { config } from "./config";
 import Bot from "./core/Bot";
 import commandLoader from "./core/loaders/commandLoader";
@@ -17,7 +16,6 @@ const logger = createLogger("index");
 
 const store = new SqliteGuildConfigStore(config.database.path);
 const guildConfig = new GuildConfig(store);
-const catalog = new Catalog();
 
 const playerRegistry = new PlayerRegistry((guildId) => {
 	const player = new Player(guildId, new DiscordVoicePort(), {
@@ -39,7 +37,6 @@ const bot = new Bot(
 	componentLoader,
 	playerRegistry,
 	guildConfig,
-	catalog,
 );
 
 try {
