@@ -101,11 +101,7 @@ export class Player {
 
 		port.on("streamError", (error) => {
 			logger.error(error, "Stream error in guild %s", this.guildId);
-			try {
-				this.onStreamError();
-			} catch (err) {
-				logger.error(err, "onStreamError failed in guild %s", this.guildId);
-			}
+			this.onStreamError();
 		});
 
 		port.on("playerStateChange", (state) => {
@@ -209,23 +205,10 @@ export class Player {
 		this.pendingRadioConfirm = null;
 		if (this.active) {
 			this.active = null;
-			try {
-				this.port.stop();
-			} catch (error) {
-				logger.error(
-					error,
-					"Failed to stop port before radio in guild %s",
-					this.guildId,
-				);
-			}
+			this.port.stop();
 		}
 		this.radio = { id: radio.id, name: radio.name, url: radio.url, retries: 0 };
-		try {
-			this.port.play(radio.url);
-		} catch (error) {
-			logger.error(error, "Failed to play radio in guild %s", this.guildId);
-			this.handleRadioStreamError();
-		}
+		this.port.play(radio.url);
 	}
 
 	stopRadio(): void {
@@ -233,11 +216,7 @@ export class Player {
 		this.cancelRadioRetry();
 		this.radio = null;
 		this.pendingRadioConfirm = null;
-		try {
-			this.port.stop();
-		} catch (error) {
-			logger.error(error, "Failed to stop radio in guild %s", this.guildId);
-		}
+		this.port.stop();
 	}
 
 	onNotice(listener: (message: string) => void): () => void {
@@ -333,19 +312,11 @@ export class Player {
 	}
 
 	pause(): void {
-		try {
-			this.port.pause();
-		} catch (error) {
-			logger.error(error, "Failed to pause in guild %s", this.guildId);
-		}
+		this.port.pause();
 	}
 
 	unpause(): void {
-		try {
-			this.port.unpause();
-		} catch (error) {
-			logger.error(error, "Failed to unpause in guild %s", this.guildId);
-		}
+		this.port.unpause();
 	}
 
 	/**
@@ -409,16 +380,7 @@ export class Player {
 			this.radioRetryTimer = setTimeout(() => {
 				this.radioRetryTimer = undefined;
 				if (!this.radio) return;
-				try {
-					this.port.play(this.radio.url);
-				} catch (error) {
-					logger.error(
-						error,
-						"Radio retry play failed in guild %s",
-						this.guildId,
-					);
-					this.handleRadioStreamError();
-				}
+				this.port.play(this.radio.url);
 			}, delay);
 			this.radioRetryTimer.unref?.();
 			return;
@@ -431,15 +393,7 @@ export class Player {
 		);
 		this.cancelRadioRetry();
 		this.radio = null;
-		try {
-			this.port.stop();
-		} catch (error) {
-			logger.error(
-				error,
-				"Failed to stop after radio retries in guild %s",
-				this.guildId,
-			);
-		}
+		this.port.stop();
 	}
 
 	private async startCurrent(): Promise<PlayResult> {
@@ -456,12 +410,7 @@ export class Player {
 		}
 
 		this.active = { item: current, retries: 0 };
-		try {
-			this.port.play(current.url);
-		} catch (error) {
-			logger.error(error, "Failed to play stream in guild %s", this.guildId);
-			this.onStreamError();
-		}
+		this.port.play(current.url);
 
 		return { started: true, queued: false };
 	}
@@ -483,11 +432,7 @@ export class Player {
 				active.retries,
 				MAX_STREAM_RETRIES,
 			);
-			try {
-				this.port.play(active.item.url);
-			} catch (error) {
-				logger.error(error, "Retry play failed in guild %s", this.guildId);
-			}
+			this.port.play(active.item.url);
 			return;
 		}
 
