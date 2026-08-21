@@ -4,6 +4,7 @@ import type {
 	MessageComponentInteraction,
 } from "discord.js";
 import { Events, MessageFlags } from "discord.js";
+import { Catalog } from "../catalog/Catalog";
 import { config, DEFAULT_LOCALE } from "../config";
 import type { BotEvent } from "../core/Event";
 import type {
@@ -23,10 +24,13 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 			? bot.guildConfigs.language(interaction.guildId)
 			: DEFAULT_LOCALE;
 		const translator = localizable(locale);
+		// A Catalog bound to the guild's locale over the shared endpoint cache,
+		// so call sites resolve localized names without passing `locale` around.
+		const catalog = new Catalog({ language: locale });
 
 		const commandContext: CommandContext = {
 			players: bot.players,
-			catalog: bot.catalog.forLocale(locale),
+			catalog,
 			guildConfigs: bot.guildConfigs,
 			play: {
 				defaults: config.defaults,
@@ -38,7 +42,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 
 		const componentContext: ComponentContext = {
 			players: bot.players,
-			catalog: bot.catalog.forLocale(locale),
+			catalog,
 			guildConfigs: bot.guildConfigs,
 			locale,
 			translator,

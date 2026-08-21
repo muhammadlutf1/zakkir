@@ -69,15 +69,6 @@ export class Catalog {
 		this.language = options.language ?? DEFAULT_LANGUAGE;
 	}
 
-	/**
-	 * A Catalog bound to a fixed locale over the same shared endpoint cache —
-	 * what the Dispatcher puts on an interaction context so call sites resolve
-	 * names without threading `locale` through every call.
-	 */
-	forLocale(locale: Locale): Catalog {
-		return new Catalog({ language: locale });
-	}
-
 	async fetchRadios(locale?: Locale) {
 		const data = await this.get<{ radios: Radio[] }>(
 			"radios",

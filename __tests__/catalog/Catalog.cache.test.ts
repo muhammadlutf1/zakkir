@@ -94,12 +94,11 @@ describe("Catalog endpoint cache", () => {
 		assert.equal(api.calls.reciters, 2);
 	});
 
-	it("shares one cache across locale-bound views of the same Catalog", async () => {
+	it("shares one cache across separate Catalog instances", async () => {
 		const api = stubApi();
-		const catalog = new Catalog();
 
-		await catalog.forLocale("en").fetchReciters();
-		await catalog.forLocale("en").fetchReciters();
+		await new Catalog({ language: "en" }).fetchReciters();
+		await new Catalog({ language: "en" }).fetchReciters();
 
 		assert.equal(api.calls.reciters, 1);
 	});
