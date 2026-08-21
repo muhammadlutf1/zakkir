@@ -48,8 +48,14 @@ interface RawReciter {
 	moshaf: RawMoshaf[];
 }
 
+interface RecitersCacheEntry {
+	reciters: Reciter[];
+	expiresAt: number;
+}
+
 export class Catalog {
 	private readonly language: Locale;
+	private readonly recitersCache = new Map<Locale, RecitersCacheEntry>();
 
 	constructor(options: CatalogOptions = {}) {
 		this.language = options.language ?? DEFAULT_LANGUAGE;
@@ -62,9 +68,22 @@ export class Catalog {
 	}
 
 	async fetchReciters(locale?: Locale) {
-		const data = await this.get<{ reciters: RawReciter[] }>("reciters", locale);
+		const language = locale ?? this.language;
+		const cached = this.recitersCache.get(language);
 
-		return data.reciters.map(normalizeReciter);
+		if (cached && cached.expiresAt > Date.now()) return cached.reciters;
+
+		const data = await this.get<{ reciters: RawReciter[] }>(
+			"reciters",
+			language,
+		);
+		const reciters = data.reciters.map(normalizeReciter);
+		this.recitersCache.set(language, {
+			reciters,
+			expiresAt: Date.now() + config.catalog.recitersTtlMs,
+		});
+
+		return reciters;
 	}
 
 	/**

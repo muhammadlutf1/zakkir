@@ -9,6 +9,9 @@ export interface BotConfig {
 	database: {
 		path: string;
 	};
+	catalog: {
+		recitersTtlMs: number;
+	};
 	defaults: GlobalDefaults;
 	rewayahPicker: {
 		timeoutMs: number;
@@ -34,6 +37,9 @@ export const config: BotConfig = {
 		language: "en",
 		defaultReciter: undefined,
 		defaultRewayah: undefined,
+	},
+	catalog: {
+		recitersTtlMs: 300_000,
 	},
 	rewayahPicker: {
 		timeoutMs: 30_000,
