@@ -45,7 +45,8 @@ export const ar = {
 	"command.skipped": "**<:forward:1384273873427759278> تم التخطي**",
 	"command.nowPlaying": "**<:play:1384273884622229514> يُشغَّل الآن** {label}.",
 	"command.nothingToSkip": "لا يوجد شيء قيد التشغيل للتخطي.",
-	"command.playbackEnded": "انتهت قائمة التشغيل — لا يوجد شيء في قائمة الانتظار.",
+	"command.playbackEnded":
+		"انتهت قائمة التشغيل — لا يوجد شيء في قائمة الانتظار.",
 	"command.queueCleared": "✅ تم مسح قائمة الانتظار.",
 	"command.onlyQueued": "يوجد {count} من التلاوات في قائمة الانتظار.",
 	"command.removed": "تمت إزالة التلاوة من الموضع {position}.",
@@ -55,6 +56,18 @@ export const ar = {
 	"repeat.mode.off": "إيقاف",
 	"repeat.mode.track": "تكرار التلاوة",
 	"repeat.mode.all": "تكرار القائمة",
+	// Radio
+	"command.radioStationNotFound":
+		'<:error:1385171040098979961> محطة الراديو "{station}" غير موجودة.',
+	"command.radioStarted": "📻 يتم الآن تشغيل راديو **{station}**.",
+	"command.radioConfirmPrompt":
+		"📻 راديو **{station}** قيد التشغيل. هل تريد إيقاف الراديو وتشغيل **{label}**؟",
+	"command.radioConfirmYes": "نعم، شغّلها",
+	"command.radioConfirmNo": "لا، استمر في الراديو",
+	"command.radioContinuing": "📻 مستمر في راديو **{station}**.",
+	"command.radioStopped": "📻 تم إيقاف الراديو.",
+	"notice.radioFailed":
+		"<:error:1385171040098979961> فشل راديو **{station}** بعد عدة محاولات — تم إيقافه.",
 	// `/preferences` confirmations and notices
 	"preferences.languageSet": "🌐 تم ضبط لغة واجهة الخادم على **{lang}**.",
 	"preferences.reciterSet": "🎙️ تم ضبط القارئ الافتراضي على **{reciter}**.",

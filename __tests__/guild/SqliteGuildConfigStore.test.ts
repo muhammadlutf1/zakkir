@@ -57,8 +57,18 @@ describe("SqliteGuildConfigStore", () => {
 	it("set upserts rather than duplicates a guild row", () => {
 		const store = memoryStore();
 
-		store.set({ guildId: "guild-1", language: "en", defaultReciter: 12, defaultRewayah: 22 });
-		store.set({ guildId: "guild-1", language: "ar", defaultReciter: 13, defaultRewayah: 23 });
+		store.set({
+			guildId: "guild-1",
+			language: "en",
+			defaultReciter: 12,
+			defaultRewayah: 22,
+		});
+		store.set({
+			guildId: "guild-1",
+			language: "ar",
+			defaultReciter: 13,
+			defaultRewayah: 23,
+		});
 
 		const config = store.get("guild-1");
 

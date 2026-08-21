@@ -1,10 +1,10 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import type { Component } from "./Component";
-import type { Command } from "./Command";
-import type { BotEvent } from "./Event";
-import type { PlayerRegistry } from "../voice/PlayerRegistry";
-import type { GuildConfig } from "../guild/GuildConfig";
 import type { Catalog } from "../catalog/Catalog";
+import type { GuildConfig } from "../guild/GuildConfig";
+import type { PlayerRegistry } from "../voice/PlayerRegistry";
+import type { Command } from "./Command";
+import type { Component } from "./Component";
+import type { BotEvent } from "./Event";
 
 export default class Bot extends Client {
 	private initialized = false;

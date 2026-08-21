@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import clearCommand from "../../src/commands/clear";
 import type { CommandContext } from "../../src/core/interactionContext";
-import { ar, en } from "../../src/i18n/messages";
 import { localizable } from "../../src/i18n/locale";
+import { ar, en } from "../../src/i18n/messages";
 
 function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 	return {
@@ -18,21 +18,16 @@ function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 }
 
 /** Captures the plain-text `reply` payload the command sends, if any. */
-async function runClear(
-	context: CommandContext,
-): Promise<string | undefined> {
+async function runClear(context: CommandContext): Promise<string | undefined> {
 	const captured: string[] = [];
 
-	await clearCommand.execute(
-		context,
-		{
-			inCachedGuild: () => true,
-			guildId: "g-1",
-			reply: async (payload: string) => {
-				captured.push(payload);
-			},
-		} as never,
-	);
+	await clearCommand.execute(context, {
+		inCachedGuild: () => true,
+		guildId: "g-1",
+		reply: async (payload: string) => {
+			captured.push(payload);
+		},
+	} as never);
 
 	return captured[0];
 }
@@ -46,7 +41,9 @@ describe("command replies are localized through context.translator", () => {
 		};
 
 		const enReply = await runClear(makeContext(shared));
-		const arReply = await runClear(makeContext({ ...shared, locale: "ar", translator: localizable("ar") }));
+		const arReply = await runClear(
+			makeContext({ ...shared, locale: "ar", translator: localizable("ar") }),
+		);
 
 		assert.equal(enReply, en["command.queueCleared"]);
 		assert.equal(arReply, ar["command.queueCleared"]);

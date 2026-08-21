@@ -11,10 +11,10 @@ function stubApi(reciters: unknown) {
 
 	const fetchMock = mock.method(globalThis, "fetch", async (url: string) => {
 		urls.push(url);
-		return new Response(
-			JSON.stringify({ reciters }),
-			{ status: 200, headers: { "content-type": "application/json" } },
-		);
+		return new Response(JSON.stringify({ reciters }), {
+			status: 200,
+			headers: { "content-type": "application/json" },
+		});
 	});
 
 	return { urls, fetchMock };
@@ -52,7 +52,10 @@ describe("Catalog locale threading", () => {
 		const { urls } = stubApi([enReciter]);
 		const catalog = new Catalog();
 
-		const reciter = await catalog.resolveReciterByName("Ibrahim Al-Akhdar", "en");
+		const reciter = await catalog.resolveReciterByName(
+			"Ibrahim Al-Akhdar",
+			"en",
+		);
 
 		assert.equal(reciter?.id, 1);
 		assert.match(urls[0]!, /language=en$/);
@@ -62,7 +65,15 @@ describe("Catalog locale threading", () => {
 		const reciter = {
 			id: 1,
 			name: "إبراهيم الأخضر",
-			moshaf: [{ id: 7, name: "حفص عن عاصم - مرتل", server: "s", surah_total: 1, surah_list: "1" }],
+			moshaf: [
+				{
+					id: 7,
+					name: "حفص عن عاصم - مرتل",
+					server: "s",
+					surah_total: 1,
+					surah_list: "1",
+				},
+			],
 		};
 		const { urls } = stubApi([reciter]);
 		const catalog = new Catalog();

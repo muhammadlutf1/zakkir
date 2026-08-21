@@ -38,7 +38,10 @@ describe("renderPicker", () => {
 			choices,
 		});
 
-		assert.match(content, /Surah \*\*الكهف \(18\)\*\* by \*\*إبراهيم الأخضر\*\*/);
+		assert.match(
+			content,
+			/Surah \*\*الكهف \(18\)\*\* by \*\*إبراهيم الأخضر\*\*/,
+		);
 		assert.match(content, /1\. حفص عن عاصم/);
 		assert.match(content, /2\. ورش عن نافع/);
 
@@ -70,7 +73,12 @@ describe("renderPicker", () => {
 	});
 
 	it("renders the header in the requesting locale", () => {
-		const { content } = renderPicker({ surah, reciterName, choices, locale: "ar" });
+		const { content } = renderPicker({
+			surah,
+			reciterName,
+			choices,
+			locale: "ar",
+		});
 
 		assert.match(
 			content,

@@ -38,9 +38,11 @@ export const en = {
 		"{reciter} has no recitation of Surah {surah} ({number}).",
 	"command.noStream":
 		"No stream available for Surah {surah} by {reciter} ({rewayah}).",
-	"command.resolveStreamFailed": "Could not resolve a stream for surah {number}.",
+	"command.resolveStreamFailed":
+		"Could not resolve a stream for surah {number}.",
 	"command.resolveFailed": "Couldn't resolve that recitation.",
-	"command.notConnected": "I'm not connected to a voice channel in this server.",
+	"command.notConnected":
+		"I'm not connected to a voice channel in this server.",
 	"command.skipped": "**<:forward:1384273873427759278> Skipped**",
 	"command.nowPlaying": "**<:play:1384273884622229514> Now playing** {label}.",
 	"command.nothingToSkip": "Nothing is playing to skip.",
@@ -54,6 +56,18 @@ export const en = {
 	"repeat.mode.off": "Off",
 	"repeat.mode.track": "Repeat Track",
 	"repeat.mode.all": "Repeat All",
+	// Radio
+	"command.radioStationNotFound":
+		'<:error:1385171040098979961> Radio station "{station}" not found.',
+	"command.radioStarted": "📻 Now playing radio **{station}**.",
+	"command.radioConfirmPrompt":
+		"📻 Radio **{station}** is playing. Do you want to stop the radio and play **{label}**?",
+	"command.radioConfirmYes": "Yes, play it",
+	"command.radioConfirmNo": "No, keep radio",
+	"command.radioContinuing": "📻 Continuing radio **{station}**.",
+	"command.radioStopped": "📻 Radio stopped.",
+	"notice.radioFailed":
+		"<:error:1385171040098979961> Radio **{station}** failed after retries — stopped.",
 	// `/preferences` confirmations and notices
 	"preferences.languageSet": "🌐 Server UI language set to **{lang}**.",
 	"preferences.reciterSet": "🎙️ Default reciter set to **{reciter}**.",

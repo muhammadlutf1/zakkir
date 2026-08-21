@@ -1,11 +1,9 @@
 import { ChannelType, MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../core/Command";
 import { formatPlayResult } from "../play/playResult";
+import { radioConfirmReply } from "../play/radioConfirmPrompt";
 import { resolvePlay } from "../play/resolvePlay";
-import {
-	RewayahPickerSession,
-	renderPicker,
-} from "../play/rewayahPicker";
+import { RewayahPickerSession, renderPicker } from "../play/rewayahPicker";
 
 const playCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -116,6 +114,17 @@ const playCommand: Command = {
 		}
 
 		if (outcome.kind === "play") {
+			if (player.isRadioPlaying) {
+				await interaction.editReply(
+					radioConfirmReply(
+						player,
+						outcome.recitation,
+						locale,
+						context.translator,
+					),
+				);
+				return;
+			}
 			const result = await player.play(outcome.recitation);
 
 			await interaction.editReply({

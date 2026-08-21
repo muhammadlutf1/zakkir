@@ -1,5 +1,6 @@
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { TextBasedChannel, VoiceChannel } from "discord.js";
+import type { Radio } from "../catalog/Catalog";
 import { createLogger } from "../core/logger";
 import { Queue, type RepeatMode } from "./Queue";
 import type { Recitation } from "./Recitation";
@@ -8,6 +9,8 @@ import type { VoicePort } from "./VoicePort";
 const logger = createLogger("player");
 
 const MAX_STREAM_RETRIES = 1;
+const MAX_RADIO_RETRIES = 3;
+const RADIO_RETRY_BASE_MS = 1000;
 
 /** The playback-failure notices a Player can emit. */
 export type PlayerNoticeKind = "unreachable" | "playbackFailed";
@@ -70,6 +73,9 @@ export class Player {
 		VoiceConnectionStatus.Destroyed;
 	private readonly queue = new Queue<Recitation>();
 	private active: { item: Recitation; retries: number } | null = null;
+	private radio: (Radio & { retries: number }) | null = null;
+	private radioRetryTimer: NodeJS.Timeout | undefined;
+	private pendingRadioConfirm: Recitation | null = null;
 	private readonly probeStream: (url: string) => Promise<boolean>;
 	private readonly gracePeriodMs: number;
 	private readonly onSessionEnd?: (guildId: string) => void;
@@ -115,6 +121,34 @@ export class Player {
 		return this.active !== null;
 	}
 
+	get isRadioPlaying() {
+		return this.radio !== null;
+	}
+
+	get radioInfo(): Radio | null {
+		return this.radio
+			? { id: this.radio.id, name: this.radio.name, url: this.radio.url }
+			: null;
+	}
+
+	get pendingRecitation(): Recitation | null {
+		return this.pendingRadioConfirm;
+	}
+
+	setPendingRadioConfirm(recitation: Recitation | null) {
+		this.pendingRadioConfirm = recitation;
+	}
+
+	clearPendingRadioConfirm() {
+		this.pendingRadioConfirm = null;
+	}
+
+	takePendingRadioConfirm(): Recitation | null {
+		const pending = this.pendingRadioConfirm;
+		this.pendingRadioConfirm = null;
+		return pending;
+	}
+
 	get queueView() {
 		return this.queue.view();
 	}
@@ -152,14 +186,37 @@ export class Player {
 
 	/**
 	 * Adds the Recitation to the guild's Queue. If nothing is currently
-	 * playing, it starts immediately.
+	 * playing and no Radio is active, it starts immediately. While Radio
+	 * plays the Queue is paused — the Recitation is appended but never
+	 * auto-started.
 	 */
 	async play(recitation: Recitation): Promise<PlayResult> {
 		this.queue.add(recitation);
 
+		if (this.isRadioPlaying) return { started: false, queued: true };
+
 		if (this.isPlaying) return { started: false, queued: true };
 
 		return this.startCurrent();
+	}
+
+	async playRadio(radio: Radio): Promise<void> {
+		this.cancelRadioRetry();
+		this.pendingRadioConfirm = null;
+		if (this.active) {
+			this.active = null;
+			this.port.stop();
+		}
+		this.radio = { id: radio.id, name: radio.name, url: radio.url, retries: 0 };
+		this.port.play(radio.url);
+	}
+
+	stopRadio(): void {
+		if (!this.radio) return;
+		this.cancelRadioRetry();
+		this.radio = null;
+		this.pendingRadioConfirm = null;
+		this.port.stop();
 	}
 
 	onNotice(listener: (message: string) => void): () => void {
@@ -181,6 +238,9 @@ export class Player {
 	leave(): void {
 		logger.info("Player leaving voice channel in guild %s", this.guildId);
 		this.cancelGraceTimer();
+		this.cancelRadioRetry();
+		this.radio = null;
+		this.pendingRadioConfirm = null;
 		this.channel = undefined;
 		this.connectionState = VoiceConnectionStatus.Destroyed;
 		this.active = null;
@@ -217,6 +277,9 @@ export class Player {
 	}
 
 	stop(): void {
+		this.cancelRadioRetry();
+		this.radio = null;
+		this.pendingRadioConfirm = null;
 		this.active = null;
 		this.queue.clear();
 		this.port.stop();
@@ -226,8 +289,10 @@ export class Player {
 	 * Stops the current Recitation and starts the next per RepeatMode. In OFF
 	 * mode playback ends cleanly when nothing is queued; TRACK replays the
 	 * current; ALL wraps back to the first when the queue ends.
+	 * While Radio plays, skip is a no-op — the station is never skipped forward.
 	 */
 	async skip() {
+		if (this.isRadioPlaying) return { started: false, queued: false };
 		if (!this.active) return { started: false, queued: false };
 
 		return this.advance();
@@ -260,6 +325,9 @@ export class Player {
 	 * the panel's Stop button in the future) converge on this single action.
 	 */
 	endSession() {
+		this.cancelRadioRetry();
+		this.radio = null;
+		this.pendingRadioConfirm = null;
 		this.leave();
 		this.queue.clear();
 		this.port.destroy();
@@ -288,6 +356,46 @@ export class Player {
 		this.graceTimer = undefined;
 	}
 
+	private cancelRadioRetry() {
+		if (!this.radioRetryTimer) return;
+		clearTimeout(this.radioRetryTimer);
+		this.radioRetryTimer = undefined;
+	}
+
+	private handleRadioStreamError() {
+		const radio = this.radio;
+		if (!radio) return;
+		if (radio.retries < MAX_RADIO_RETRIES) {
+			const delay = RADIO_RETRY_BASE_MS * 2 ** radio.retries;
+			radio.retries += 1;
+			logger.info(
+				"Retrying radio %s in guild %s (%d/%d) in %dms",
+				radio.name,
+				this.guildId,
+				radio.retries,
+				MAX_RADIO_RETRIES,
+				delay,
+			);
+			this.cancelRadioRetry();
+			this.radioRetryTimer = setTimeout(() => {
+				this.radioRetryTimer = undefined;
+				if (!this.radio) return;
+				this.port.play(this.radio.url);
+			}, delay);
+			this.radioRetryTimer.unref?.();
+			return;
+		}
+		logger.warn(
+			"Radio %s in guild %s failed after %d retries — going idle",
+			radio.name,
+			this.guildId,
+			MAX_RADIO_RETRIES,
+		);
+		this.cancelRadioRetry();
+		this.radio = null;
+		this.port.stop();
+	}
+
 	private async startCurrent(): Promise<PlayResult> {
 		const current = this.queue.view().current;
 
@@ -308,6 +416,10 @@ export class Player {
 	}
 
 	private onStreamError() {
+		if (this.radio) {
+			this.handleRadioStreamError();
+			return;
+		}
 		const active = this.active;
 
 		if (!active) return;
@@ -336,6 +448,7 @@ export class Player {
 	}
 
 	private onTrackEnd() {
+		if (this.radio) return;
 		if (!this.active) return;
 
 		void this.advance();

@@ -1,6 +1,6 @@
 import { DEFAULT_LOCALE } from "../config";
+import { type Locale, localizable } from "../i18n/locale";
 import type { MessageKey } from "../i18n/messages";
-import { localizable, type Locale } from "../i18n/locale";
 import { recitationLabel } from "../i18n/recitationLabel";
 import type { PlayerNoticeFormatter, PlayerNoticeKind } from "../voice/Player";
 import type { Recitation } from "../voice/Recitation";

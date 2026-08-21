@@ -26,7 +26,9 @@ class NoopVoicePort implements VoicePort {
 
 describe("PlayerRegistry", () => {
 	it("creates a Player lazily on first access", () => {
-		const registry = new PlayerRegistry((guildId) => new Player(guildId, new NoopVoicePort()));
+		const registry = new PlayerRegistry(
+			(guildId) => new Player(guildId, new NoopVoicePort()),
+		);
 
 		const player = registry.getOrCreate("guild-1");
 
@@ -34,13 +36,17 @@ describe("PlayerRegistry", () => {
 	});
 
 	it("returns undefined from get before a Player exists", () => {
-		const registry = new PlayerRegistry(() => new Player("n/a", new NoopVoicePort()));
+		const registry = new PlayerRegistry(
+			() => new Player("n/a", new NoopVoicePort()),
+		);
 
 		assert.equal(registry.get("guild-1"), undefined);
 	});
 
 	it("reuses the same Player for later calls in the same guild", () => {
-		const registry = new PlayerRegistry((guildId) => new Player(guildId, new NoopVoicePort()));
+		const registry = new PlayerRegistry(
+			(guildId) => new Player(guildId, new NoopVoicePort()),
+		);
 
 		const first = registry.getOrCreate("guild-1");
 		const second = registry.getOrCreate("guild-1");
@@ -49,7 +55,9 @@ describe("PlayerRegistry", () => {
 	});
 
 	it("creates separate Players for separate guilds", () => {
-		const registry = new PlayerRegistry((guildId) => new Player(guildId, new NoopVoicePort()));
+		const registry = new PlayerRegistry(
+			(guildId) => new Player(guildId, new NoopVoicePort()),
+		);
 
 		const first = registry.getOrCreate("guild-1");
 		const second = registry.getOrCreate("guild-2");
@@ -60,7 +68,9 @@ describe("PlayerRegistry", () => {
 	});
 
 	it("drops the Player on remove and subsequent get returns undefined", () => {
-		const registry = new PlayerRegistry((guildId) => new Player(guildId, new NoopVoicePort()));
+		const registry = new PlayerRegistry(
+			(guildId) => new Player(guildId, new NoopVoicePort()),
+		);
 
 		const player = registry.getOrCreate("guild-1");
 

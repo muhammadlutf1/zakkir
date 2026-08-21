@@ -62,10 +62,7 @@ export class Catalog {
 	}
 
 	async fetchReciters(locale?: Locale) {
-		const data = await this.get<{ reciters: RawReciter[] }>(
-			"reciters",
-			locale,
-		);
+		const data = await this.get<{ reciters: RawReciter[] }>("reciters", locale);
 
 		return data.reciters.map(normalizeReciter);
 	}
@@ -115,7 +112,11 @@ export class Catalog {
 	/**
 	 * get the different rewayat of a reciter that list a specific surah
 	 */
-	async resolveRewayat(reciterId: number, surahNumber: number, locale?: Locale) {
+	async resolveRewayat(
+		reciterId: number,
+		surahNumber: number,
+		locale?: Locale,
+	) {
 		const reciters = await this.fetchReciters(locale);
 		const reciter = reciters.find((r) => r.id === reciterId);
 

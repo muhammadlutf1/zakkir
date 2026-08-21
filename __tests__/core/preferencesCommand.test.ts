@@ -5,8 +5,8 @@ import preferencesCommand from "../../src/commands/preferences";
 import type { CommandContext } from "../../src/core/interactionContext";
 import { GuildConfig } from "../../src/guild/GuildConfig";
 import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
-import { ar, en } from "../../src/i18n/messages";
 import { localizable, t } from "../../src/i18n/locale";
+import { ar, en } from "../../src/i18n/messages";
 
 const rewayah = (id: number, name: string): Rewayah => ({
 	id,
@@ -138,7 +138,8 @@ describe("preferences command", () => {
 		const context = makeContext();
 		const { replies, interaction } = await capture();
 		interaction.options.getSubcommand = () => "language";
-		interaction.options.getString = (key) => (key === "locale" ? "ar" : undefined);
+		interaction.options.getString = (key) =>
+			key === "locale" ? "ar" : undefined;
 
 		await run(context, interaction);
 
@@ -203,17 +204,14 @@ describe("preferences command autocomplete", () => {
 		const context = makeContext();
 		const responses: Array<{ name: string; value: string }> = [];
 
-		await preferencesCommand.autocomplete?.(
-			context,
-			{
-				options: {
-					getFocused: () => ({ name: "reciter", value: "ش" }),
-				},
-				respond: async (payload: Array<{ name: string; value: string }>) => {
-					responses.push(...payload);
-				},
-			} as never,
-		);
+		await preferencesCommand.autocomplete?.(context, {
+			options: {
+				getFocused: () => ({ name: "reciter", value: "ش" }),
+			},
+			respond: async (payload: Array<{ name: string; value: string }>) => {
+				responses.push(...payload);
+			},
+		} as never);
 
 		assert.deepEqual(
 			responses.map((r) => r.value),
@@ -226,17 +224,14 @@ describe("preferences command autocomplete", () => {
 		const context = makeContext();
 		const responses: Array<{ name: string; value: string }> = [];
 
-		await preferencesCommand.autocomplete?.(
-			context,
-			{
-				options: {
-					getFocused: () => ({ name: "rewayah", value: "حفص" }),
-				},
-				respond: async (payload: Array<{ name: string; value: string }>) => {
-					responses.push(...payload);
-				},
-			} as never,
-		);
+		await preferencesCommand.autocomplete?.(context, {
+			options: {
+				getFocused: () => ({ name: "rewayah", value: "حفص" }),
+			},
+			respond: async (payload: Array<{ name: string; value: string }>) => {
+				responses.push(...payload);
+			},
+		} as never);
 
 		assert.deepEqual(
 			responses.map((r) => r.value),

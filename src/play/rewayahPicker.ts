@@ -4,7 +4,7 @@ import type { Surah } from "../catalog/suwar";
 import { surahName } from "../catalog/suwar";
 import { DEFAULT_LOCALE } from "../config";
 import { createLogger } from "../core/logger";
-import { localizable, type Locale } from "../i18n/locale";
+import { type Locale, localizable } from "../i18n/locale";
 import type { Player } from "../voice/Player";
 import { formatPlayResult } from "./playResult";
 import { buildRecitationFromChoice, type RewayahChoice } from "./resolvePlay";

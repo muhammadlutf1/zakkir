@@ -3,7 +3,7 @@ import type { Surah } from "../catalog/suwar";
 import { DEFAULT_LOCALE } from "../config";
 import type { GuildConfig } from "../guild/GuildConfig";
 import type { GlobalDefaults, RewayahCoverage } from "../guild/types";
-import { localizable, type Locale } from "../i18n/locale";
+import { type Locale, localizable } from "../i18n/locale";
 import type { Recitation } from "../voice/Recitation";
 
 /**
@@ -98,7 +98,11 @@ export async function resolvePlay(
 	}
 
 	// rewayah
-	const rewayat = await catalog.resolveRewayat(reciter.id, surah.number, locale);
+	const rewayat = await catalog.resolveRewayat(
+		reciter.id,
+		surah.number,
+		locale,
+	);
 
 	if (rewayat.length === 0) {
 		return {

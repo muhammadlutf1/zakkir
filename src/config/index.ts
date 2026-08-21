@@ -1,5 +1,5 @@
-import type { Locale } from "../i18n/locale";
 import type { GlobalDefaults } from "../guild/types";
+import type { Locale } from "../i18n/locale";
 
 export interface BotConfig {
 	clientId: string;

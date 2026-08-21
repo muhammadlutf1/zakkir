@@ -1,5 +1,6 @@
 import type { Component } from "../../core/Component";
 import { formatPlayResult } from "../../play/playResult";
+import { radioConfirmReply } from "../../play/radioConfirmPrompt";
 import { buildRecitationFromChoice } from "../../play/resolvePlay";
 import {
 	parsePickerCustomId,
@@ -57,6 +58,13 @@ const component: Component = {
 
 		if (interaction.channel) {
 			player.setNoticeChannel(interaction.channel);
+		}
+
+		if (player.isRadioPlaying) {
+			await interaction.editReply(
+				radioConfirmReply(player, recitation, locale, context.translator),
+			);
+			return;
 		}
 
 		const result = await player.play(recitation);

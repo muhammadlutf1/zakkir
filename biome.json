@@ -1,5 +1,9 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.5.6/schema.json",
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab"
+	},
 	"linter": {
 		"rules": {
 			"nursery": {
