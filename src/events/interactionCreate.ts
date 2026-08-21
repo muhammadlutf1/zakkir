@@ -26,7 +26,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 
 		const commandContext: CommandContext = {
 			players: bot.players,
-			catalog: bot.catalog,
+			catalog: bot.catalog.forLocale(locale),
 			guildConfigs: bot.guildConfigs,
 			play: {
 				defaults: config.defaults,
@@ -38,7 +38,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 
 		const componentContext: ComponentContext = {
 			players: bot.players,
-			catalog: bot.catalog,
+			catalog: bot.catalog.forLocale(locale),
 			guildConfigs: bot.guildConfigs,
 			locale,
 			translator,

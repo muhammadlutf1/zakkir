@@ -48,6 +48,16 @@ interface RawReciter {
 	moshaf: RawMoshaf[];
 }
 
+interface CacheEntry {
+	data: unknown;
+	expiresAt: number;
+}
+
+// Module-level cache shared by every Catalog instance and locale-bound view,
+// keyed by `${endpoint}:${language}` — each endpoint entry is fully
+// independent, so traffic on one never forces a refetch of the other.
+const endpointCache = new Map<string, CacheEntry>();
+
 export class Catalog {
 	private readonly language: Locale;
 
@@ -55,14 +65,29 @@ export class Catalog {
 		this.language = options.language ?? DEFAULT_LANGUAGE;
 	}
 
+	/**
+	 * A Catalog bound to a fixed locale over the same shared endpoint cache —
+	 * what the Dispatcher puts on an interaction context so call sites resolve
+	 * names without threading `locale` through every call.
+	 */
+	forLocale(locale: Locale): Catalog {
+		return new Catalog({ language: locale });
+	}
+
 	async fetchRadios(locale?: Locale) {
-		const data = await this.get<{ radios: Radio[] }>("radios", locale);
+		const data = await this.get<{ radios: Radio[] }>(
+			"radios",
+			locale ?? this.language,
+		);
 
 		return data.radios;
 	}
 
 	async fetchReciters(locale?: Locale) {
-		const data = await this.get<{ reciters: RawReciter[] }>("reciters", locale);
+		const data = await this.get<{ reciters: RawReciter[] }>(
+			"reciters",
+			locale ?? this.language,
+		);
 
 		return data.reciters.map(normalizeReciter);
 	}
@@ -148,18 +173,62 @@ export class Catalog {
 		return radios.find((radio) => radio.id === radioId)?.url;
 	}
 
-	private async get<T>(endpoint: string, locale?: Locale) {
-		const url = `${config.mp3Quran.baseUrl}/${endpoint}?language=${
-			locale ?? this.language
-		}`;
-		const response = await fetch(url);
+	/**
+	 * Serves an endpoint payload from the shared cache while it is fresh;
+	 * on a miss or expiry, refetches (retrying up to `fetchAttempts`), and
+	 * falls back to the stale copy when the refetch keeps failing. A cold
+	 * cache with no stale copy propagates the error.
+	 */
+	private async get<T>(endpoint: string, language: Locale): Promise<T> {
+		const key = `${endpoint}:${language}`;
+		const cached = endpointCache.get(key);
 
-		if (!response.ok) {
-			logger.error({ status: response.status, url }, "MP3Quran request failed");
-			throw new Error(`MP3Quran request failed with status ${response.status}`);
+		if (cached && cached.expiresAt > Date.now()) return cached.data as T;
+
+		try {
+			const data = await this.fetchEndpoint<T>(endpoint, language);
+			endpointCache.set(key, {
+				data,
+				expiresAt: Date.now() + config.catalog.ttlMs,
+			});
+			return data;
+		} catch (error) {
+			if (!cached) throw error;
+
+			logger.warn(
+				error,
+				"MP3Quran refresh failed for %s; serving stale cache",
+				key,
+			);
+			return cached.data as T;
+		}
+	}
+
+	private async fetchEndpoint<T>(endpoint: string, language: Locale) {
+		let lastError: unknown;
+
+		for (let attempt = 0; attempt < config.catalog.fetchAttempts; attempt++) {
+			try {
+				const url = `${config.mp3Quran.baseUrl}/${endpoint}?language=${language}`;
+				const response = await fetch(url);
+
+				if (!response.ok) {
+					logger.error(
+						{ status: response.status, url },
+						"MP3Quran request failed",
+					);
+					throw new Error(
+						`MP3Quran request failed with status ${response.status}`,
+					);
+				}
+
+				return (await response.json()) as T;
+			} catch (error) {
+				lastError = error;
+			}
 		}
 
-		return (await response.json()) as T;
+		throw lastError;
 	}
 }
 
