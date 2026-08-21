@@ -48,7 +48,9 @@ const radioCommand: Command = {
 		const radios = await context.catalog.fetchRadios(context.locale);
 		const radio =
 			radios.find((r) => String(r.id) === stationInput.trim()) ??
-			radios.find((r) => r.name.toLowerCase() === stationInput.trim().toLowerCase());
+			radios.find(
+				(r) => r.name.toLowerCase() === stationInput.trim().toLowerCase(),
+			);
 
 		if (!radio) {
 			await interaction.editReply({
@@ -69,7 +71,9 @@ const radioCommand: Command = {
 		await player.playRadio(radio);
 
 		await interaction.editReply({
-			content: context.translator.t("command.radioStarted", { station: radio.name }),
+			content: context.translator.t("command.radioStarted", {
+				station: radio.name,
+			}),
 		});
 	},
 };

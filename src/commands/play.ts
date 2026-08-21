@@ -10,10 +10,7 @@ import type { Command } from "../core/Command";
 import { recitationLabel } from "../i18n/recitationLabel";
 import { formatPlayResult } from "../play/playResult";
 import { resolvePlay } from "../play/resolvePlay";
-import {
-	RewayahPickerSession,
-	renderPicker,
-} from "../play/rewayahPicker";
+import { RewayahPickerSession, renderPicker } from "../play/rewayahPicker";
 
 const playCommand: Command = {
 	data: new SlashCommandBuilder()

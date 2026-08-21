@@ -159,17 +159,14 @@ describe("play command autocomplete", () => {
 
 		const responses: Array<{ name: string; value: string }> = [];
 
-		await playCommand.autocomplete?.(
-			context,
-			{
-				options: {
-					getFocused: () => ({ name: "reciter", value: "أكرم" }),
-				},
-				respond: async (payload: Array<{ name: string; value: string }>) => {
-					responses.push(...payload);
-				},
-			} as never,
-		);
+		await playCommand.autocomplete?.(context, {
+			options: {
+				getFocused: () => ({ name: "reciter", value: "أكرم" }),
+			},
+			respond: async (payload: Array<{ name: string; value: string }>) => {
+				responses.push(...payload);
+			},
+		} as never);
 
 		assert.deepEqual(responses, [
 			{ name: "أكرم العلاقمي", value: "أكرم العلاقمي" },

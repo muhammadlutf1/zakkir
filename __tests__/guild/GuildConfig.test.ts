@@ -173,7 +173,12 @@ describe("GuildConfig.resolve", () => {
 describe("GuildConfig.language", () => {
 	it("returns the guild's saved locale", () => {
 		const store = memoryStore();
-		store.set({ guildId: "guild-1", language: "ar", defaultReciter: 12, defaultRewayah: 22 });
+		store.set({
+			guildId: "guild-1",
+			language: "ar",
+			defaultReciter: 12,
+			defaultRewayah: 22,
+		});
 		const configs = new GuildConfig(store);
 
 		assert.equal(configs.language("guild-1"), "ar");
@@ -187,7 +192,12 @@ describe("GuildConfig.language", () => {
 
 	it("falls back to the default when the saved language is not a known locale", () => {
 		const store = memoryStore();
-		store.set({ guildId: "guild-1", language: undefined, defaultReciter: undefined, defaultRewayah: undefined });
+		store.set({
+			guildId: "guild-1",
+			language: undefined,
+			defaultReciter: undefined,
+			defaultRewayah: undefined,
+		});
 		const configs = new GuildConfig(store);
 
 		assert.equal(configs.language("guild-1"), "en");

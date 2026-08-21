@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
 import { dirname } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { isLocale } from "../i18n/locale";
 import type { GuildConfigData } from "./types";
 

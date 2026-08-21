@@ -8,28 +8,40 @@ const translator = localizable("en");
 describe("decideFailureResponse", () => {
 	describe("autocomplete", () => {
 		it("logs with no response whether or not it is responsive", () => {
-			assert.deepEqual(decideFailureResponse("autocomplete", false, translator), {
-				action: "log",
-			});
-			assert.deepEqual(decideFailureResponse("autocomplete", true, translator), {
-				action: "log",
-			});
+			assert.deepEqual(
+				decideFailureResponse("autocomplete", false, translator),
+				{
+					action: "log",
+				},
+			);
+			assert.deepEqual(
+				decideFailureResponse("autocomplete", true, translator),
+				{
+					action: "log",
+				},
+			);
 		});
 	});
 
 	describe("messageComponent", () => {
 		it("replies when nothing was responded to yet", () => {
-			assert.deepEqual(decideFailureResponse("messageComponent", false, translator), {
-				action: "reply",
-				content: translator.t("error.componentGeneric"),
-			});
+			assert.deepEqual(
+				decideFailureResponse("messageComponent", false, translator),
+				{
+					action: "reply",
+					content: translator.t("error.componentGeneric"),
+				},
+			);
 		});
 
 		it("follows up when already responded to", () => {
-			assert.deepEqual(decideFailureResponse("messageComponent", true, translator), {
-				action: "followUp",
-				content: translator.t("error.componentGeneric"),
-			});
+			assert.deepEqual(
+				decideFailureResponse("messageComponent", true, translator),
+				{
+					action: "followUp",
+					content: translator.t("error.componentGeneric"),
+				},
+			);
 		});
 	});
 

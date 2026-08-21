@@ -1,8 +1,4 @@
-import {
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle,
-} from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import type { Component } from "../../core/Component";
 import { recitationLabel } from "../../i18n/recitationLabel";
 import { formatPlayResult } from "../../play/playResult";

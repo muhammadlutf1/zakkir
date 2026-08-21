@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-	resolveSurah,
-	surahName,
-	SURAH_LIST,
-} from "../../src/catalog/suwar";
+import { resolveSurah, SURAH_LIST, surahName } from "../../src/catalog/suwar";
 
 describe("SURAH_LIST", () => {
 	it("lists all 114 surahs numbered 1..114", () => {
@@ -12,7 +8,10 @@ describe("SURAH_LIST", () => {
 
 		const numbers = SURAH_LIST.map((s) => s.number);
 
-		assert.deepEqual(numbers, Array.from({ length: 114 }, (_, i) => i + 1));
+		assert.deepEqual(
+			numbers,
+			Array.from({ length: 114 }, (_, i) => i + 1),
+		);
 
 		for (const surah of SURAH_LIST) {
 			assert.ok(surah.name.length > 0);

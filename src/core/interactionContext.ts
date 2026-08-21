@@ -1,7 +1,7 @@
 import type { Catalog } from "../catalog/Catalog";
 import type { GuildConfig } from "../guild/GuildConfig";
 import type { GlobalDefaults } from "../guild/types";
-import type { Localizable, Locale } from "../i18n/locale";
+import type { Locale, Localizable } from "../i18n/locale";
 import type { PlayerRegistry } from "../voice/PlayerRegistry";
 
 /**

@@ -1,10 +1,10 @@
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { TextBasedChannel, VoiceChannel } from "discord.js";
+import type { Radio } from "../catalog/Catalog";
 import { createLogger } from "../core/logger";
 import { Queue, type RepeatMode } from "./Queue";
 import type { Recitation } from "./Recitation";
 import type { VoicePort } from "./VoicePort";
-import type { Radio } from "../catalog/Catalog";
 
 const logger = createLogger("player");
 
@@ -73,8 +73,7 @@ export class Player {
 		VoiceConnectionStatus.Destroyed;
 	private readonly queue = new Queue<Recitation>();
 	private active: { item: Recitation; retries: number } | null = null;
-	private radio: { id: number; name: string; url: string; retries: number } | null =
-		null;
+	private radio: (Radio & { retries: number }) | null = null;
 	private radioRetryTimer: NodeJS.Timeout | undefined;
 	private pendingRadioConfirm: Recitation | null = null;
 	private readonly probeStream: (url: string) => Promise<boolean>;
@@ -131,7 +130,9 @@ export class Player {
 	}
 
 	get radioInfo(): Radio | null {
-		return this.radio ? { id: this.radio.id, name: this.radio.name, url: this.radio.url } : null;
+		return this.radio
+			? { id: this.radio.id, name: this.radio.name, url: this.radio.url }
+			: null;
 	}
 
 	get pendingRecitation(): Recitation | null {
@@ -211,7 +212,11 @@ export class Player {
 			try {
 				this.port.stop();
 			} catch (error) {
-				logger.error(error, "Failed to stop port before radio in guild %s", this.guildId);
+				logger.error(
+					error,
+					"Failed to stop port before radio in guild %s",
+					this.guildId,
+				);
 			}
 		}
 		this.radio = { id: radio.id, name: radio.name, url: radio.url, retries: 0 };
@@ -407,20 +412,33 @@ export class Player {
 				try {
 					this.port.play(this.radio.url);
 				} catch (error) {
-					logger.error(error, "Radio retry play failed in guild %s", this.guildId);
+					logger.error(
+						error,
+						"Radio retry play failed in guild %s",
+						this.guildId,
+					);
 					this.handleRadioStreamError();
 				}
 			}, delay);
 			this.radioRetryTimer.unref?.();
 			return;
 		}
-		logger.warn("Radio %s in guild %s failed after %d retries — going idle", radio.name, this.guildId, MAX_RADIO_RETRIES);
+		logger.warn(
+			"Radio %s in guild %s failed after %d retries — going idle",
+			radio.name,
+			this.guildId,
+			MAX_RADIO_RETRIES,
+		);
 		this.cancelRadioRetry();
 		this.radio = null;
 		try {
 			this.port.stop();
 		} catch (error) {
-			logger.error(error, "Failed to stop after radio retries in guild %s", this.guildId);
+			logger.error(
+				error,
+				"Failed to stop after radio retries in guild %s",
+				this.guildId,
+			);
 		}
 	}
 

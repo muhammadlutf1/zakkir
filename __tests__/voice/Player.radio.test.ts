@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { AudioPlayerStatus } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
-import { Player } from "../../src/voice/Player";
 import type { Radio } from "../../src/catalog/Catalog";
+import { Player } from "../../src/voice/Player";
 import type { Recitation } from "../../src/voice/Recitation";
 import type {
 	VoicePort,
@@ -49,14 +49,22 @@ class FakeVoicePort implements VoicePort {
 	off<K extends VoicePortEventName>(event: K, listener: VoicePortEvents[K]) {
 		this.listeners[event].delete(listener);
 	}
-	emit<K extends VoicePortEventName>(event: K, payload: VoicePortEventPayload<K>) {
+	emit<K extends VoicePortEventName>(
+		event: K,
+		payload: VoicePortEventPayload<K>,
+	) {
 		for (const listener of this.listeners[event])
 			(listener as (payload: VoicePortEventPayload<K>) => void)(payload);
 	}
 }
 
 function radio(overrides: Partial<Radio> = {}): Radio {
-	return { id: 1, name: "Quran Radio", url: "https://example.com/radio.mp3", ...overrides };
+	return {
+		id: 1,
+		name: "Quran Radio",
+		url: "https://example.com/radio.mp3",
+		...overrides,
+	};
 }
 
 function recitation(overrides: Partial<Recitation> = {}): Recitation {
@@ -86,7 +94,9 @@ describe("Player radio", () => {
 
 	it("while radio plays, queued recitations are paused but retained", async () => {
 		const port = new FakeVoicePort();
-		const player = new Player("guild-1", port, { probeStream: async () => true });
+		const player = new Player("guild-1", port, {
+			probeStream: async () => true,
+		});
 		await player.playRadio(radio());
 		const result = await player.play(recitation());
 		assert.equal(result.started, false);
@@ -97,7 +107,9 @@ describe("Player radio", () => {
 
 	it("confirm flow: stopRadio clears radio and pending", async () => {
 		const port = new FakeVoicePort();
-		const player = new Player("guild-1", port, { probeStream: async () => true });
+		const player = new Player("guild-1", port, {
+			probeStream: async () => true,
+		});
 		await player.playRadio(radio());
 		player.setPendingRadioConfirm(recitation());
 		player.stopRadio();
@@ -111,7 +123,9 @@ describe("Player radio", () => {
 		const player = new Player("guild-1", port);
 		await player.playRadio(radio());
 		// add a queued recitation while radio plays — should be retained
-		const queued = await player.play(recitation({ url: "https://example.com/018.mp3" }));
+		const queued = await player.play(
+			recitation({ url: "https://example.com/018.mp3" }),
+		);
 		assert.equal(queued.queued, true);
 		assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
 		// 3 retries: initial radio play + 3 retries = 4 plays before idle
@@ -143,7 +157,9 @@ describe("Player radio", () => {
 
 	it("Idle while radio does not advance queue", async () => {
 		const port = new FakeVoicePort();
-		const player = new Player("guild-1", port, { probeStream: async () => true });
+		const player = new Player("guild-1", port, {
+			probeStream: async () => true,
+		});
 		await player.play(recitation({ url: "https://example.com/018.mp3" }));
 		await player.playRadio(radio());
 		port.emit("playerStateChange", AudioPlayerStatus.Idle);

@@ -152,7 +152,8 @@ function allNames(surah: Surah): string[] {
  * user typing "Al-Kahf" or "الكهف" both resolve to surah 18.
  */
 export function resolveSurah(input: string | number): Surah | undefined {
-	if (typeof input === "number") return SURAH_LIST.find((s) => s.number === input);
+	if (typeof input === "number")
+		return SURAH_LIST.find((s) => s.number === input);
 
 	const trimmed = input.trim();
 

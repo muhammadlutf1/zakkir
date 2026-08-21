@@ -140,7 +140,10 @@ describe("Player", () => {
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 
 			player.endSession();
@@ -168,7 +171,9 @@ describe("Player", () => {
 	describe("playing", () => {
 		it("adds the Recitation to the Queue and feeds the URL after a successful probe", async () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port, { probeStream: async () => true });
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
 
 			const result = await player.play(recitation());
 
@@ -180,17 +185,25 @@ describe("Player", () => {
 
 		it("appends to the Queue without interrupting while playing", async () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port, { probeStream: async () => true });
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			const result = await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 
 			assert.equal(result.started, false);
 			assert.equal(result.queued, true);
 			assert.deepEqual(port.calls, ["play:https://example.com/018.mp3"]);
-			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/018.mp3",
+			);
 			assert.equal(player.queueView.upcoming.length, 1);
 		});
 	});
@@ -233,20 +246,27 @@ describe("Player", () => {
 			]);
 		});
 
-		it("advances to the next reachable Recitation when the first is unreachable", async () => {			const port = new FakeVoicePort();
+		it("advances to the next reachable Recitation when the first is unreachable", async () => {
+			const port = new FakeVoicePort();
 			const player = new Player("guild-1", port, {
 				probeStream: async (url) => url.includes("019"),
 			});
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			const result = await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 
 			assert.equal(result.started, true);
 			assert.equal(player.isPlaying, true);
 			assert.deepEqual(port.calls, ["play:https://example.com/019.mp3"]);
-			assert.equal(player.queueView.current?.url, "https://example.com/019.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/019.mp3",
+			);
 		});
 
 		it("retries once on a recoverable mid-play failure, then continues to the next Recitation", async () => {
@@ -259,7 +279,10 @@ describe("Player", () => {
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 
 			port.emit("streamError", new Error("cut"));
@@ -267,7 +290,10 @@ describe("Player", () => {
 			await flush();
 
 			assert.equal(player.isPlaying, true);
-			assert.equal(player.queueView.current?.url, "https://example.com/019.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/019.mp3",
+			);
 			assert.deepEqual(port.calls, [
 				"play:https://example.com/018.mp3",
 				"play:https://example.com/018.mp3",
@@ -293,7 +319,10 @@ describe("Player", () => {
 			await flush();
 
 			assert.equal(player.isPlaying, false);
-			assert.deepEqual(port.calls, ["play:https://example.com/018.mp3", "play:https://example.com/018.mp3"]);
+			assert.deepEqual(port.calls, [
+				"play:https://example.com/018.mp3",
+				"play:https://example.com/018.mp3",
+			]);
 			assert.deepEqual(messages, [
 				"<:error:1385171040098979961> Playback of الكهف by إبراهيم الأخضر (حفص عن عاصم) failed.",
 			]);
@@ -301,7 +330,9 @@ describe("Player", () => {
 
 		it("does not crash on stream errors with nothing playing", () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port, { probeStream: async () => true });
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
 
 			assert.doesNotThrow(() => port.emit("streamError", new Error("late")));
 			assert.doesNotThrow(() => port.emit("error", new Error("connection")));
@@ -321,7 +352,9 @@ describe("Player", () => {
 	describe("stopping and natural end", () => {
 		it("stop clears the active Recitation so a later play restarts", async () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port, { probeStream: async () => true });
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			player.stop();
@@ -334,22 +367,33 @@ describe("Player", () => {
 				"stop",
 				"play:https://example.com/019.mp3",
 			]);
-			assert.equal(player.queueView.current?.url, "https://example.com/019.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/019.mp3",
+			);
 		});
 
 		it("a natural end advances to the next queued Recitation", async () => {
 			const port = new FakeVoicePort();
-			const player = new Player("guild-1", port, { probeStream: async () => true });
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 			port.emit("playerStateChange", AudioPlayerStatus.Idle);
 			await flush();
 
 			assert.equal(player.isPlaying, true);
-			assert.equal(player.queueView.current?.url, "https://example.com/019.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/019.mp3",
+			);
 			assert.deepEqual(port.calls, [
 				"play:https://example.com/018.mp3",
 				"play:https://example.com/019.mp3",
@@ -392,14 +436,20 @@ describe("Player", () => {
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 
 			const result = await player.skip();
 
 			assert.equal(result.started, true);
 			assert.equal(player.isPlaying, true);
-			assert.equal(player.queueView.current?.url, "https://example.com/019.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/019.mp3",
+			);
 			assert.deepEqual(port.calls, [
 				"play:https://example.com/018.mp3",
 				"play:https://example.com/019.mp3",
@@ -438,14 +488,20 @@ describe("Player", () => {
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 			player.setRepeatMode(RepeatMode.TRACK);
 
 			const result = await player.skip();
 
 			assert.equal(result.started, true);
-			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/018.mp3",
+			);
 			assert.deepEqual(port.calls, [
 				"play:https://example.com/018.mp3",
 				"play:https://example.com/018.mp3",
@@ -460,10 +516,16 @@ describe("Player", () => {
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 			await player.play(
-				recitation({ surah: { number: 20, name: "طه" }, url: "https://example.com/020.mp3" }),
+				recitation({
+					surah: { number: 20, name: "طه" },
+					url: "https://example.com/020.mp3",
+				}),
 			);
 			player.setRepeatMode(RepeatMode.ALL);
 
@@ -471,7 +533,10 @@ describe("Player", () => {
 			await player.skip();
 			await player.skip();
 
-			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/018.mp3",
+			);
 			assert.deepEqual(port.calls, [
 				"play:https://example.com/018.mp3",
 				"play:https://example.com/019.mp3",
@@ -495,7 +560,10 @@ describe("Player", () => {
 			await flush();
 
 			assert.equal(player.isPlaying, true);
-			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/018.mp3",
+			);
 			assert.deepEqual(port.calls, [
 				"play:https://example.com/018.mp3",
 				"play:https://example.com/018.mp3",
@@ -510,7 +578,10 @@ describe("Player", () => {
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 			player.setRepeatMode(RepeatMode.ALL);
 
@@ -520,7 +591,10 @@ describe("Player", () => {
 			await flush();
 
 			assert.equal(player.isPlaying, true);
-			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/018.mp3",
+			);
 			assert.deepEqual(port.calls, [
 				"play:https://example.com/018.mp3",
 				"play:https://example.com/019.mp3",
@@ -553,7 +627,10 @@ describe("Player", () => {
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 
 			assert.equal(player.remove(2), true);
@@ -571,13 +648,19 @@ describe("Player", () => {
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 
 			player.clearQueue();
 
 			assert.equal(player.isPlaying, true);
-			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/018.mp3",
+			);
 			assert.equal(player.queueView.upcoming.length, 0);
 			assert.deepEqual(port.calls, ["play:https://example.com/018.mp3"]);
 		});
@@ -658,7 +741,10 @@ describe("Player", () => {
 			port.emit("stateChange", VoiceConnectionStatus.Ready);
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
 			await player.play(
-				recitation({ surah: { number: 19, name: "مريم" }, url: "https://example.com/019.mp3" }),
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
 			);
 
 			// The last human leaves -> the grace timer starts.
@@ -704,9 +790,15 @@ describe("Player", () => {
 			await flush();
 
 			assert.equal(player.isPlaying, true);
-			assert.equal(player.queueView.current?.url, "https://example.com/018.mp3");
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/018.mp3",
+			);
 			assert.deepEqual(ended, []);
-			assert.deepEqual(port.calls, ["join:voice-1", "play:https://example.com/018.mp3"]);
+			assert.deepEqual(port.calls, [
+				"join:voice-1",
+				"play:https://example.com/018.mp3",
+			]);
 		});
 
 		it("does not arm the grace timer while not connected", async (t) => {

@@ -1,13 +1,14 @@
 import { MessageFlags } from "discord.js";
 import type { Component } from "../../core/Component";
-import { formatPlayResult } from "../../play/playResult";
 import { createLogger } from "../../core/logger";
+import { formatPlayResult } from "../../play/playResult";
 
 const logger = createLogger("radioConfirm");
 
 const component: Component = {
 	id: "radio-confirm",
-	match: (customId) => customId === "radio:confirm" || customId === "radio:cancel",
+	match: (customId) =>
+		customId === "radio:confirm" || customId === "radio:cancel",
 
 	async execute(context, interaction) {
 		if (!interaction.inCachedGuild()) return;

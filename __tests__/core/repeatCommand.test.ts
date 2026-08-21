@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import repeatCommand from "../../src/commands/repeat";
 import type { CommandContext } from "../../src/core/interactionContext";
-import { ar, en } from "../../src/i18n/messages";
 import { localizable, t } from "../../src/i18n/locale";
+import { ar, en } from "../../src/i18n/messages";
 import { RepeatMode } from "../../src/voice/Queue";
 
 function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
@@ -24,19 +24,16 @@ async function runRepeat(
 ): Promise<string | undefined> {
 	const captured: string[] = [];
 
-	await repeatCommand.execute(
-		context,
-		{
-			inCachedGuild: () => true,
-			guildId: "g-1",
-			options: {
-				getString: (key: string) => (key === "mode" ? mode : undefined),
-			},
-			reply: async (payload: string) => {
-				captured.push(payload);
-			},
-		} as never,
-	);
+	await repeatCommand.execute(context, {
+		inCachedGuild: () => true,
+		guildId: "g-1",
+		options: {
+			getString: (key: string) => (key === "mode" ? mode : undefined),
+		},
+		reply: async (payload: string) => {
+			captured.push(payload);
+		},
+	} as never);
 
 	return captured[0];
 }
@@ -47,10 +44,7 @@ describe("repeat mode names are localized", () => {
 			get: () => ({ setRepeatMode: () => undefined }),
 		} as unknown as CommandContext["players"];
 
-		const enReply = await runRepeat(
-			makeContext({ players }),
-			RepeatMode.TRACK,
-		);
+		const enReply = await runRepeat(makeContext({ players }), RepeatMode.TRACK);
 		const arReply = await runRepeat(
 			makeContext({ players, locale: "ar", translator: localizable("ar") }),
 			RepeatMode.TRACK,

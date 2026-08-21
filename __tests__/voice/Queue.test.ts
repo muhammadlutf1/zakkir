@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { Queue, RepeatMode, type QueueView } from "../../src/voice/Queue";
+import { Queue, type QueueView, RepeatMode } from "../../src/voice/Queue";
 
 const alFatiha = { surah: "Al-Fatiha", reciter: "Mishary" } as const;
 const yaseen = { surah: "Yaseen", reciter: "Mishary" } as const;
@@ -290,11 +290,7 @@ describe("advance honors RepeatMode", () => {
 	});
 
 	it("is a safe no-op on an empty Queue in every mode", () => {
-		for (const mode of [
-			RepeatMode.OFF,
-			RepeatMode.TRACK,
-			RepeatMode.ALL,
-		]) {
+		for (const mode of [RepeatMode.OFF, RepeatMode.TRACK, RepeatMode.ALL]) {
 			const queue = new Queue();
 			queue.setRepeatMode(mode);
 
