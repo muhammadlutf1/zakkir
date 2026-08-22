@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import type { Component } from "../../core/Component";
 import { updatePanel } from "../../play/playerPanel";
 import { RepeatMode } from "../../voice/Queue";
@@ -29,7 +30,15 @@ const component: Component = {
 
 		updatePanel(player.guildId);
 
-		await interaction.update({ components: [buildRepeatRow(mode, true)] });
+		await interaction.update({
+			components: [buildRepeatRow(mode, true)],
+		});
+		await interaction.followUp({
+			content: context.translator.t("command.repeatSet", {
+				mode: context.translator.t(`repeat.mode.${mode}` as never),
+			}),
+			flags: MessageFlags.Ephemeral,
+		});
 	},
 };
 

@@ -239,7 +239,7 @@ describe("buildPanelPayload", () => {
 		const ar = textContents(containerOf(player, "ar").container);
 		assert.equal(
 			ar[0],
-			"<:book:1384273893149249546> Surah الكهف by إبراهيم الأخضر",
+			"<:book:1384273893149249546> سورة الكهف بواسطة إبراهيم الأخضر",
 		);
 	});
 
@@ -272,19 +272,21 @@ describe("buildPanelPayload", () => {
 		await player.play(recitation());
 		player.setRepeatMode(RepeatMode.OFF);
 		assert.ok(
-			textContents(containerOf(player).container).includes("Repeat Mode: OFF"),
+			textContents(containerOf(player).container).includes("Repeat Mode: Off"),
 		);
 
 		player.setRepeatMode(RepeatMode.TRACK);
 		assert.ok(
 			textContents(containerOf(player).container).includes(
-				"Repeat Mode: TRACK",
+				"Repeat Mode: Repeat Track",
 			),
 		);
 
 		player.setRepeatMode(RepeatMode.ALL);
 		assert.ok(
-			textContents(containerOf(player).container).includes("Repeat Mode: ALL"),
+			textContents(containerOf(player).container).includes(
+				"Repeat Mode: Repeat All",
+			),
 		);
 	});
 
@@ -407,7 +409,8 @@ describe("the track select", () => {
 
 		assert.equal(select.disabled, true);
 		assert.equal(select.placeholder, "No tracks queued");
-		assert.equal(select.options?.length, 0);
+		assert.equal(select.options?.length, 1);
+		assert.equal(select.options?.[0]?.label, "No tracks queued");
 	});
 });
 
@@ -417,7 +420,7 @@ describe("empty-queue header", () => {
 
 		const texts = textContents(containerOf(player).container);
 
-		assert.ok(texts.includes("Repeat Mode: OFF"));
+		assert.ok(texts.includes("Repeat Mode: Off"));
 		assert.ok(!texts.some((text) => text.includes("Surah ")));
 	});
 });
@@ -516,7 +519,7 @@ describe("updatePanel", () => {
 		assert.ok(handles[0]!.edits.length >= 1);
 		assert.ok(
 			textContents(payloadContainer(handles[0]!.edits[0]!)).includes(
-				"Repeat Mode: ALL",
+				"Repeat Mode: Repeat All",
 			),
 		);
 	});

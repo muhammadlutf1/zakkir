@@ -14,7 +14,7 @@ import {
 } from "discord.js";
 import { surahName } from "../catalog/suwar";
 import { createLogger } from "../core/logger";
-import type { Locale } from "../i18n/locale";
+import { type Locale, localizable } from "../i18n/locale";
 import type { Player } from "../voice/Player";
 
 type SendableTextChannel = Exclude<TextBasedChannel, PartialGroupDMChannel>;
@@ -35,11 +35,12 @@ export const PANEL_SKIP_CUSTOM_ID = "player-panel:skip";
 export const PANEL_REPEAT_CUSTOM_ID = "player-panel:repeat";
 
 const ACCENT_COLOR = 0x2b2d31;
-const NOTE_TEXT =
-	"Note: To skip without clearing previous tracks (in order), set loop mode to 'All' first";
-const EMPTY_QUEUE_PLACEHOLDER = "No tracks queued";
 const MAX_SELECT_OPTIONS = 25;
 const BURIED_WINDOW = 15;
+
+export type PanelEndState =
+	| { kind: "finished" }
+	| { kind: "stoppedBy"; user: string };
 
 /** Read-only view of the active panel for a guild, if one exists. */
 export interface PanelSnapshot {
@@ -52,6 +53,7 @@ interface PanelEntry {
 	player: Player;
 	channel: SendableTextChannel;
 	locale: Locale;
+	status?: PanelEndState;
 	updating: boolean;
 	dirty: boolean;
 	dispose: () => void;
@@ -72,22 +74,38 @@ export function buildPanelPayload(
 	player: Player,
 	locale: Locale,
 	disabled = false,
+	status?: PanelEndState,
 ) {
 	return {
-		components: [buildContainer(player, locale, disabled)],
+		components: [buildContainer(player, locale, disabled, status)],
 		flags: MessageFlags.IsComponentsV2 as number,
 	};
 }
 
-function buildContainer(player: Player, locale: Locale, disabled: boolean) {
+function buildContainer(
+	player: Player,
+	locale: Locale,
+	disabled: boolean,
+	status?: PanelEndState,
+) {
+	const translator = localizable(locale);
 	const view = player.queueView;
 	const current = view.current;
 	const texts: TextDisplayBuilder[] = [];
 
-	if (current) {
+	if (status?.kind === "stoppedBy") {
 		texts.push(
 			new TextDisplayBuilder().setContent(
-				`${BOOK_EMOJI} Surah ${surahName(current.surah, locale)} by ${current.reciterName}`,
+				translator.t("panel.stoppedBy", { user: status.user }),
+			),
+		);
+	} else if (current) {
+		texts.push(
+			new TextDisplayBuilder().setContent(
+				`${BOOK_EMOJI} ${translator.t("panel.title", {
+					surah: surahName(current.surah, locale),
+					reciter: current.reciterName,
+				})}`,
 			),
 		);
 
@@ -96,26 +114,42 @@ function buildContainer(player: Player, locale: Locale, disabled: boolean) {
 		) {
 			texts.push(new TextDisplayBuilder().setContent(current.rewayahName));
 		}
-	}
 
-	texts.push(
-		new TextDisplayBuilder().setContent(
-			`Repeat Mode: ${view.repeatMode.toUpperCase()}`,
-		),
-	);
+		const modeLabel = translator.t(`repeat.mode.${view.repeatMode}` as never);
+		texts.push(
+			new TextDisplayBuilder().setContent(
+				translator.t("panel.repeatMode", { mode: modeLabel }),
+			),
+		);
+	} else {
+		if (!player.isRadioPlaying) {
+			texts.push(
+				new TextDisplayBuilder().setContent(translator.t("panel.finished")),
+			);
+		}
+		const modeLabel = translator.t(`repeat.mode.${view.repeatMode}` as never);
+		texts.push(
+			new TextDisplayBuilder().setContent(
+				translator.t("panel.repeatMode", { mode: modeLabel }),
+			),
+		);
+	}
 
 	const container = new ContainerBuilder()
 		.setAccentColor(ACCENT_COLOR)
 		.addTextDisplayComponents(...texts)
 		.addSeparatorComponents(new SeparatorBuilder())
 		.addActionRowComponents(buildSelectRow(player, locale, disabled))
-		.addActionRowComponents(buildControlsRow(player, disabled))
-		.addTextDisplayComponents(new TextDisplayBuilder().setContent(NOTE_TEXT));
+		.addActionRowComponents(buildControlsRow(player, locale, disabled))
+		.addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(translator.t("panel.note")),
+		);
 
 	return container;
 }
 
 function buildSelectRow(player: Player, locale: Locale, disabled: boolean) {
+	const translator = localizable(locale);
 	const view = player.queueView;
 	const entries = view.current ? [view.current, ...view.upcoming] : [];
 	const select = new StringSelectMenuBuilder().setCustomId(
@@ -123,7 +157,14 @@ function buildSelectRow(player: Player, locale: Locale, disabled: boolean) {
 	);
 
 	if (entries.length === 0) {
-		select.setPlaceholder(EMPTY_QUEUE_PLACEHOLDER);
+		const placeholder = translator.t("panel.noTracks");
+		select.setPlaceholder(placeholder);
+		select.addOptions(
+			new StringSelectMenuOptionBuilder()
+				.setValue("empty")
+				.setLabel(placeholder)
+				.setDefault(true),
+		);
 	} else {
 		select.addOptions(
 			entries.slice(0, MAX_SELECT_OPTIONS).map((recitation, index) => {
@@ -143,29 +184,34 @@ function buildSelectRow(player: Player, locale: Locale, disabled: boolean) {
 	return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
 }
 
-function buildControlsRow(player: Player, disabled: boolean) {
+function buildControlsRow(player: Player, locale: Locale, disabled: boolean) {
+	const translator = localizable(locale);
 	const paused = player.isPaused;
 	const pauseButton = new ButtonBuilder()
 		.setCustomId(PANEL_PAUSE_CUSTOM_ID)
-		.setLabel(paused ? "Resume" : "Pause")
+		.setLabel(
+			paused
+				? translator.t("panel.buttonResume")
+				: translator.t("panel.buttonPause"),
+		)
 		.setEmoji(paused ? PLAY_EMOJI : PAUSE_EMOJI)
 		.setStyle(ButtonStyle.Secondary);
 
 	const stopButton = new ButtonBuilder()
 		.setCustomId(PANEL_STOP_CUSTOM_ID)
-		.setLabel("Stop")
+		.setLabel(translator.t("panel.buttonStop"))
 		.setEmoji(STOP_EMOJI)
 		.setStyle(ButtonStyle.Secondary);
 
 	const skipButton = new ButtonBuilder()
 		.setCustomId(PANEL_SKIP_CUSTOM_ID)
-		.setLabel("Skip")
+		.setLabel(translator.t("panel.buttonSkip"))
 		.setEmoji(FORWARD_EMOJI)
 		.setStyle(ButtonStyle.Secondary);
 
 	const repeatButton = new ButtonBuilder()
 		.setCustomId(PANEL_REPEAT_CUSTOM_ID)
-		.setLabel("Loop")
+		.setLabel(translator.t("panel.buttonLoop"))
 		.setEmoji(REPEAT_EMOJI)
 		.setStyle(ButtonStyle.Secondary);
 
@@ -225,6 +271,12 @@ export function hasPanel(guildId: string) {
 	return panels.has(guildId);
 }
 
+export function setPanelStatus(guildId: string, status: PanelEndState) {
+	const entry = panels.get(guildId);
+	if (!entry) return;
+	entry.status = status;
+}
+
 function registerPanel(
 	player: Player,
 	channel: SendableTextChannel,
@@ -256,7 +308,12 @@ async function refreshEntry(entry: PanelEntry) {
 	entry.updating = true;
 
 	try {
-		const payload = buildPanelPayload(entry.player, entry.locale);
+		const payload = buildPanelPayload(
+			entry.player,
+			entry.locale,
+			false,
+			entry.status,
+		);
 		const buried = await isBuried(entry);
 
 		if (!buried) {
@@ -273,6 +330,7 @@ async function refreshEntry(entry: PanelEntry) {
 		}
 
 		await entry.message.delete().catch((error: unknown) => {
+			if ((error as { code?: number })?.code === 10008) return;
 			logger.debug(
 				error,
 				"Old panel already gone in guild %s",
@@ -316,7 +374,12 @@ async function disablePanel(guildId: string) {
 
 	entry.dispose();
 
-	const payload = buildPanelPayload(entry.player, entry.locale, true);
+	const payload = buildPanelPayload(
+		entry.player,
+		entry.locale,
+		true,
+		entry.status,
+	);
 	try {
 		await entry.message.edit(payload);
 	} catch (error) {

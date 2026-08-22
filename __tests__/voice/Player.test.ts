@@ -1020,7 +1020,7 @@ describe("Player", () => {
 
 			await player.play(recitation({ url: "https://example.com/019.mp3" }));
 
-			assert.equal(changes, 1);
+			assert.equal(changes, 2);
 		});
 
 		it("fires after skip and auto-advance", async () => {
@@ -1046,7 +1046,7 @@ describe("Player", () => {
 			port.emit("playerStateChange", AudioPlayerStatus.Idle);
 			await flush();
 
-			assert.equal(changes, 3);
+			assert.equal(changes, 4);
 		});
 
 		it("fires after pause, unpause, and setRepeatMode", async () => {

@@ -222,9 +222,15 @@ export class Player {
 	async play(recitation: Recitation): Promise<PlayResult> {
 		this.queue.add(recitation);
 
-		if (this.isRadioPlaying) return { started: false, queued: true };
+		if (this.isRadioPlaying) {
+			this.emitChange();
+			return { started: false, queued: true };
+		}
 
-		if (this.isPlaying) return { started: false, queued: true };
+		if (this.isPlaying) {
+			this.emitChange();
+			return { started: false, queued: true };
+		}
 
 		const result = await this.startCurrent();
 

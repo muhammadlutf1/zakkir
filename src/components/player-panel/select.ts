@@ -1,4 +1,6 @@
+import { MessageFlags } from "discord.js";
 import type { Component } from "../../core/Component";
+import { recitationLabel } from "../../i18n/recitationLabel";
 import { updatePanel } from "../../play/playerPanel";
 import { resolvePanelPlayer } from "./shared";
 
@@ -28,6 +30,19 @@ const component: Component = {
 		await player.jumpTo(index);
 
 		updatePanel(player.guildId);
+
+		const jumped = (player as unknown as { queueView?: { current?: unknown } })
+			.queueView?.current as
+			| import("../../voice/Recitation").Recitation
+			| undefined;
+		if (jumped) {
+			await interaction.followUp({
+				content: context.translator.t("panel.jumpedTo", {
+					label: recitationLabel(jumped, context.locale),
+				}),
+				flags: MessageFlags.Ephemeral,
+			});
+		}
 	},
 };
 
