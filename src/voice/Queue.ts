@@ -69,6 +69,20 @@ export class Queue<T> {
 	}
 
 	/**
+	 * Makes the Recitation at the given 0-based index current, dropping every
+	 * item before it and keeping the ones after as upcoming. Unaffected by
+	 * RepeatMode.
+	 */
+	jumpTo(index: number) {
+		if (!Number.isInteger(index) || index < 0 || index >= this.items.length) {
+			return false;
+		}
+
+		this.items = this.items.slice(index);
+		return true;
+	}
+
+	/**
 	 * Removes the Recitation at the given 1-based position.
 	 * @param position - 1-based position of the Recitation to remove.
 	 */

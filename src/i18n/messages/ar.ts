@@ -52,6 +52,26 @@ export const ar = {
 	"command.removed": "تمت إزالة التلاوة من الموضع {position}.",
 	"command.repeatSet":
 		"**<:repeat:1384278335114449060> تم ضبط وضع التكرار على {mode}.**",
+	// Player panel (`/panel` and auto-post)
+	"panel.showing": "🎛️ لوحة المشغّل معروضة الآن.",
+	"panel.title": "سورة {surah} بصوت القارئ {reciter}",
+	"panel.repeatMode": "وضع التكرار: {mode}",
+	"panel.note":
+		'ملاحظة: للتخطي دون إفراغ المقاطع السابقة (بالترتيب)، اضبط وضع التكرار على "تكرار القائمة" أولًا',
+	"panel.noTracks": "لا توجد مقاطع في قائمة الانتظار",
+	"panel.buttonPause": "إيقاف مؤقت",
+	"panel.buttonResume": "متابعة",
+	"panel.buttonStop": "إيقاف",
+	"panel.buttonSkip": "تخطي",
+	"panel.buttonLoop": "تكرار",
+	"panel.repeatOff": "إيقاف",
+	"panel.repeatTrack": "تكرار المقطع",
+	"panel.repeatAll": "تكرار الكل",
+	"panel.finished": "انتهت قائمة التشغيل — استخدم `/play` لإضافة المزيد.",
+	"panel.stoppedBy": "**أوقف المشغّل** {user}.",
+	"panel.paused": "<:pause:1384273881040289924> تم الإيقاف المؤقت.",
+	"panel.resumed": "<:play:1384273884622229514> استؤنف التشغيل.",
+	"panel.jumpedTo": "**<:play:1384273884622229514> انتقل إلى** {label}.",
 	// Repeat-mode names fed into `command.repeatSet`
 	"repeat.mode.off": "إيقاف",
 	"repeat.mode.track": "تكرار التلاوة",

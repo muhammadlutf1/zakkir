@@ -5,6 +5,8 @@ import { PlayerRegistry } from "../../src/voice/PlayerRegistry";
 import type { VoicePort } from "../../src/voice/VoicePort";
 
 class NoopVoicePort implements VoicePort {
+	readonly joinedChannelId = null;
+
 	async join() {}
 
 	leave() {}

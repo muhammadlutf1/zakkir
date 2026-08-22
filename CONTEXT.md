@@ -35,7 +35,7 @@ One per guild. Owns that guild's voice connection and audio playback — joins/l
 _Avoid_: VC manager, audio player manager, guild player
 
 **PlayerPanel**:
-One per guild. Renders the Player's state to a Discord message (embed with action components) and re-edits that same message in place as playback state changes, so the panel stays the single live view of the session.
+One per guild. Renders the Player's state to a Discord message (a Components V2 Container with action components) and re-edits that same message in place as playback state changes, so the panel stays the single live view of the session.
 _Avoid_: player card, now-playing message, player message
 
 **Queue**:

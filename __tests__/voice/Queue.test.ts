@@ -342,3 +342,69 @@ describe("clearPending", () => {
 		assert.deepEqual(queue.view(), emptyView());
 	});
 });
+
+describe("jumpTo", () => {
+	it("makes the item at the 0-based index current and drops everything before it", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+		queue.add(arRahman);
+
+		assert.equal(queue.jumpTo(1), true);
+		assert.deepEqual(queue.view(), {
+			current: yaseen,
+			upcoming: [arRahman],
+			repeatMode: RepeatMode.OFF,
+		});
+		assert.equal(queue.size, 2);
+	});
+
+	it("keeps the items after the index as upcoming", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+		queue.add(arRahman);
+
+		queue.jumpTo(0);
+
+		assert.deepEqual(queue.view().upcoming, [yaseen, arRahman]);
+		assert.equal(queue.size, 3);
+	});
+
+	it("reports failure for an out-of-range index and leaves the Queue untouched", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+
+		assert.equal(queue.jumpTo(2), false);
+		assert.equal(queue.jumpTo(-1), false);
+		assert.deepEqual(queue.view(), {
+			current: alFatiha,
+			upcoming: [yaseen],
+			repeatMode: RepeatMode.OFF,
+		});
+	});
+
+	it("reports failure on an empty Queue", () => {
+		const queue = new Queue();
+
+		assert.equal(queue.jumpTo(0), false);
+		assert.deepEqual(queue.view(), emptyView());
+	});
+
+	it("is unaffected by RepeatMode", () => {
+		const queue = new Queue();
+		queue.add(alFatiha);
+		queue.add(yaseen);
+		queue.add(arRahman);
+		queue.setRepeatMode(RepeatMode.ALL);
+
+		queue.jumpTo(2);
+
+		assert.deepEqual(queue.view(), {
+			current: arRahman,
+			upcoming: [],
+			repeatMode: RepeatMode.ALL,
+		});
+	});
+});
