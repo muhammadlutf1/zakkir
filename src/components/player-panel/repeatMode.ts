@@ -31,7 +31,7 @@ const component: Component = {
 		updatePanel(player.guildId);
 
 		await interaction.update({
-			components: [buildRepeatRow(mode, true)],
+			components: [buildRepeatRow(mode, context.locale, true)],
 		});
 		await interaction.followUp({
 			content: context.translator.t("command.repeatSet", {

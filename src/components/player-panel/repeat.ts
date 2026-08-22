@@ -13,7 +13,7 @@ const component: Component = {
 		if (!player) return;
 
 		await interaction.reply({
-			components: [buildRepeatRow(player.repeatMode)],
+			components: [buildRepeatRow(player.repeatMode, context.locale)],
 			flags: MessageFlags.Ephemeral,
 		});
 	},

@@ -239,7 +239,7 @@ describe("buildPanelPayload", () => {
 		const ar = textContents(containerOf(player, "ar").container);
 		assert.equal(
 			ar[0],
-			"<:book:1384273893149249546> سورة الكهف بواسطة إبراهيم الأخضر",
+			"<:book:1384273893149249546> سورة الكهف بصوت القارئ إبراهيم الأخضر",
 		);
 	});
 

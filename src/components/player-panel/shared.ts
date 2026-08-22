@@ -7,14 +7,16 @@ import {
 	MessageFlags,
 } from "discord.js";
 import type { ComponentContext } from "../../core/interactionContext";
+import { type Locale, localizable } from "../../i18n/locale";
+import type { MessageKey } from "../../i18n/messages/en";
 import { PANEL_REPEAT_CUSTOM_ID } from "../../play/playerPanel";
 import type { Player } from "../../voice/Player";
 import { RepeatMode } from "../../voice/Queue";
 
-const REPEAT_MODES: Array<{ mode: RepeatMode; label: string }> = [
-	{ mode: RepeatMode.OFF, label: "Off" },
-	{ mode: RepeatMode.TRACK, label: "Track" },
-	{ mode: RepeatMode.ALL, label: "All" },
+const REPEAT_MODES: Array<{ mode: RepeatMode; key: MessageKey }> = [
+	{ mode: RepeatMode.OFF, key: "panel.repeatOff" },
+	{ mode: RepeatMode.TRACK, key: "panel.repeatTrack" },
+	{ mode: RepeatMode.ALL, key: "panel.repeatAll" },
 ];
 
 /**
@@ -53,14 +55,19 @@ export async function resolvePanelPlayer(
 }
 
 /** One row of Off/Track/All buttons; the current mode is disabled. */
-export function buildRepeatRow(current: RepeatMode, disabled = false) {
+export function buildRepeatRow(
+	current: RepeatMode,
+	locale: Locale,
+	disabled = false,
+) {
+	const translator = localizable(locale);
 	const row = new ActionRowBuilder<ButtonBuilder>();
 
-	for (const { mode, label } of REPEAT_MODES) {
+	for (const { mode, key } of REPEAT_MODES) {
 		row.addComponents(
 			new ButtonBuilder()
 				.setCustomId(`${PANEL_REPEAT_CUSTOM_ID}:${mode}`)
-				.setLabel(label)
+				.setLabel(translator.t(key))
 				.setStyle(ButtonStyle.Secondary)
 				.setDisabled(disabled || mode === current),
 		);
