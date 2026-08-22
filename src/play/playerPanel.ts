@@ -68,7 +68,8 @@ const panels = new Map<string, PanelEntry>();
 /**
  * Renders the panel's full components-v2 payload from the Player's current
  * state. `disabled` grays out every interactive component (used on session
- * end); the message content itself never changes.
+ * end); the controls also gray out on their own once the Queue drains
+ * naturally and no Radio plays. The message content itself never changes.
  */
 export function buildPanelPayload(
 	player: Player,
@@ -135,12 +136,15 @@ function buildContainer(
 		);
 	}
 
+	const drained = !current && !player.isRadioPlaying;
+	const effectiveDisabled = disabled || drained;
+
 	const container = new ContainerBuilder()
 		.setAccentColor(ACCENT_COLOR)
 		.addTextDisplayComponents(...texts)
 		.addSeparatorComponents(new SeparatorBuilder())
-		.addActionRowComponents(buildSelectRow(player, locale, disabled))
-		.addActionRowComponents(buildControlsRow(player, locale, disabled))
+		.addActionRowComponents(buildSelectRow(player, locale, effectiveDisabled))
+		.addActionRowComponents(buildControlsRow(player, locale, effectiveDisabled))
 		.addTextDisplayComponents(
 			new TextDisplayBuilder().setContent(translator.t("panel.note")),
 		);

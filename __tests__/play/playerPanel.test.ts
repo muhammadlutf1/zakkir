@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { AudioPlayerStatus } from "@discordjs/voice";
 import type { Message, VoiceChannel } from "discord.js";
 import { MessageFlags } from "discord.js";
 import type { Locale } from "../../src/i18n/locale";
@@ -405,12 +406,17 @@ describe("the track select", () => {
 	it("is disabled with a placeholder on an empty queue", () => {
 		const player = makePlayer("panel-select-empty");
 
-		const select = selectOf(containerOf(player).container);
+		const container = containerOf(player).container;
+		const select = selectOf(container);
 
 		assert.equal(select.disabled, true);
 		assert.equal(select.placeholder, "No tracks queued");
 		assert.equal(select.options?.length, 1);
 		assert.equal(select.options?.[0]?.label, "No tracks queued");
+
+		for (const button of buttons(container)) {
+			assert.equal(button.disabled, true);
+		}
 	});
 });
 
@@ -446,6 +452,55 @@ describe("createPanel", () => {
 			messageId: handles[0]!.message.id,
 			channelId: "text-1",
 		});
+	});
+
+	it("disables every control once the queue drains naturally", async () => {
+		const guildId = "panel-drain";
+		const port = new FakeVoicePort();
+		const player = new Player(guildId, port, { probeStream: async () => true });
+		await player.play(recitation());
+		await player.play(
+			recitation({
+				surah: { number: 19, name: "مريم", names: { en: "Maryam" } },
+				url: "https://example.com/019.mp3",
+			}),
+		);
+		const { channel, handles } = makeChannel([]);
+		await createPanel(
+			player,
+			channel as unknown as Parameters<typeof createPanel>[1],
+			"en",
+		);
+		channel.messages.fetch = async () => ({
+			has: (id: string) => id === getPanel(guildId)!.messageId,
+		});
+
+		port.emit("playerStateChange", AudioPlayerStatus.Idle);
+		await flush();
+		assert.equal(handles[0]!.edits.length, 1);
+		assert.ok(
+			textContents(payloadContainer(handles[0]!.edits[0]!)).some((text) =>
+				text.includes("Surah Maryam"),
+			),
+		);
+
+		port.emit("playerStateChange", AudioPlayerStatus.Idle);
+		await flush();
+
+		assert.ok(handles[0]!.edits.length >= 2);
+		assert.equal(hasPanel(guildId), true);
+
+		const edit = handles[0]!.edits.at(-1)!;
+		assert.equal(edit.flags, MessageFlags.IsComponentsV2);
+		const container = payloadContainer(edit);
+		for (const interactive of [...buttons(container), selectOf(container)]) {
+			assert.equal(interactive.disabled, true);
+		}
+		assert.ok(
+			textContents(container).includes(
+				"Queue finished — use `/play` to add more.",
+			),
+		);
 	});
 });
 
