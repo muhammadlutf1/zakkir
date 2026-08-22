@@ -216,7 +216,7 @@ function makePlayer(guildId: string) {
 }
 
 describe("buildPanelPayload", () => {
-	it("sends with the IsComponentsV2 flag and the accent color", async () => {
+	it("sends with the IsComponentsV2 flag", async () => {
 		const player = makePlayer("panel-flags");
 		await player.play(recitation());
 
@@ -224,7 +224,7 @@ describe("buildPanelPayload", () => {
 
 		assert.equal(payload.flags, MessageFlags.IsComponentsV2);
 		assert.equal(payload.flags, 32768);
-		assert.equal(container.accent_color, 0x2b2d31);
+		assert.equal(container.accent_color, undefined);
 	});
 
 	it("renders the title with the book emote and the localized surah name", async () => {
@@ -234,13 +234,13 @@ describe("buildPanelPayload", () => {
 		const en = textContents(containerOf(player, "en").container);
 		assert.equal(
 			en[0],
-			"<:book:1384273893149249546> Surah Al-Kahf by إبراهيم الأخضر",
+			"## <:book:1384273893149249546> Surah Al-Kahf by إبراهيم الأخضر",
 		);
 
 		const ar = textContents(containerOf(player, "ar").container);
 		assert.equal(
 			ar[0],
-			"<:book:1384273893149249546> سورة الكهف بصوت القارئ إبراهيم الأخضر",
+			"## <:book:1384273893149249546> سورة الكهف بصوت القارئ إبراهيم الأخضر",
 		);
 	});
 
@@ -251,7 +251,7 @@ describe("buildPanelPayload", () => {
 		const texts = textContents(containerOf(player).container);
 
 		assert.deepEqual(texts.slice(0, 2), [
-			"<:book:1384273893149249546> Surah Al-Kahf by إبراهيم الأخضر",
+			"## <:book:1384273893149249546> Surah Al-Kahf by إبراهيم الأخضر",
 			"حفص عن عاصم",
 		]);
 	});

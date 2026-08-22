@@ -34,7 +34,6 @@ export const PANEL_STOP_CUSTOM_ID = "player-panel:stop";
 export const PANEL_SKIP_CUSTOM_ID = "player-panel:skip";
 export const PANEL_REPEAT_CUSTOM_ID = "player-panel:repeat";
 
-const ACCENT_COLOR = 0x2b2d31;
 const MAX_SELECT_OPTIONS = 25;
 const BURIED_WINDOW = 15;
 
@@ -103,7 +102,7 @@ function buildContainer(
 	} else if (current) {
 		texts.push(
 			new TextDisplayBuilder().setContent(
-				`${BOOK_EMOJI} ${translator.t("panel.title", {
+				`## ${BOOK_EMOJI} ${translator.t("panel.title", {
 					surah: surahName(current.surah, locale),
 					reciter: current.reciterName,
 				})}`,
@@ -140,13 +139,12 @@ function buildContainer(
 	const effectiveDisabled = disabled || drained;
 
 	const container = new ContainerBuilder()
-		.setAccentColor(ACCENT_COLOR)
 		.addTextDisplayComponents(...texts)
 		.addSeparatorComponents(new SeparatorBuilder())
 		.addActionRowComponents(buildSelectRow(player, locale, effectiveDisabled))
 		.addActionRowComponents(buildControlsRow(player, locale, effectiveDisabled))
 		.addTextDisplayComponents(
-			new TextDisplayBuilder().setContent(translator.t("panel.note")),
+			new TextDisplayBuilder().setContent(`-# ${translator.t("panel.note")}`),
 		);
 
 	return container;
