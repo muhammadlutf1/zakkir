@@ -5,7 +5,7 @@ import type {
 } from "discord.js";
 import { Events, MessageFlags } from "discord.js";
 import { Catalog } from "../catalog/Catalog";
-import { config, DEFAULT_LOCALE } from "../config";
+import { config } from "../config";
 import type { BotEvent } from "../core/Event";
 import type {
 	CommandContext,
@@ -22,9 +22,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 		if (!interaction.guild) return;
 
 		// The guild's UI locale for every reactive reply in this dispatch.
-		const locale = interaction.guildId
-			? bot.guildConfigs.language(interaction.guildId)
-			: DEFAULT_LOCALE;
+		const locale = bot.guildConfigs.language(interaction.guild.id);
 		const translator = localizable(locale);
 		// A Catalog bound to the guild's locale over the shared endpoint cache,
 		// so call sites resolve localized names without passing `locale` around.
