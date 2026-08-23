@@ -1,10 +1,10 @@
 import type { Component } from "../../core/Component";
-import { setPanelStatus } from "../../play/playerPanel";
+import { PANEL_STOP_CUSTOM_ID, setPanelStatus } from "../../play/playerPanel";
 import { resolvePanelPlayer } from "./shared";
 
 const component: Component = {
 	id: "player-panel-stop",
-	match: (customId) => customId === "player-panel:stop",
+	match: (customId) => customId === PANEL_STOP_CUSTOM_ID,
 
 	async execute(context, interaction) {
 		const player = await resolvePanelPlayer(context, interaction);

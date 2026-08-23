@@ -72,6 +72,7 @@ export const ar = {
 	"panel.paused": "<:pause:1384273881040289924> تم الإيقاف المؤقت.",
 	"panel.resumed": "<:play:1384273884622229514> استؤنف التشغيل.",
 	"panel.jumpedTo": "**<:play:1384273884622229514> انتقل إلى** {label}.",
+	"panel.radioTitle": "راديو: {station}",
 	// Repeat-mode names fed into `command.repeatSet`
 	"repeat.mode.off": "إيقاف",
 	"repeat.mode.track": "تكرار التلاوة",

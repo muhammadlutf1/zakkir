@@ -1,14 +1,14 @@
 import { MessageFlags } from "discord.js";
 import type { Component } from "../../core/Component";
 import { recitationLabel } from "../../i18n/recitationLabel";
-import { updatePanel } from "../../play/playerPanel";
+import { PANEL_SELECT_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
 import { resolvePanelPlayer } from "./shared";
 
 const TRACK_VALUE_PREFIX = "track-";
 
 const component: Component = {
 	id: "player-panel-select",
-	match: (customId) => customId === "player-panel:select",
+	match: (customId) => customId === PANEL_SELECT_CUSTOM_ID,
 
 	async execute(context, interaction) {
 		const player = await resolvePanelPlayer(context, interaction);
@@ -31,10 +31,7 @@ const component: Component = {
 
 		updatePanel(player.guildId);
 
-		const jumped = (player as unknown as { queueView?: { current?: unknown } })
-			.queueView?.current as
-			| import("../../voice/Recitation").Recitation
-			| undefined;
+		const jumped = player.queueView.current;
 		if (jumped) {
 			await interaction.followUp({
 				content: context.translator.t("panel.jumpedTo", {

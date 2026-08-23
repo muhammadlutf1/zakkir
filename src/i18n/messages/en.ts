@@ -72,6 +72,7 @@ export const en = {
 	"panel.paused": "<:pause:1384273881040289924> Paused.",
 	"panel.resumed": "<:play:1384273884622229514> Resumed.",
 	"panel.jumpedTo": "**<:play:1384273884622229514> Jumped to** {label}.",
+	"panel.radioTitle": "Radio: {station}",
 	// Repeat-mode names fed into `command.repeatSet`
 	"repeat.mode.off": "Off",
 	"repeat.mode.track": "Repeat Track",

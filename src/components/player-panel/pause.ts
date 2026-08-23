@@ -1,11 +1,11 @@
 import { MessageFlags } from "discord.js";
 import type { Component } from "../../core/Component";
-import { updatePanel } from "../../play/playerPanel";
+import { PANEL_PAUSE_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
 import { resolvePanelPlayer } from "./shared";
 
 const component: Component = {
 	id: "player-panel-pause",
-	match: (customId) => customId === "player-panel:pause",
+	match: (customId) => customId === PANEL_PAUSE_CUSTOM_ID,
 
 	async execute(context, interaction) {
 		const player = await resolvePanelPlayer(context, interaction);

@@ -1,6 +1,6 @@
 import { MessageFlags } from "discord.js";
 import type { Component } from "../../core/Component";
-import { updatePanel } from "../../play/playerPanel";
+import { PANEL_REPEAT_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
 import { RepeatMode } from "../../voice/Queue";
 import { buildRepeatRow, resolvePanelPlayer } from "./shared";
 
@@ -12,14 +12,19 @@ const MODES: Record<string, RepeatMode> = {
 
 const component: Component = {
 	id: "player-panel-repeat-mode",
-	match: (customId) => /^player-panel:repeat:(off|track|all)$/.test(customId),
+	match: (customId) =>
+		customId.startsWith(`${PANEL_REPEAT_CUSTOM_ID}:`) &&
+		(customId.slice(PANEL_REPEAT_CUSTOM_ID.length + 1) as RepeatMode) in MODES,
 
 	async execute(context, interaction) {
 		const player = await resolvePanelPlayer(context, interaction);
 
 		if (!player) return;
 
-		const mode = MODES[interaction.customId.split(":")[2] ?? ""];
+		const suffix = interaction.customId.slice(
+			PANEL_REPEAT_CUSTOM_ID.length + 1,
+		);
+		const mode = MODES[suffix];
 
 		if (!mode) {
 			await interaction.deferUpdate();

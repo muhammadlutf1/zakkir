@@ -73,6 +73,13 @@ function makeFakePlayer(
 			repeatMode = mode;
 			calls.push(`repeat:${mode}`);
 		},
+		get queueView() {
+			return {
+				current: undefined,
+				upcoming: [],
+				repeatMode,
+			};
+		},
 		onChange(_listener: () => void) {
 			return () => {};
 		},

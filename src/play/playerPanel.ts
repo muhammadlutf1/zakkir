@@ -22,6 +22,7 @@ type SendableTextChannel = Exclude<TextBasedChannel, PartialGroupDMChannel>;
 const logger = createLogger("playerPanel");
 
 const BOOK_EMOJI = "<:book:1384273893149249546>";
+const MICROPHONE_EMOJI = "<:microphone:1387684996587851877>";
 const PAUSE_EMOJI = "<:pause:1384273881040289924>";
 const PLAY_EMOJI = "<:play:1384273884622229514>";
 const STOP_EMOJI = "<:stop:1384273886652137665>";
@@ -99,6 +100,19 @@ function buildContainer(
 				translator.t("panel.stoppedBy", { user: status.user }),
 			),
 		);
+	} else if (player.isRadioPlaying) {
+		const station = player.radioInfo?.name ?? "radio";
+		texts.push(
+			new TextDisplayBuilder().setContent(
+				`## ${MICROPHONE_EMOJI} ${translator.t("panel.radioTitle", { station })}`,
+			),
+		);
+		const modeLabel = translator.t(`repeat.mode.${view.repeatMode}` as never);
+		texts.push(
+			new TextDisplayBuilder().setContent(
+				translator.t("panel.repeatMode", { mode: modeLabel }),
+			),
+		);
 	} else if (current) {
 		texts.push(
 			new TextDisplayBuilder().setContent(
@@ -109,6 +123,7 @@ function buildContainer(
 			),
 		);
 
+		// Hide rewayah subtitle when it duplicates the reciter name (some moshafs repeat it).
 		if (
 			current.rewayahName.toLowerCase() !== current.reciterName.toLowerCase()
 		) {
@@ -122,11 +137,9 @@ function buildContainer(
 			),
 		);
 	} else {
-		if (!player.isRadioPlaying) {
-			texts.push(
-				new TextDisplayBuilder().setContent(translator.t("panel.finished")),
-			);
-		}
+		texts.push(
+			new TextDisplayBuilder().setContent(translator.t("panel.finished")),
+		);
 		const modeLabel = translator.t(`repeat.mode.${view.repeatMode}` as never);
 		texts.push(
 			new TextDisplayBuilder().setContent(
@@ -189,6 +202,7 @@ function buildSelectRow(player: Player, locale: Locale, disabled: boolean) {
 function buildControlsRow(player: Player, locale: Locale, disabled: boolean) {
 	const translator = localizable(locale);
 	const paused = player.isPaused;
+	const isRadio = player.isRadioPlaying;
 	const pauseButton = new ButtonBuilder()
 		.setCustomId(PANEL_PAUSE_CUSTOM_ID)
 		.setLabel(
@@ -220,8 +234,8 @@ function buildControlsRow(player: Player, locale: Locale, disabled: boolean) {
 	return new ActionRowBuilder<ButtonBuilder>().addComponents(
 		pauseButton.setDisabled(disabled),
 		stopButton.setDisabled(disabled),
-		skipButton.setDisabled(disabled),
-		repeatButton.setDisabled(disabled),
+		skipButton.setDisabled(disabled || isRadio),
+		repeatButton.setDisabled(disabled || isRadio),
 	);
 }
 
