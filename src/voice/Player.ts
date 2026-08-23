@@ -292,6 +292,27 @@ export class Player {
 		await this.port.join(channel);
 	}
 
+	/**
+	 * Syncs the Player to an external voice move (e.g. an admin dragged the
+	 * bot to another channel). The audio pipeline is untouched — the
+	 * AudioPlayer stays subscribed to the same VoiceConnection, so the current
+	 * Recitation/Radio keeps playing. Only the channel pointer and grace timer
+	 * are updated so membership tracking follows the new channel.
+	 */
+	handleExternalMove(channel: VoiceChannel): void {
+		if (this.channel?.id === channel.id) {
+			this.refreshVoiceMembership();
+			return;
+		}
+		logger.info(
+			"Player moved to voice channel %s in guild %s via external move",
+			channel.id,
+			this.guildId,
+		);
+		this.channel = channel;
+		this.refreshVoiceMembership();
+	}
+
 	leave(): void {
 		logger.info("Player leaving voice channel in guild %s", this.guildId);
 		this.cancelGraceTimer();
