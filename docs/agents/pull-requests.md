@@ -6,9 +6,35 @@ PRs are created with the `gh` CLI. Body text is written as GitHub-flavored Markd
 
 When the body contains backticks, hash signs, or other Markdown/foreground characters, do **not** pass it inline to `gh pr create/edit --body "..."`.
 
-This shell is PowerShell, which does not treat `\`` or `\#` as escapes — the backslash passes through literally, and the resulting PR body is full of `\` garbage. This bit us in #16.
+Different shells escape differently (PowerShell, for example, does not treat `\`` or `\#` as escapes — the backslash passes through literally and the resulting PR body ends up full of `\` garbage). This bit us in #16.
 
-Instead, write the body to a temp file and pass it with `--body-file`, then delete the temp file once the PR is uploaded:
+Instead, write the body to a temp file and pass it with `--body-file`, then delete the temp file once the PR is uploaded. Use the OS temp directory or any location outside the workspace for these throwaway files, and always remove them afterwards.
+
+**Linux / macOS (bash/zsh):**
+
+```sh
+bodyFile=$(mktemp)
+
+# write the markdown body to "$bodyFile" ...
+
+gh pr create --base main --head my-branch --title "feat(...): ..." --body-file "$bodyFile"
+
+rm "$bodyFile"
+```
+
+Same for edits:
+
+```sh
+bodyFile=$(mktemp)
+
+# write the markdown body to "$bodyFile" ...
+
+gh pr edit 16 --body-file "$bodyFile"
+
+rm "$bodyFile"
+```
+
+**Windows (PowerShell):**
 
 ```powershell
 $bodyFile = Join-Path ([System.IO.Path]::GetTempPath()) "pr-body.md"
@@ -31,8 +57,6 @@ gh pr edit 16 --body-file $bodyFile
 
 Remove-Item -LiteralPath $bodyFile
 ```
-
-Use the OS temp dir or any location outside the workspace for these throwaway files, and always remove them once the PR has been created or updated.
 
 ## PR conventions
 
