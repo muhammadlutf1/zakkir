@@ -11,7 +11,7 @@ function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 		players: {} as CommandContext["players"],
 		catalog: {} as CommandContext["catalog"],
 		guildConfigs: {} as CommandContext["guildConfigs"],
-		play: {} as CommandContext["play"],
+		playback: {} as CommandContext["playback"],
 		locale: "en",
 		translator: localizable("en"),
 		...overrides,

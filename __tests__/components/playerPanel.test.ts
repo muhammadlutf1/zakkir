@@ -140,6 +140,7 @@ function makeContext(player?: Player): ComponentContext {
 		players: { get: () => player },
 		catalog: {} as Catalog,
 		guildConfigs: {} as GuildConfig,
+		playback: {} as ComponentContext["playback"],
 		locale: "en",
 		translator: localizable("en"),
 	};

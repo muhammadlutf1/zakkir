@@ -5,7 +5,6 @@ import type {
 } from "discord.js";
 import { Events, MessageFlags } from "discord.js";
 import { Catalog } from "../catalog/Catalog";
-import { config } from "../config";
 import type { BotEvent } from "../core/Event";
 import type {
 	CommandContext,
@@ -32,10 +31,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 			players: bot.players,
 			catalog,
 			guildConfigs: bot.guildConfigs,
-			play: {
-				defaults: config.defaults,
-				pickerTimeoutMs: config.rewayahPicker.timeoutMs,
-			},
+			playback: bot.playback,
 			locale,
 			translator,
 		};
@@ -44,6 +40,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 			players: bot.players,
 			catalog,
 			guildConfigs: bot.guildConfigs,
+			playback: bot.playback,
 			locale,
 			translator,
 		};

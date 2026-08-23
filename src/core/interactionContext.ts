@@ -1,7 +1,7 @@
 import type { Catalog } from "../catalog/Catalog";
 import type { GuildConfig } from "../guild/GuildConfig";
-import type { GlobalDefaults } from "../guild/types";
 import type { Locale, Localizable } from "../i18n/locale";
+import type { PlaybackRequest } from "../play/playbackRequest";
 import type { PlayerRegistry } from "../voice/PlayerRegistry";
 
 /**
@@ -10,17 +10,13 @@ import type { PlayerRegistry } from "../voice/PlayerRegistry";
  */
 export type PlayerRegistryView = Omit<PlayerRegistry, "playerFactory">;
 
-export interface PlayConfig {
-	defaults: GlobalDefaults;
-	pickerTimeoutMs: number;
-}
-
 /** Collaborators a slash-command handler may touch. */
 export interface CommandContext {
 	players: Omit<PlayerRegistry, "playerFactory">;
 	catalog: Catalog;
 	guildConfigs: GuildConfig;
-	play: PlayConfig;
+	/** The guild's PlaybackRequest: the single seam for /play flows. */
+	playback: PlaybackRequest;
 	/** The guild's UI locale for this dispatch. */
 	locale: Locale;
 	/** The locale-bound message key resolver for every reply in this dispatch. */
@@ -32,6 +28,8 @@ export interface ComponentContext {
 	players: Pick<PlayerRegistryView, "get">;
 	catalog: Catalog;
 	guildConfigs: GuildConfig;
+	/** The guild's PlaybackRequest: the single seam for /play flows. */
+	playback: PlaybackRequest;
 	/** The guild's UI locale for this dispatch. */
 	locale: Locale;
 	/** The locale-bound message key resolver for every reply in this dispatch. */

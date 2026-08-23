@@ -75,7 +75,6 @@ export class Player {
 	private active: { item: Recitation; retries: number } | null = null;
 	private radio: (Radio & { retries: number }) | null = null;
 	private radioRetryTimer: NodeJS.Timeout | undefined;
-	private pendingRadioConfirm: Recitation | null = null;
 	private readonly probeStream: (url: string) => Promise<boolean>;
 	private readonly gracePeriodMs: number;
 	private readonly onSessionEnd?: (guildId: string) => void;
@@ -83,6 +82,7 @@ export class Player {
 	private readonly noticeListeners = new Set<(message: string) => void>();
 	private readonly changeListeners = new Set<() => void>();
 	private readonly endListeners = new Set<() => void>();
+	private readonly radioListeners = new Set<() => void>();
 	private noticeChannelRef: TextBasedChannel | undefined;
 	private channel: VoiceChannel | undefined;
 	private graceTimer: NodeJS.Timeout | undefined;
@@ -141,24 +141,6 @@ export class Player {
 		return this.radio
 			? { id: this.radio.id, name: this.radio.name, url: this.radio.url }
 			: null;
-	}
-
-	get pendingRecitation(): Recitation | null {
-		return this.pendingRadioConfirm;
-	}
-
-	setPendingRadioConfirm(recitation: Recitation | null) {
-		this.pendingRadioConfirm = recitation;
-	}
-
-	clearPendingRadioConfirm() {
-		this.pendingRadioConfirm = null;
-	}
-
-	takePendingRadioConfirm(): Recitation | null {
-		const pending = this.pendingRadioConfirm;
-		this.pendingRadioConfirm = null;
-		return pending;
 	}
 
 	get queueView() {
@@ -241,21 +223,21 @@ export class Player {
 
 	async playRadio(radio: Radio): Promise<void> {
 		this.cancelRadioRetry();
-		this.pendingRadioConfirm = null;
 		if (this.active) {
 			this.active = null;
 			this.port.stop();
 		}
 		this.radio = { id: radio.id, name: radio.name, url: radio.url, retries: 0 };
 		this.port.play(radio.url);
+		this.emitRadioChange();
 	}
 
 	stopRadio(): void {
 		if (!this.radio) return;
 		this.cancelRadioRetry();
 		this.radio = null;
-		this.pendingRadioConfirm = null;
 		this.port.stop();
+		this.emitRadioChange();
 	}
 
 	onNotice(listener: (message: string) => void): () => void {
@@ -280,6 +262,19 @@ export class Player {
 		this.endListeners.add(listener);
 
 		return () => this.endListeners.delete(listener);
+	}
+
+	/**
+	 * Subscribes to Radio state transitions (a Radio started, stopped, gave
+	 * up after retries, or the session ended). Returns an unsubscribe
+	 * function. Lets the play layer drop per-guild state tied to the current
+	 * Radio — e.g. pending play confirmations — without reaching into
+	 * playback internals.
+	 */
+	onRadioChange(listener: () => void): () => void {
+		this.radioListeners.add(listener);
+
+		return () => this.radioListeners.delete(listener);
 	}
 
 	async join(channel: VoiceChannel): Promise<void> {
@@ -318,7 +313,7 @@ export class Player {
 		this.cancelGraceTimer();
 		this.cancelRadioRetry();
 		this.radio = null;
-		this.pendingRadioConfirm = null;
+		this.emitRadioChange();
 		this.channel = undefined;
 		this.connectionState = VoiceConnectionStatus.Destroyed;
 		this.active = null;
@@ -357,7 +352,7 @@ export class Player {
 	stop(): void {
 		this.cancelRadioRetry();
 		this.radio = null;
-		this.pendingRadioConfirm = null;
+		this.emitRadioChange();
 		this.active = null;
 		this.queue.clear();
 		this.port.stop();
@@ -409,7 +404,7 @@ export class Player {
 	endSession() {
 		this.cancelRadioRetry();
 		this.radio = null;
-		this.pendingRadioConfirm = null;
+		this.emitRadioChange();
 		this.leave();
 		this.queue.clear();
 		this.port.destroy();
@@ -476,6 +471,7 @@ export class Player {
 		);
 		this.cancelRadioRetry();
 		this.radio = null;
+		this.emitRadioChange();
 		this.port.stop();
 	}
 
@@ -555,5 +551,9 @@ export class Player {
 
 	private emitChange() {
 		for (const listener of this.changeListeners) listener();
+	}
+
+	private emitRadioChange() {
+		for (const listener of this.radioListeners) listener();
 	}
 }

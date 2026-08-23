@@ -9,6 +9,7 @@ import { GuildConfig } from "../../src/guild/GuildConfig";
 import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
 import type { GlobalDefaults } from "../../src/guild/types";
 import { localizable } from "../../src/i18n/locale";
+import { PlaybackRequest } from "../../src/play/playbackRequest";
 import type { Player } from "../../src/voice/Player";
 
 const NO_DEFAULTS: GlobalDefaults = {
@@ -108,7 +109,15 @@ describe("play command with a fabricated context", () => {
 			},
 			catalog: new FakeCatalog() as unknown as Catalog,
 			guildConfigs: new GuildConfig(new SqliteGuildConfigStore(":memory:")),
-			play: { defaults: NO_DEFAULTS, pickerTimeoutMs: 100 },
+			playback: new PlaybackRequest({
+				players: {
+					getOrCreate: () => player,
+					get: () => undefined,
+				},
+				guildConfig: new GuildConfig(new SqliteGuildConfigStore(":memory:")),
+				defaults: NO_DEFAULTS,
+				pickerTimeoutMs: 100,
+			}),
 			locale: "en",
 			translator: localizable("en"),
 		};
@@ -152,7 +161,7 @@ describe("play command autocomplete", () => {
 			players: {} as CommandContext["players"],
 			catalog: new FakeCatalog() as unknown as Catalog,
 			guildConfigs: new GuildConfig(new SqliteGuildConfigStore(":memory:")),
-			play: { defaults: NO_DEFAULTS, pickerTimeoutMs: 100 },
+			playback: {} as CommandContext["playback"],
 			locale: "en",
 			translator: localizable("en"),
 		};

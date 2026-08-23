@@ -48,7 +48,7 @@ function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 		players: {} as CommandContext["players"],
 		catalog: new FakeCatalog() as unknown as Catalog,
 		guildConfigs: new GuildConfig(new SqliteGuildConfigStore(":memory:")),
-		play: {} as CommandContext["play"],
+		playback: {} as CommandContext["playback"],
 		locale: "en",
 		translator: localizable("en"),
 		...overrides,

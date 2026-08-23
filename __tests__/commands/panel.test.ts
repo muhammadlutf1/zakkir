@@ -87,14 +87,7 @@ function makeContext(player: Player | undefined): CommandContext {
 		},
 		catalog: {} as Catalog,
 		guildConfigs: new GuildConfig(new SqliteGuildConfigStore(":memory:")),
-		play: {
-			defaults: {
-				language: "en",
-				defaultReciter: undefined,
-				defaultRewayah: undefined,
-			},
-			pickerTimeoutMs: 100,
-		},
+		playback: {} as CommandContext["playback"],
 		locale: "en",
 		translator: localizable("en"),
 	};
