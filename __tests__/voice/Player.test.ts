@@ -16,6 +16,11 @@ import type {
 
 class FakeVoicePort implements VoicePort {
 	readonly calls: string[] = [];
+	private _joinedChannelId: string | null = null;
+
+	get joinedChannelId() {
+		return this._joinedChannelId;
+	}
 
 	private listeners: {
 		[K in VoicePortEventName]: Set<VoicePortEvents[K]>;
@@ -27,11 +32,13 @@ class FakeVoicePort implements VoicePort {
 	};
 
 	async join(channel: VoiceChannel) {
+		this._joinedChannelId = channel.id;
 		this.calls.push(`join:${channel.id}`);
 	}
 
 	leave() {
 		this.calls.push("leave");
+		this._joinedChannelId = null;
 	}
 
 	play(url: string) {
@@ -845,6 +852,262 @@ describe("Player", () => {
 			await flush();
 
 			assert.deepEqual(ended, ["guild-1"]);
+		});
+	});
+
+	describe("jumpTo", () => {
+		it("restarts playback at the given 0-based queue index, dropping the prefix", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
+			);
+			await player.play(
+				recitation({
+					surah: { number: 20, name: "طه" },
+					url: "https://example.com/020.mp3",
+				}),
+			);
+
+			const result = await player.jumpTo(1);
+
+			assert.equal(result.started, true);
+			assert.equal(player.isPlaying, true);
+			assert.equal(
+				player.queueView.current?.url,
+				"https://example.com/019.mp3",
+			);
+			assert.deepEqual(
+				player.queueView.upcoming.map((r) => r.url),
+				["https://example.com/020.mp3"],
+			);
+			assert.deepEqual(port.calls, [
+				"play:https://example.com/018.mp3",
+				"stop",
+				"play:https://example.com/019.mp3",
+			]);
+		});
+
+		it("is a no-op when nothing sits at that index", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+
+			const result = await player.jumpTo(5);
+
+			assert.equal(result.started, false);
+			assert.equal(result.queued, false);
+			assert.equal(player.isPlaying, true);
+			assert.deepEqual(port.calls, ["play:https://example.com/018.mp3"]);
+		});
+
+		it("is a no-op while Radio is playing", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.playRadio({
+				id: 1,
+				name: "Quran Radio",
+				url: "https://example.com/radio.mp3",
+			});
+
+			await player.jumpTo(0);
+
+			assert.equal(player.isRadioPlaying, true);
+			assert.deepEqual(port.calls, [
+				"play:https://example.com/018.mp3",
+				"stop",
+				"play:https://example.com/radio.mp3",
+			]);
+		});
+
+		it("notifies onChange listeners", async () => {
+			const player = new Player("guild-1", new FakeVoicePort(), {
+				probeStream: async () => true,
+			});
+			let changes = 0;
+			player.onChange(() => {
+				changes += 1;
+			});
+
+			await player.play(recitation());
+			await player.play(recitation({ url: "https://example.com/019.mp3" }));
+
+			const before = changes;
+			await player.jumpTo(0);
+
+			assert.equal(changes, before + 1);
+		});
+	});
+
+	describe("isPaused", () => {
+		it("toggles with pause and unpause", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation());
+
+			assert.equal(player.isPaused, false);
+
+			player.pause();
+			assert.equal(player.isPaused, true);
+
+			player.unpause();
+			assert.equal(player.isPaused, false);
+		});
+
+		it("stays in sync from playerStateChange events", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+
+			await player.play(recitation());
+
+			port.emit("playerStateChange", AudioPlayerStatus.Paused);
+			assert.equal(player.isPaused, true);
+
+			port.emit("playerStateChange", AudioPlayerStatus.Playing);
+			assert.equal(player.isPaused, false);
+
+			port.emit("playerStateChange", AudioPlayerStatus.Buffering);
+			assert.equal(player.isPaused, false);
+		});
+	});
+
+	describe("voiceChannelId", () => {
+		it("exposes the joined channel id and clears it on leave", async () => {
+			const player = new Player("guild-1", new FakeVoicePort());
+
+			assert.equal(player.voiceChannelId, null);
+
+			await player.join(channel);
+			assert.equal(player.voiceChannelId, "voice-1");
+
+			player.leave();
+			assert.equal(player.voiceChannelId, null);
+		});
+	});
+
+	describe("onChange", () => {
+		it("fires after play starts something", async () => {
+			const player = new Player("guild-1", new FakeVoicePort(), {
+				probeStream: async () => true,
+			});
+			let changes = 0;
+			player.onChange(() => {
+				changes += 1;
+			});
+
+			await player.play(recitation());
+
+			assert.equal(changes, 1);
+
+			await player.play(recitation({ url: "https://example.com/019.mp3" }));
+
+			assert.equal(changes, 2);
+		});
+
+		it("fires after skip and auto-advance", async () => {
+			const port = new FakeVoicePort();
+			const player = new Player("guild-1", port, {
+				probeStream: async () => true,
+			});
+			let changes = 0;
+			player.onChange(() => {
+				changes += 1;
+			});
+
+			await player.play(recitation({ url: "https://example.com/018.mp3" }));
+			await player.play(
+				recitation({
+					surah: { number: 19, name: "مريم" },
+					url: "https://example.com/019.mp3",
+				}),
+			);
+
+			await player.skip();
+
+			port.emit("playerStateChange", AudioPlayerStatus.Idle);
+			await flush();
+
+			assert.equal(changes, 4);
+		});
+
+		it("fires after pause, unpause, and setRepeatMode", async () => {
+			const player = new Player("guild-1", new FakeVoicePort(), {
+				probeStream: async () => true,
+			});
+			let changes = 0;
+			player.onChange(() => {
+				changes += 1;
+			});
+
+			player.pause();
+			player.unpause();
+			player.setRepeatMode(RepeatMode.ALL);
+
+			assert.equal(changes, 3);
+		});
+
+		it("stops firing after unsubscribe", async () => {
+			const player = new Player("guild-1", new FakeVoicePort(), {
+				probeStream: async () => true,
+			});
+			let changes = 0;
+			const unsubscribe = player.onChange(() => {
+				changes += 1;
+			});
+
+			player.setRepeatMode(RepeatMode.TRACK);
+			unsubscribe();
+			player.setRepeatMode(RepeatMode.ALL);
+
+			assert.equal(changes, 1);
+		});
+	});
+
+	describe("onEnd", () => {
+		it("fires during endSession cleanup", async () => {
+			const player = new Player("guild-1", new FakeVoicePort(), {
+				probeStream: async () => true,
+			});
+			let ends = 0;
+			player.onEnd(() => {
+				ends += 1;
+			});
+
+			player.endSession();
+
+			assert.equal(ends, 1);
+		});
+
+		it("stops firing after unsubscribe", () => {
+			const player = new Player("guild-1", new FakeVoicePort());
+			let ends = 0;
+			const unsubscribe = player.onEnd(() => {
+				ends += 1;
+			});
+
+			unsubscribe();
+			player.endSession();
+
+			assert.equal(ends, 0);
 		});
 	});
 });

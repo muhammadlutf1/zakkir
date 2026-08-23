@@ -52,6 +52,27 @@ export const en = {
 	"command.removed": "Removed queued recitation at position {position}.",
 	"command.repeatSet":
 		"**<:repeat:1384278335114449060> Loop mode set to {mode}.**",
+	// Player panel (`/panel` and auto-post)
+	"panel.showing": "🎛️ The player panel is up.",
+	"panel.title": "Surah {surah} by {reciter}",
+	"panel.repeatMode": "Repeat Mode: {mode}",
+	"panel.note":
+		"Note: To skip without clearing previous tracks (in order), set loop mode to 'All' first",
+	"panel.noTracks": "No tracks queued",
+	"panel.buttonPause": "Pause",
+	"panel.buttonResume": "Resume",
+	"panel.buttonStop": "Stop",
+	"panel.buttonSkip": "Skip",
+	"panel.buttonLoop": "Loop",
+	"panel.repeatOff": "Off",
+	"panel.repeatTrack": "Track",
+	"panel.repeatAll": "All",
+	"panel.finished": "Queue finished — use `/play` to add more.",
+	"panel.stoppedBy": "**Player stopped** by {user}.",
+	"panel.paused": "<:pause:1384273881040289924> Paused.",
+	"panel.resumed": "<:play:1384273884622229514> Resumed.",
+	"panel.jumpedTo": "**<:play:1384273884622229514> Jumped to** {label}.",
+	"panel.radioTitle": "Radio: {station}",
 	// Repeat-mode names fed into `command.repeatSet`
 	"repeat.mode.off": "Off",
 	"repeat.mode.track": "Repeat Track",

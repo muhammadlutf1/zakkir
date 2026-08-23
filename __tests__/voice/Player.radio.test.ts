@@ -14,6 +14,7 @@ import type {
 
 class FakeVoicePort implements VoicePort {
 	readonly calls: string[] = [];
+	readonly joinedChannelId = null;
 	private listeners: {
 		[K in VoicePortEventName]: Set<VoicePortEvents[K]>;
 	} = {
