@@ -8,7 +8,6 @@ import {
 } from "../../play/rewayahPicker";
 
 const component: Component = {
-	id: "rewayah-play",
 	match: (customId) => customId.startsWith("rewayah-play:"),
 
 	async execute(context, interaction) {

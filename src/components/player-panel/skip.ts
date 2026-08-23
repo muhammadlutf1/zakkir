@@ -5,7 +5,6 @@ import { PANEL_SKIP_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
 import { resolvePanelPlayer } from "./shared";
 
 const component: Component = {
-	id: "player-panel-skip",
 	match: (customId) => customId === PANEL_SKIP_CUSTOM_ID,
 
 	async execute(context, interaction) {

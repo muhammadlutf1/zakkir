@@ -7,7 +7,6 @@ import { resolvePanelPlayer } from "./shared";
 const TRACK_VALUE_PREFIX = "track-";
 
 const component: Component = {
-	id: "player-panel-select",
 	match: (customId) => customId === PANEL_SELECT_CUSTOM_ID,
 
 	async execute(context, interaction) {

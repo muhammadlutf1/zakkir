@@ -4,7 +4,6 @@ import { PANEL_REPEAT_CUSTOM_ID } from "../../play/playerPanel";
 import { buildRepeatRow, resolvePanelPlayer } from "./shared";
 
 const component: Component = {
-	id: "player-panel-repeat",
 	match: (customId) => customId === PANEL_REPEAT_CUSTOM_ID,
 
 	async execute(context, interaction) {

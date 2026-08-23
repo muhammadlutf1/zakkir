@@ -6,7 +6,6 @@ import { formatPlayResult } from "../../play/playResult";
 const logger = createLogger("radioConfirm");
 
 const component: Component = {
-	id: "radio-confirm",
 	match: (customId) =>
 		customId === "radio:confirm" || customId === "radio:cancel",
 

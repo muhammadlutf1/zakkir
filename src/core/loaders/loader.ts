@@ -64,7 +64,7 @@ async function loadFile(
 		const item = module.default ?? module;
 
 		if (isBotEvent(item)) collection.set(item.name, item);
-		else if (isComponent(item)) collection.set(item.id, item);
+		else if (isComponent(item)) collection.set(filePath, item);
 		else if (isCommand(item)) collection.set(item.data.name, item);
 	} catch (error) {
 		logger.error(error, "Failed to import %s", filePath);
