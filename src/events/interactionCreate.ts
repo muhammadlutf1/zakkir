@@ -19,6 +19,8 @@ const logger = createLogger("interactionCreate");
 const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 	name: Events.InteractionCreate,
 	async execute(bot, interaction) {
+		if (!interaction.guild) return;
+
 		// The guild's UI locale for every reactive reply in this dispatch.
 		const locale = interaction.guildId
 			? bot.guildConfigs.language(interaction.guildId)
