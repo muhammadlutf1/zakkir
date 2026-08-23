@@ -4,7 +4,7 @@ import type { MessageKey } from "./messages";
 
 const REPEAT_MODE_KEYS: Record<RepeatMode, MessageKey> = {
 	[RepeatMode.OFF]: "repeat.mode.off",
-	[RepeatMode.TRACK]: "repeat.mode.track",
+	[RepeatMode.CURRENT]: "repeat.mode.current",
 	[RepeatMode.ALL]: "repeat.mode.all",
 };
 

@@ -2,13 +2,13 @@
  * The Queue's looping behavior.
  *
  * - `OFF` — advance to the next Recitation, then end when the queue is empty.
- * - `TRACK` — replay the current Recitation when it ends.
+ * - `CURRENT` — replay the current Recitation when it ends.
  * - `ALL` — advance to the next Recitation, wrapping back to the first when
  *   the queue ends.
  */
 export enum RepeatMode {
 	OFF = "off",
-	TRACK = "track",
+	CURRENT = "current",
 	ALL = "all",
 }
 
@@ -50,7 +50,7 @@ export class Queue<T> {
 	/**
 	 * Moves to the next Recitation per the RepeatMode. In OFF mode this drops
 	 * the current item; in ALL mode the current Recitation rotates to the back
-	 * so playback wraps; in TRACK mode the Queue is left unchanged so the
+	 * so playback wraps; in CURRENT mode the Queue is left unchanged so the
 	 * current Recitation is replayed.
 	 */
 	advance() {
@@ -61,7 +61,7 @@ export class Queue<T> {
 					if (next) this.items.push(next);
 				}
 				break;
-			case RepeatMode.TRACK:
+			case RepeatMode.CURRENT:
 				break;
 			default:
 				this.items.shift();

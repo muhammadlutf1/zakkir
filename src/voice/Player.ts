@@ -365,7 +365,7 @@ export class Player {
 
 	/**
 	 * Stops the current Recitation and starts the next per RepeatMode. In OFF
-	 * mode playback ends cleanly when nothing is queued; TRACK replays the
+	 * mode playback ends cleanly when nothing is queued; CURRENT replays the
 	 * current; ALL wraps back to the first when the queue ends.
 	 * While Radio plays, skip is a no-op — the station is never skipped forward.
 	 */

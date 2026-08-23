@@ -15,7 +15,7 @@ import { RepeatMode } from "../../voice/Queue";
 
 const REPEAT_MODES: Array<{ mode: RepeatMode; key: MessageKey }> = [
 	{ mode: RepeatMode.OFF, key: "panel.repeatOff" },
-	{ mode: RepeatMode.TRACK, key: "panel.repeatTrack" },
+	{ mode: RepeatMode.CURRENT, key: "panel.repeatCurrent" },
 	{ mode: RepeatMode.ALL, key: "panel.repeatAll" },
 ];
 
@@ -54,7 +54,7 @@ export async function resolvePanelPlayer(
 	return player;
 }
 
-/** One row of Off/Track/All buttons; the current mode is disabled. */
+/** One row of Off/Current/All buttons; the current mode is disabled. */
 export function buildRepeatRow(
 	current: RepeatMode,
 	locale: Locale,

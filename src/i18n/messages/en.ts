@@ -65,7 +65,7 @@ export const en = {
 	"panel.buttonSkip": "Skip",
 	"panel.buttonLoop": "Loop",
 	"panel.repeatOff": "Off",
-	"panel.repeatTrack": "Track",
+	"panel.repeatCurrent": "Current",
 	"panel.repeatAll": "All",
 	"panel.finished": "Queue finished — use `/play` to add more.",
 	"panel.stoppedBy": "**Player stopped** by {user}.",
@@ -75,7 +75,7 @@ export const en = {
 	"panel.radioTitle": "Radio: {station}",
 	// Repeat-mode names fed into `command.repeatSet`
 	"repeat.mode.off": "Off",
-	"repeat.mode.track": "Repeat Track",
+	"repeat.mode.current": "Repeat Current",
 	"repeat.mode.all": "Repeat All",
 	// Radio
 	"command.radioStationNotFound":

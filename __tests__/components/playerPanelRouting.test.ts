@@ -36,7 +36,7 @@ const ROUTES: Array<{
 		component: repeatModeComponent,
 		accepts: [
 			"player-panel:repeat:off",
-			"player-panel:repeat:track",
+			"player-panel:repeat:current",
 			"player-panel:repeat:all",
 		],
 		rejects: ["player-panel:repeat", "player-panel:repeat:nope"],

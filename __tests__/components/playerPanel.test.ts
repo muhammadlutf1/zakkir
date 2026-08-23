@@ -233,7 +233,7 @@ describe("player panel components — controls", () => {
 	});
 
 	it("repeat opens an ephemeral menu with the current mode disabled", async () => {
-		const { player } = makeFakePlayer({ repeatMode: RepeatMode.TRACK });
+		const { player } = makeFakePlayer({ repeatMode: RepeatMode.CURRENT });
 		const { interaction, replies } = makeInteraction({
 			customId: "player-panel:repeat",
 		});
@@ -249,19 +249,19 @@ describe("player panel components — controls", () => {
 			buttons.map((b) => b.custom_id),
 			[
 				"player-panel:repeat:off",
-				"player-panel:repeat:track",
+				"player-panel:repeat:current",
 				"player-panel:repeat:all",
 			],
 		);
 		assert.deepEqual(
 			buttons.map((b) => b.label),
-			["Off", "Track", "All"],
+			["Off", "Current", "All"],
 		);
 		for (const button of buttons) {
 			assert.equal(button.style, 2);
 			assert.equal(
 				button.disabled,
-				button.custom_id === "player-panel:repeat:track",
+				button.custom_id === "player-panel:repeat:current",
 			);
 		}
 	});
