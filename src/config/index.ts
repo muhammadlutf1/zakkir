@@ -34,7 +34,7 @@ export interface BotConfig {
 }
 
 export const config: BotConfig = {
-	clientId: "881841846312116234",
+	clientId: process.env.CLIENT_ID ?? "",
 	mp3Quran: {
 		baseUrl: "https://www.mp3quran.net/api/v3",
 	},
