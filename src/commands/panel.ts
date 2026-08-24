@@ -8,8 +8,6 @@ const panelCommand: Command = {
 		.setDescription("Show the player panel"),
 
 	async execute(context, interaction) {
-		if (!interaction.inCachedGuild()) return;
-
 		const player = context.players.get(interaction.guildId);
 
 		if (!player) {

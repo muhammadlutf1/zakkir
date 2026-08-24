@@ -8,7 +8,7 @@ export interface Component {
 	match(customId: string): boolean;
 	execute(
 		context: ComponentContext,
-		interaction: MessageComponentInteraction,
+		interaction: MessageComponentInteraction<"cached">,
 	): Promise<void> | void;
 }
 

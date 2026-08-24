@@ -57,8 +57,6 @@ const playCommand: Command = {
 	},
 
 	async execute(context, interaction) {
-		if (!interaction.inCachedGuild()) return;
-
 		const channel = interaction.member.voice.channel;
 
 		if (!channel || channel.type === ChannelType.GuildStageVoice) {

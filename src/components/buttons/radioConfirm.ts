@@ -6,14 +6,10 @@ const component: Component = {
 		customId === "radio:confirm" || customId === "radio:cancel",
 
 	async execute(context, interaction) {
-		if (!interaction.inCachedGuild()) return;
-		const guildId = interaction.guildId;
-		if (!guildId) return;
-
 		// One seam call per path: the module owns the pending-Radio state
 		// and the play/cancel behaviour; we only supply reply sinks.
 		const input = {
-			guildId,
+			guildId: interaction.guildId,
 			locale: context.locale,
 			translator: context.translator,
 			noticeChannel: interaction.channel ?? undefined,

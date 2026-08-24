@@ -128,7 +128,8 @@ function makeInteraction(options: {
 	};
 
 	return {
-		interaction: interaction as unknown as MessageComponentInteraction,
+		interaction:
+			interaction as unknown as MessageComponentInteraction<"cached">,
 		state,
 		replies,
 		updates,

@@ -14,11 +14,11 @@ export interface Command {
 		| SlashCommandSubcommandsOnlyBuilder;
 	execute(
 		context: CommandContext,
-		interaction: ChatInputCommandInteraction,
+		interaction: ChatInputCommandInteraction<"cached">,
 	): Promise<void> | void;
 	autocomplete?(
 		context: CommandContext,
-		interaction: AutocompleteInteraction,
+		interaction: AutocompleteInteraction<"cached">,
 	): Promise<void> | void;
 }
 
