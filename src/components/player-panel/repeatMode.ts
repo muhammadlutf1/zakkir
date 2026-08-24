@@ -6,12 +6,11 @@ import { buildRepeatRow, resolvePanelPlayer } from "./shared";
 
 const MODES: Record<string, RepeatMode> = {
 	off: RepeatMode.OFF,
-	track: RepeatMode.TRACK,
+	current: RepeatMode.CURRENT,
 	all: RepeatMode.ALL,
 };
 
 const component: Component = {
-	id: "player-panel-repeat-mode",
 	match: (customId) =>
 		customId.startsWith(`${PANEL_REPEAT_CUSTOM_ID}:`) &&
 		(customId.slice(PANEL_REPEAT_CUSTOM_ID.length + 1) as RepeatMode) in MODES,

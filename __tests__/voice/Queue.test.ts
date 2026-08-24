@@ -200,10 +200,10 @@ describe("RepeatMode", () => {
 		const queue = new Queue();
 		queue.add(alFatiha);
 
-		queue.setRepeatMode(RepeatMode.TRACK);
+		queue.setRepeatMode(RepeatMode.CURRENT);
 
-		assert.equal(queue.repeatMode, RepeatMode.TRACK);
-		assert.equal(queue.view().repeatMode, RepeatMode.TRACK);
+		assert.equal(queue.repeatMode, RepeatMode.CURRENT);
+		assert.equal(queue.view().repeatMode, RepeatMode.CURRENT);
 	});
 });
 
@@ -225,18 +225,18 @@ describe("advance honors RepeatMode", () => {
 		assert.equal(queue.size, 0);
 	});
 
-	it("TRACK leaves the current Recitation in place for replay", () => {
+	it("CURRENT leaves the current Recitation in place for replay", () => {
 		const queue = new Queue();
 		queue.add(alFatiha);
 		queue.add(yaseen);
-		queue.setRepeatMode(RepeatMode.TRACK);
+		queue.setRepeatMode(RepeatMode.CURRENT);
 
 		queue.advance();
 
 		assert.deepEqual(queue.view(), {
 			current: alFatiha,
 			upcoming: [yaseen],
-			repeatMode: RepeatMode.TRACK,
+			repeatMode: RepeatMode.CURRENT,
 		});
 		assert.equal(queue.size, 2);
 	});
@@ -290,7 +290,7 @@ describe("advance honors RepeatMode", () => {
 	});
 
 	it("is a safe no-op on an empty Queue in every mode", () => {
-		for (const mode of [RepeatMode.OFF, RepeatMode.TRACK, RepeatMode.ALL]) {
+		for (const mode of [RepeatMode.OFF, RepeatMode.CURRENT, RepeatMode.ALL]) {
 			const queue = new Queue();
 			queue.setRepeatMode(mode);
 

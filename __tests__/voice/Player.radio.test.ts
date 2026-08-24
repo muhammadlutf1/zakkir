@@ -106,16 +106,15 @@ describe("Player radio", () => {
 		assert.deepEqual(port.calls, ["play:https://example.com/radio.mp3"]);
 	});
 
-	it("confirm flow: stopRadio clears radio and pending", async () => {
+	it("stopRadio clears the radio and returns the queue to playback", async () => {
 		const port = new FakeVoicePort();
 		const player = new Player("guild-1", port, {
 			probeStream: async () => true,
 		});
 		await player.playRadio(radio());
-		player.setPendingRadioConfirm(recitation());
 		player.stopRadio();
 		assert.equal(player.isRadioPlaying, false);
-		assert.equal(player.pendingRecitation, null);
+		assert.deepEqual(port.calls.slice(1), ["stop"]);
 	});
 
 	it("radio stream error retries up to 3 times with backoff then goes idle without touching queue", async (t) => {

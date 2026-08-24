@@ -4,7 +4,6 @@ import { PANEL_PAUSE_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
 import { resolvePanelPlayer } from "./shared";
 
 const component: Component = {
-	id: "player-panel-pause",
 	match: (customId) => customId === PANEL_PAUSE_CUSTOM_ID,
 
 	async execute(context, interaction) {

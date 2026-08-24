@@ -2,7 +2,6 @@ import {
 	ActionRowBuilder,
 	ButtonBuilder,
 	ButtonStyle,
-	type GuildMember,
 	type MessageComponentInteraction,
 	MessageFlags,
 } from "discord.js";
@@ -15,7 +14,7 @@ import { RepeatMode } from "../../voice/Queue";
 
 const REPEAT_MODES: Array<{ mode: RepeatMode; key: MessageKey }> = [
 	{ mode: RepeatMode.OFF, key: "panel.repeatOff" },
-	{ mode: RepeatMode.TRACK, key: "panel.repeatTrack" },
+	{ mode: RepeatMode.CURRENT, key: "panel.repeatCurrent" },
 	{ mode: RepeatMode.ALL, key: "panel.repeatAll" },
 ];
 
@@ -26,11 +25,9 @@ const REPEAT_MODES: Array<{ mode: RepeatMode; key: MessageKey }> = [
  */
 export async function resolvePanelPlayer(
 	context: ComponentContext,
-	interaction: MessageComponentInteraction,
+	interaction: MessageComponentInteraction<"cached">,
 ): Promise<Player | undefined> {
-	const player = interaction.guildId
-		? context.players.get(interaction.guildId)
-		: undefined;
+	const player = context.players.get(interaction.guildId);
 
 	if (!player) {
 		await interaction.reply({
@@ -40,8 +37,7 @@ export async function resolvePanelPlayer(
 		return undefined;
 	}
 
-	const interactorChannelId = (interaction.member as GuildMember | null)?.voice
-		?.channelId;
+	const interactorChannelId = interaction.member.voice?.channelId;
 
 	if (interactorChannelId !== player.voiceChannelId) {
 		await interaction.reply({
@@ -54,7 +50,7 @@ export async function resolvePanelPlayer(
 	return player;
 }
 
-/** One row of Off/Track/All buttons; the current mode is disabled. */
+/** One row of Off/Current/All buttons; the current mode is disabled. */
 export function buildRepeatRow(
 	current: RepeatMode,
 	locale: Locale,

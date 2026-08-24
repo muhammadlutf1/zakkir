@@ -428,9 +428,9 @@ describe("Player", () => {
 		it("setRepeatMode selects the Queue's mode", () => {
 			const player = new Player("guild-1", new FakeVoicePort());
 
-			player.setRepeatMode(RepeatMode.TRACK);
-			assert.equal(player.repeatMode, "track");
-			assert.equal(player.queueView.repeatMode, "track");
+			player.setRepeatMode(RepeatMode.CURRENT);
+			assert.equal(player.repeatMode, "current");
+			assert.equal(player.queueView.repeatMode, "current");
 		});
 	});
 
@@ -487,7 +487,7 @@ describe("Player", () => {
 			assert.equal(result.queued, false);
 		});
 
-		it("replays the current Recitation in TRACK mode", async () => {
+		it("replays the current Recitation in CURRENT mode", async () => {
 			const port = new FakeVoicePort();
 			const player = new Player("guild-1", port, {
 				probeStream: async () => true,
@@ -500,7 +500,7 @@ describe("Player", () => {
 					url: "https://example.com/019.mp3",
 				}),
 			);
-			player.setRepeatMode(RepeatMode.TRACK);
+			player.setRepeatMode(RepeatMode.CURRENT);
 
 			const result = await player.skip();
 
@@ -554,14 +554,14 @@ describe("Player", () => {
 	});
 
 	describe("natural-end auto-advance honors RepeatMode", () => {
-		it("replays the current Recitation on Idle in TRACK mode", async () => {
+		it("replays the current Recitation on Idle in CURRENT mode", async () => {
 			const port = new FakeVoicePort();
 			const player = new Player("guild-1", port, {
 				probeStream: async () => true,
 			});
 
 			await player.play(recitation({ url: "https://example.com/018.mp3" }));
-			player.setRepeatMode(RepeatMode.TRACK);
+			player.setRepeatMode(RepeatMode.CURRENT);
 
 			port.emit("playerStateChange", AudioPlayerStatus.Idle);
 			await flush();
@@ -1074,7 +1074,7 @@ describe("Player", () => {
 				changes += 1;
 			});
 
-			player.setRepeatMode(RepeatMode.TRACK);
+			player.setRepeatMode(RepeatMode.CURRENT);
 			unsubscribe();
 			player.setRepeatMode(RepeatMode.ALL);
 

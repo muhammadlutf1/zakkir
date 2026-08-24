@@ -1,9 +1,5 @@
 import { ChannelType, MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../core/Command";
-import { formatPlayResult } from "../play/playResult";
-import { radioConfirmReply } from "../play/radioConfirmPrompt";
-import { resolvePlay } from "../play/resolvePlay";
-import { RewayahPickerSession, renderPicker } from "../play/rewayahPicker";
 
 const playCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -61,8 +57,6 @@ const playCommand: Command = {
 	},
 
 	async execute(context, interaction) {
-		if (!interaction.inCachedGuild()) return;
-
 		const channel = interaction.member.voice.channel;
 
 		if (!channel || channel.type === ChannelType.GuildStageVoice) {
@@ -91,56 +85,18 @@ const playCommand: Command = {
 
 		const locale = context.locale;
 
-		const outcome = await resolvePlay(
-			context.catalog,
-			context.guildConfigs,
-			context.play.defaults,
-			interaction.guildId,
-			surah,
-			reciterOption,
-			locale,
-		);
-
-		if (outcome.kind === "error") {
-			await interaction.editReply({ content: outcome.message });
-			return;
-		}
-
-		const player = context.players.getOrCreate(interaction.guildId);
-		await player.join(channel);
-
-		if (interaction.channel) {
-			player.setNoticeChannel(interaction.channel);
-		}
-
-		if (outcome.kind === "play") {
-			if (player.isRadioPlaying) {
-				await interaction.editReply(
-					radioConfirmReply(
-						player,
-						outcome.recitation,
-						locale,
-						context.translator,
-					),
-				);
-				return;
-			}
-			const result = await player.play(outcome.recitation);
-
-			await interaction.editReply({
-				content: formatPlayResult(outcome.recitation, result, locale),
-			});
-			return;
-		}
-
-		const message = await interaction.editReply(renderPicker(outcome));
-
-		new RewayahPickerSession(message.id, {
-			timeoutMs: context.play.pickerTimeoutMs,
-			defaultChoice: outcome.defaultChoice,
+		// One seam call: PlaybackRequest resolves, plays or shows the picker,
+		// handles the radio-confirm branch, and replies through the sinks.
+		await context.playback.request({
+			guildId: interaction.guildId,
 			catalog: context.catalog,
-			player,
-			locale: outcome.locale,
+			surah,
+			reciter: reciterOption,
+			locale,
+			translator: context.translator,
+			voiceChannel: channel,
+			noticeChannel: interaction.channel ?? undefined,
+			editReply: (reply) => interaction.editReply(reply),
 			followUp: (content) =>
 				interaction.followUp({ content, flags: MessageFlags.Ephemeral }),
 		});

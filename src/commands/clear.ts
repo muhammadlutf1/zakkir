@@ -7,8 +7,6 @@ const clearCommand: Command = {
 		.setDescription("Clear the queue"),
 
 	async execute(context, interaction) {
-		if (!interaction.inCachedGuild()) return;
-
 		const player = context.players.get(interaction.guildId);
 
 		if (!player) {

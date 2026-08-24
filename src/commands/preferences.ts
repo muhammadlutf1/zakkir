@@ -106,8 +106,6 @@ const preferencesCommand: Command = {
 	},
 
 	async execute(context, interaction) {
-		if (!interaction.inCachedGuild()) return;
-
 		const subcommand = interaction.options.getSubcommand();
 		const { translator, guildConfigs } = context;
 

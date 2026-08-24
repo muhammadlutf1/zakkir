@@ -43,7 +43,7 @@ One per guild. The ordered list of tracks a Player plays, supporting add, remove
 _Avoid_: playlist, song list, queue manager
 
 **RepeatMode**:
-The Queue's looping behavior: OFF (advance and end), TRACK (replay the current Recitation), or ALL (wrap back to the first when the queue ends). The Player's auto-advance follows the current mode.
+The Queue's looping behavior: OFF (advance and end), CURRENT (replay the current Recitation), or ALL (wrap back to the first when the queue ends). The Player's auto-advance follows the current mode.
 _Avoid_: loop mode
 
 **PlayerRegistry**:

@@ -1,11 +1,11 @@
 import type {
 	AutocompleteInteraction,
+	ChatInputCommandInteraction,
 	CommandInteraction,
 	MessageComponentInteraction,
 } from "discord.js";
 import { Events, MessageFlags } from "discord.js";
 import { Catalog } from "../catalog/Catalog";
-import { config } from "../config";
 import type { BotEvent } from "../core/Event";
 import type {
 	CommandContext,
@@ -32,10 +32,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 			players: bot.players,
 			catalog,
 			guildConfigs: bot.guildConfigs,
-			play: {
-				defaults: config.defaults,
-				pickerTimeoutMs: config.rewayahPicker.timeoutMs,
-			},
+			playback: bot.playback,
 			locale,
 			translator,
 		};
@@ -44,20 +41,24 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 			players: bot.players,
 			catalog,
 			guildConfigs: bot.guildConfigs,
+			playback: bot.playback,
 			locale,
 			translator,
 		};
 
 		if (interaction.isAutocomplete()) {
-			const command = bot.commands.get(interaction.commandName);
+			// The guild gate above guarantees a cached-guild interaction; the
+			// cast only restates that for the handler's static type.
+			const autocomplete = interaction as AutocompleteInteraction<"cached">;
+			const command = bot.commands.get(autocomplete.commandName);
 
 			if (!command?.autocomplete) return;
 
 			await dispatchWithErrorPolicy(
 				"autocomplete",
-				`autocomplete for ${interaction.commandName}`,
-				interaction,
-				() => command.autocomplete?.(commandContext, interaction),
+				`autocomplete for ${autocomplete.commandName}`,
+				autocomplete,
+				() => command.autocomplete?.(commandContext, autocomplete),
 				translator,
 			);
 
@@ -66,17 +67,18 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 
 		// Message components (e.g. rewayah picker Play buttons)
 		if (interaction.isMessageComponent()) {
-			const component = Array.from(bot.components.values()).find((c) =>
-				c.match(interaction.customId),
+			const component = interaction as MessageComponentInteraction<"cached">;
+			const handler = Array.from(bot.components.values()).find((c) =>
+				c.match(component.customId),
 			);
 
-			if (!component) return;
+			if (!handler) return;
 
 			await dispatchWithErrorPolicy(
 				"messageComponent",
-				`component ${interaction.customId}`,
-				interaction,
-				() => component.execute(componentContext, interaction),
+				`component ${component.customId}`,
+				component,
+				() => handler.execute(componentContext, component),
 				translator,
 			);
 
@@ -85,15 +87,16 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 
 		// Slash commands
 		if (interaction.isChatInputCommand()) {
-			const command = bot.commands.get(interaction.commandName);
+			const chatInput = interaction as ChatInputCommandInteraction<"cached">;
+			const command = bot.commands.get(chatInput.commandName);
 
 			if (!command) return;
 
 			await dispatchWithErrorPolicy(
 				"chatInput",
-				`command ${interaction.commandName}`,
-				interaction,
-				() => command.execute(commandContext, interaction),
+				`command ${chatInput.commandName}`,
+				chatInput,
+				() => command.execute(commandContext, chatInput),
 				translator,
 			);
 		}

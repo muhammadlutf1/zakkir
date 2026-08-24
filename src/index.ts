@@ -6,9 +6,8 @@ import eventLoader from "./core/loaders/eventLoader";
 import { createLogger } from "./core/logger";
 import { GuildConfig } from "./guild/GuildConfig";
 import { SqliteGuildConfigStore } from "./guild/SqliteGuildConfigStore";
-import { attachPlayerNotices } from "./play/noticeChannels";
-import { attachPlayerPanel } from "./play/panelAutoPost";
 import { playbackNotices } from "./play/playbackNotices";
+import { PlaybackRequest } from "./play/playbackRequest";
 import { DiscordVoicePort } from "./voice/DiscordVoicePort";
 import { Player } from "./voice/Player";
 import { PlayerRegistry } from "./voice/PlayerRegistry";
@@ -17,6 +16,18 @@ const logger = createLogger("index");
 
 const store = new SqliteGuildConfigStore(config.database.path);
 const guildConfig = new GuildConfig(store);
+
+// Both bindings below reference each other; every access goes through a
+// deferred closure, so the declaration order is structurally safe.
+const playbackRequest = new PlaybackRequest({
+	players: {
+		get: (guildId) => playerRegistry.get(guildId),
+		getOrCreate: (guildId) => playerRegistry.getOrCreate(guildId),
+	},
+	guildConfig,
+	defaults: config.defaults,
+	pickerTimeoutMs: config.rewayahPicker.timeoutMs,
+});
 
 const playerRegistry = new PlayerRegistry((guildId) => {
 	const locale = guildConfig.language(guildId);
@@ -28,8 +39,7 @@ const playerRegistry = new PlayerRegistry((guildId) => {
 		},
 	});
 
-	attachPlayerNotices(player);
-	attachPlayerPanel(player, locale);
+	playbackRequest.attach(player, locale);
 
 	return player;
 });
@@ -40,6 +50,7 @@ const bot = new Bot(
 	componentLoader,
 	playerRegistry,
 	guildConfig,
+	playbackRequest,
 );
 
 try {

@@ -276,10 +276,10 @@ describe("buildPanelPayload", () => {
 			textContents(containerOf(player).container).includes("Repeat Mode: Off"),
 		);
 
-		player.setRepeatMode(RepeatMode.TRACK);
+		player.setRepeatMode(RepeatMode.CURRENT);
 		assert.ok(
 			textContents(containerOf(player).container).includes(
-				"Repeat Mode: Repeat Track",
+				"Repeat Mode: Repeat Current",
 			),
 		);
 

@@ -22,5 +22,5 @@ When a `/play` request has a real Rewayah choice (more than one covers the Surah
 ## Consequences
 
 - The component pipeline (loader, `Bot.components`, `interactionCreate` dispatch) is the delivery path for pickers and future panels (e.g. PlayerPanel buttons).
-- The picker message must be remembered for timeout cleanup; cancellation is keyed by the message id.
+- ~~The picker message must be remembered for timeout cleanup; cancellation is keyed by the message id.~~ Superseded by the PlaybackRequest deep module (issue #37): picker session lifecycle lives inside `PlaybackRequest`, and sessions are keyed **per guild** (`guildId`), one active picker per guild — starting a new `/play` picker disposes the predecessor. Guild keying was chosen because a guild has at most one voice Player, so per-guild state cannot leak across pickers and needs no message-id wiring.
 - The timeout default and the picker's ephemeral behavior are centralized in `src/config` and the picker module, so both stay consistent.

@@ -65,7 +65,7 @@ export const ar = {
 	"panel.buttonSkip": "تخطي",
 	"panel.buttonLoop": "تكرار",
 	"panel.repeatOff": "إيقاف",
-	"panel.repeatTrack": "تكرار المقطع",
+	"panel.repeatCurrent": "الحالي",
 	"panel.repeatAll": "تكرار الكل",
 	"panel.finished": "انتهت قائمة التشغيل — استخدم `/play` لإضافة المزيد.",
 	"panel.stoppedBy": "**أوقف المشغّل** {user}.",
@@ -75,7 +75,7 @@ export const ar = {
 	"panel.radioTitle": "راديو: {station}",
 	// Repeat-mode names fed into `command.repeatSet`
 	"repeat.mode.off": "إيقاف",
-	"repeat.mode.track": "تكرار التلاوة",
+	"repeat.mode.current": "تكرار الحالي",
 	"repeat.mode.all": "تكرار القائمة",
 	// Radio
 	"command.radioStationNotFound":

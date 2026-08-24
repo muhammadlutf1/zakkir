@@ -1,5 +1,6 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 import type { GuildConfig } from "../guild/GuildConfig";
+import type { PlaybackRequest } from "../play/playbackRequest";
 import type { PlayerRegistry } from "../voice/PlayerRegistry";
 import type { Command } from "./Command";
 import type { Component } from "./Component";
@@ -17,6 +18,7 @@ export default class Bot extends Client {
 		private componentLoader: () => Promise<Collection<string, Component>>,
 		private playerRegistry: PlayerRegistry,
 		private guildConfig: GuildConfig,
+		private playbackRequest: PlaybackRequest,
 	) {
 		super({
 			intents: [
@@ -55,6 +57,10 @@ export default class Bot extends Client {
 
 	public get guildConfigs() {
 		return this.guildConfig;
+	}
+
+	public get playback() {
+		return this.playbackRequest;
 	}
 
 	async init() {

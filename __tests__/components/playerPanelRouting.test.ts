@@ -36,7 +36,7 @@ const ROUTES: Array<{
 		component: repeatModeComponent,
 		accepts: [
 			"player-panel:repeat:off",
-			"player-panel:repeat:track",
+			"player-panel:repeat:current",
 			"player-panel:repeat:all",
 		],
 		rejects: ["player-panel:repeat", "player-panel:repeat:nope"],
@@ -50,13 +50,13 @@ const ROUTES: Array<{
 
 describe("player-panel component routing", () => {
 	for (const { component, accepts, rejects } of ROUTES) {
-		it(`${component.id} matches its customIds`, () => {
+		it(`${accepts[0]} matches its customIds`, () => {
 			for (const customId of accepts) {
 				assert.ok(component.match(customId), customId);
 			}
 		});
 
-		it(`${component.id} rejects foreign customIds`, () => {
+		it(`${accepts[0]} rejects foreign customIds`, () => {
 			for (const customId of rejects) {
 				assert.ok(!component.match(customId), customId);
 			}

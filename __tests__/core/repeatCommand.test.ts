@@ -11,7 +11,7 @@ function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 		players: {} as CommandContext["players"],
 		catalog: {} as CommandContext["catalog"],
 		guildConfigs: {} as CommandContext["guildConfigs"],
-		play: {} as CommandContext["play"],
+		playback: {} as CommandContext["playback"],
 		locale: "en",
 		translator: localizable("en"),
 		...overrides,
@@ -44,19 +44,22 @@ describe("repeat mode names are localized", () => {
 			get: () => ({ setRepeatMode: () => undefined }),
 		} as unknown as CommandContext["players"];
 
-		const enReply = await runRepeat(makeContext({ players }), RepeatMode.TRACK);
+		const enReply = await runRepeat(
+			makeContext({ players }),
+			RepeatMode.CURRENT,
+		);
 		const arReply = await runRepeat(
 			makeContext({ players, locale: "ar", translator: localizable("ar") }),
-			RepeatMode.TRACK,
+			RepeatMode.CURRENT,
 		);
 
 		assert.equal(
 			enReply,
-			t(en["command.repeatSet"], { mode: en["repeat.mode.track"] }),
+			t(en["command.repeatSet"], { mode: en["repeat.mode.current"] }),
 		);
 		assert.equal(
 			arReply,
-			t(ar["command.repeatSet"], { mode: ar["repeat.mode.track"] }),
+			t(ar["command.repeatSet"], { mode: ar["repeat.mode.current"] }),
 		);
 		assert.notEqual(enReply, arReply);
 	});

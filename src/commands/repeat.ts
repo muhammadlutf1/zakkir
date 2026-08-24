@@ -5,7 +5,7 @@ import { RepeatMode } from "../voice/Queue";
 
 const REPEAT_CHOICES = [
 	{ name: "Off", value: RepeatMode.OFF },
-	{ name: "Repeat Track", value: RepeatMode.TRACK },
+	{ name: "Repeat Current", value: RepeatMode.CURRENT },
 	{ name: "Repeat All", value: RepeatMode.ALL },
 ];
 
@@ -17,15 +17,13 @@ const repeatCommand: Command = {
 			option
 				.setName("mode")
 				.setDescription(
-					"Off: play once; Track: replay the current; All: loop the queue",
+					"Off: play once; Current: replay the current; All: loop the queue",
 				)
 				.setRequired(true)
 				.addChoices(...REPEAT_CHOICES),
 		),
 
 	async execute(context, interaction) {
-		if (!interaction.inCachedGuild()) return;
-
 		const player = context.players.get(interaction.guildId);
 
 		if (!player) {
