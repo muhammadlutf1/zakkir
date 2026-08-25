@@ -7,7 +7,7 @@ import type { CommandContext } from "../../src/core/interactionContext";
 import { GuildConfig } from "../../src/guild/GuildConfig";
 import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
 import { localizable } from "../../src/i18n/locale";
-import { hasPanel } from "../../src/play/playerPanel";
+import { getPanel, hasPanel } from "../../src/play/playerPanel";
 import { Player } from "../../src/voice/Player";
 import { RepeatMode } from "../../src/voice/Queue";
 import type { Recitation } from "../../src/voice/Recitation";
@@ -64,14 +64,29 @@ function makePlayer(guildId: string) {
 	});
 }
 
+interface SentMessage {
+	id: string;
+	deletions: number;
+}
+
 function makeChannel() {
-	const sends: unknown[] = [];
+	const sends: SentMessage[] = [];
 
 	const channel = {
 		id: "text-1",
-		async send(payload: unknown) {
-			sends.push(payload);
-			return { id: `sent-${sends.length}` };
+		async send(_payload: unknown) {
+			const sent: SentMessage = {
+				id: `sent-${sends.length + 1}`,
+				deletions: 0,
+			};
+			sends.push(sent);
+			return {
+				id: sent.id,
+				async delete() {
+					sent.deletions += 1;
+					return sent;
+				},
+			};
 		},
 	};
 
@@ -93,13 +108,18 @@ function makeContext(player: Player | undefined): CommandContext {
 	};
 }
 
-function makeInteraction(guildId: string, channel: unknown) {
+function makeInteraction(guildId: string, channel: unknown, isAdmin = false) {
 	const replies: Array<Record<string, unknown>> = [];
+	const permissions = {
+		has: () => isAdmin,
+	};
 
 	const interaction = {
 		inCachedGuild: () => true,
 		guildId,
 		channel,
+		member: { permissions },
+		memberPermissions: permissions,
 		replied: false,
 		deferred: false,
 		async reply(payload: Record<string, unknown>) {
@@ -163,5 +183,41 @@ describe("/panel command", () => {
 		await panelCommand.execute(context, second.interaction);
 
 		assert.equal(sends.length, 1);
+	});
+
+	it("reposts a fresh panel for an admin, deleting the tracked one", async () => {
+		const guildId = "panel-cmd-admin";
+		const player = makePlayer(guildId);
+		await player.play(recitation());
+		const { channel, sends } = makeChannel();
+		const context = makeContext(player);
+		const first = makeInteraction(guildId, channel);
+		await panelCommand.execute(context, first.interaction);
+
+		const admin = makeInteraction(guildId, channel, true);
+		await panelCommand.execute(context, admin.interaction);
+
+		assert.equal(sends[0]!.deletions, 1);
+		assert.equal(sends.length, 2);
+		assert.equal(hasPanel(guildId), true);
+		assert.deepEqual(getPanel(guildId), {
+			messageId: "sent-2",
+			channelId: "text-1",
+		});
+		assert.equal(admin.replies[0]!.flags, MessageFlags.Ephemeral);
+	});
+
+	it("creates the panel when an admin invokes /panel with none posted", async () => {
+		const guildId = "panel-cmd-admin-fresh";
+		const player = makePlayer(guildId);
+		await player.play(recitation());
+		const { channel, sends } = makeChannel();
+		const context = makeContext(player);
+		const admin = makeInteraction(guildId, channel, true);
+
+		await panelCommand.execute(context, admin.interaction);
+
+		assert.equal(sends.length, 1);
+		assert.equal(hasPanel(guildId), true);
 	});
 });

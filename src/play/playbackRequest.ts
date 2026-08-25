@@ -79,7 +79,7 @@ export interface PlayReply {
  */
 export class PlaybackRequest {
 	private readonly pickers = new Map<string, ActivePicker>();
-	private readonly pendingRadio = new Map<string, Recitation>();
+	private readonly pendingRecitation = new Map<string, Recitation>();
 	private readonly wired = new WeakSet<Player>();
 
 	constructor(
@@ -102,11 +102,11 @@ export class PlaybackRequest {
 		if (this.wired.has(player)) return;
 		this.wired.add(player);
 
-		player.onEnd(() => this.pendingRadio.delete(player.guildId));
+		player.onEnd(() => this.pendingRecitation.delete(player.guildId));
 
 		// Any Radio transition (a new station starting, a stop, session end)
 		// invalidates an outstanding play confirmation for that station.
-		player.onRadioChange(() => this.pendingRadio.delete(player.guildId));
+		player.onRadioChange(() => this.pendingRecitation.delete(player.guildId));
 
 		player.onNotice((message) => {
 			const channel = player.noticeChannel;
@@ -233,7 +233,7 @@ export class PlaybackRequest {
 
 		if (!player) return;
 
-		const pending = this.takePendingRadio(input.guildId);
+		const pending = this.takePendingRecitation(input.guildId);
 
 		if (!pending) {
 			await input.replyEphemeral(input.translator.t("command.resolveFailed"));
@@ -269,7 +269,7 @@ export class PlaybackRequest {
 
 		if (!player) return;
 
-		this.pendingRadio.delete(input.guildId);
+		this.pendingRecitation.delete(input.guildId);
 		const station = player.radioInfo?.name ?? "radio";
 
 		try {
@@ -286,10 +286,15 @@ export class PlaybackRequest {
 		}
 	}
 
-	private takePendingRadio(guildId: string) {
-		const pending = this.pendingRadio.get(guildId);
-		this.pendingRadio.delete(guildId);
+	private takePendingRecitation(guildId: string) {
+		const pending = this.pendingRecitation.get(guildId);
+		this.pendingRecitation.delete(guildId);
 		return pending;
+	}
+
+	/** Non-mutating look at the guild's pending Radio confirmation (for gating). */
+	peekPendingRecitation(guildId: string): Recitation | undefined {
+		return this.pendingRecitation.get(guildId);
 	}
 
 	private setNoticeChannel(player: Player, noticeChannel?: TextBasedChannel) {
@@ -315,7 +320,7 @@ export class PlaybackRequest {
 		sink: { edit: (reply: PlayReply) => Promise<unknown> },
 	) {
 		if (player.isRadioPlaying) {
-			this.pendingRadio.set(player.guildId, recitation);
+			this.pendingRecitation.set(player.guildId, recitation);
 			await sink.edit(radioConfirmPrompt(player, recitation, locale));
 			return;
 		}

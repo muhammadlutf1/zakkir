@@ -109,16 +109,23 @@ export const en = {
 	"preferences.unset": "not set",
 	"language.name.en": "English",
 	"language.name.ar": "العربية",
-	// Vote (Gate tracer bullet)
-	"vote.prompt": "Vote to skip **{label}** — cast your vote:",
-	"vote.promptInitiator":
-		"**{initiator}** wants to skip **{label}** — cast your vote:",
+	// Vote (Gate)
+	"vote.prompt": "Vote to {action} — cast your vote:",
+	"vote.promptInitiator": "**{initiator}** wants to {action} — cast your vote:",
 	"vote.alreadyVoted": "You already voted in this vote.",
-	"vote.passed": "✅ Vote passed — skipped **{label}**.",
-	"vote.rejected": "❌ Vote failed — not enough votes to skip.",
+	"vote.passed": "✅ Vote passed — {action}.",
+	"vote.rejected": "❌ Vote failed — not enough votes.",
 	"vote.cancelled": "🚫 Vote cancelled — initiator left the voice channel.",
 	"vote.replaced": "🔄 Vote replaced by a new proposal.",
 	"vote.started": "Vote started — please vote in the channel.",
+	// Action phrases rendered inside the vote prompts
+	"vote.action.skip": "skip **{label}**",
+	"vote.action.clear": "clear the queue",
+	"vote.action.repeat": "change the repeat mode",
+	"vote.action.remove": "remove **{label}**",
+	"vote.action.select": "jump to **{label}**",
+	"vote.action.stop": "stop playback",
+	"vote.action.radio": "stop the radio and play **{label}**",
 	// Generic interaction error fallbacks
 	"error.componentGeneric": "There was an error while handling that component!",
 	"error.commandGeneric": "There was an error while executing this command!",

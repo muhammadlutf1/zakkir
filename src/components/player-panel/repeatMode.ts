@@ -1,4 +1,5 @@
 import { MessageFlags } from "discord.js";
+import { gateOrVoteStarted } from "../../access/actionGate";
 import type { Component } from "../../core/Component";
 import { PANEL_REPEAT_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
 import { RepeatMode } from "../../voice/Queue";
@@ -30,9 +31,32 @@ const component: Component = {
 			return;
 		}
 
-		player.setRepeatMode(mode);
+		const act = async () => {
+			player.setRepeatMode(mode);
+			updatePanel(player.guildId);
+		};
 
-		updatePanel(player.guildId);
+		if (
+			!(await gateOrVoteStarted(
+				{
+					player,
+					member: interaction.member,
+					guildId: interaction.guildId,
+					locale: context.locale,
+					translator: context.translator,
+					votes: context.votes,
+					channel: interaction.channel ?? undefined,
+					action: context.translator.t("vote.action.repeat"),
+					onPass: act,
+				},
+				interaction,
+				context.translator,
+			))
+		) {
+			return;
+		}
+
+		await act();
 
 		await interaction.update({
 			components: [buildRepeatRow(mode, context.locale, true)],

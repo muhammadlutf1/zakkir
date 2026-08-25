@@ -1,6 +1,15 @@
-import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+	MessageFlags,
+	PermissionFlagsBits,
+	SlashCommandBuilder,
+} from "discord.js";
 import type { Command } from "../core/Command";
-import { createPanel, hasPanel, updatePanel } from "../play/playerPanel";
+import {
+	createPanel,
+	hasPanel,
+	repostPanel,
+	updatePanel,
+} from "../play/playerPanel";
 
 const panelCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -18,14 +27,21 @@ const panelCommand: Command = {
 			return;
 		}
 
-		if (hasPanel(interaction.guildId)) {
-			updatePanel(interaction.guildId);
-		} else {
-			const channel = interaction.channel ?? player.noticeChannel;
+		const hasManageGuild =
+			interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) ||
+			(interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild) ??
+				false);
 
+		const channel = interaction.channel ?? player.noticeChannel;
+
+		if (hasManageGuild) {
 			if (channel && "send" in channel) {
-				await createPanel(player, channel, context.locale);
+				await repostPanel(player, channel, context.locale);
 			}
+		} else if (hasPanel(interaction.guildId)) {
+			updatePanel(interaction.guildId);
+		} else if (channel && "send" in channel) {
+			await createPanel(player, channel, context.locale);
 		}
 
 		await interaction.reply({

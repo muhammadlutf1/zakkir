@@ -1,4 +1,5 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import { gateOrVoteStarted } from "../access/actionGate";
 import type { Command } from "../core/Command";
 import { repeatModeLabel } from "../i18n/repeatModeLabel";
 import { RepeatMode } from "../voice/Queue";
@@ -35,6 +36,28 @@ const repeatCommand: Command = {
 		}
 
 		const mode = interaction.options.getString("mode", true) as RepeatMode;
+
+		if (
+			!(await gateOrVoteStarted(
+				{
+					player,
+					member: interaction.member,
+					guildId: interaction.guildId,
+					locale: context.locale,
+					translator: context.translator,
+					votes: context.votes,
+					channel: interaction.channel ?? undefined,
+					action: context.translator.t("vote.action.repeat"),
+					onPass: async () => {
+						player.setRepeatMode(mode);
+					},
+				},
+				interaction,
+				context.translator,
+			))
+		) {
+			return;
+		}
 
 		player.setRepeatMode(mode);
 

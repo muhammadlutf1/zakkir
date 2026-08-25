@@ -287,6 +287,44 @@ export function hasPanel(guildId: string) {
 	return panels.has(guildId);
 }
 
+/**
+ * Deletes the guild's tracked panel message and clears its registry entry,
+ * tolerating a message that is already gone. Used by admin `/panel` reposts.
+ */
+export async function deletePanel(guildId: string) {
+	const entry = panels.get(guildId);
+	if (!entry) return;
+	entry.dispose();
+
+	try {
+		await entry.message.delete();
+	} catch (error) {
+		if ((error as { code?: number })?.code === 10008) return;
+		logger.warn(error, "Could not delete old panel in guild %s", guildId);
+	}
+}
+
+/**
+ * Reposts the guild's panel from scratch in the given channel: any previous
+ * panel message is deleted and a fresh one takes over the tracking. Resolves
+ * to whether a new panel is now tracked.
+ */
+export async function repostPanel(
+	player: Player,
+	channel: SendableTextChannel,
+	locale: Locale,
+) {
+	await deletePanel(player.guildId);
+
+	try {
+		await createPanel(player, channel, locale);
+		return true;
+	} catch (error) {
+		logger.error(error, "Could not repost panel in guild %s", player.guildId);
+		return false;
+	}
+}
+
 export function setPanelStatus(guildId: string, status: PanelEndState) {
 	const entry = panels.get(guildId);
 	if (!entry) return;

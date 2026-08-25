@@ -31,6 +31,8 @@ function makeFakePlayer(
 		paused?: boolean;
 		repeatMode?: RepeatMode;
 		voiceChannelId?: string | null;
+		current?: unknown;
+		upcoming?: unknown[];
 	} = {},
 ) {
 	const calls: string[] = [];
@@ -75,8 +77,8 @@ function makeFakePlayer(
 		},
 		get queueView() {
 			return {
-				current: undefined,
-				upcoming: [],
+				current: overrides.current,
+				upcoming: overrides.upcoming ?? [],
 				repeatMode,
 			};
 		},
@@ -287,7 +289,11 @@ describe("player panel components — controls", () => {
 	});
 
 	it("select jumps to the encoded queue index", async () => {
-		const { player, calls } = makeFakePlayer();
+		const track = { surah: 18, reciterName: "Qari", rewayahName: "Hafs" };
+		const { player, calls } = makeFakePlayer({
+			current: { surah: 1, reciterName: "Qari", rewayahName: "Hafs" },
+			upcoming: [track, track],
+		});
 		const { interaction, state } = makeInteraction({
 			customId: "player-panel:select",
 			values: ["track-2"],
@@ -297,6 +303,19 @@ describe("player panel components — controls", () => {
 
 		assert.equal(state.defers, 1);
 		assert.deepEqual(calls, ["jumpTo:2"]);
+	});
+
+	it("select on a stale option that no longer resolves jumps nowhere", async () => {
+		const { player, calls } = makeFakePlayer();
+		const { interaction, state } = makeInteraction({
+			customId: "player-panel:select",
+			values: ["track-2"],
+		});
+
+		await selectComponent.execute(makeContext(player), interaction);
+
+		assert.equal(state.defers, 1);
+		assert.deepEqual(calls, []);
 	});
 
 	it("select ignores a malformed option value", async () => {

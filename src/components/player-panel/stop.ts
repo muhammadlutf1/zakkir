@@ -1,3 +1,4 @@
+import { gateOrVoteStarted } from "../../access/actionGate";
 import type { Component } from "../../core/Component";
 import { PANEL_STOP_CUSTOM_ID, setPanelStatus } from "../../play/playerPanel";
 import { resolvePanelPlayer } from "./shared";
@@ -16,14 +17,38 @@ const component: Component = {
 			interaction.user.username ??
 			"someone";
 		const mention = userId ? `<@${userId}> (${displayName})` : displayName;
-		setPanelStatus(player.guildId, {
-			kind: "stoppedBy",
-			user: mention,
-		});
+
+		const act = async () => {
+			setPanelStatus(player.guildId, {
+				kind: "stoppedBy",
+				user: mention,
+			});
+			player.endSession();
+		};
+
+		if (
+			!(await gateOrVoteStarted(
+				{
+					player,
+					member: interaction.member,
+					guildId: interaction.guildId,
+					locale: context.locale,
+					translator: context.translator,
+					votes: context.votes,
+					channel: interaction.channel ?? undefined,
+					action: context.translator.t("vote.action.stop"),
+					onPass: act,
+				},
+				interaction,
+				context.translator,
+			))
+		) {
+			return;
+		}
 
 		await interaction.deferUpdate();
 
-		player.endSession();
+		await act();
 	},
 };
 
