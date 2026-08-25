@@ -17,6 +17,16 @@ const joinCommand: Command = {
 			return;
 		}
 
+		const existing = context.players.get(interaction.guildId);
+
+		if (existing?.isOccupied) {
+			await interaction.reply({
+				content: context.translator.t("command.joinBlocked"),
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+
 		const player = context.players.getOrCreate(interaction.guildId);
 
 		await player.join(channel);

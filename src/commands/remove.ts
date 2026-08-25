@@ -18,7 +18,7 @@ const removeCommand: Command = {
 
 		if (!player) {
 			await interaction.reply({
-				content: context.translator.t("command.notInVoice"),
+				content: context.translator.t("command.nothingPlaying"),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;

@@ -133,6 +133,15 @@ export class Player {
 		return this.channel?.id ?? this.port.joinedChannelId ?? null;
 	}
 
+	get humanMemberCount() {
+		if (!this.channel) return 0;
+		return this.channel.members.filter((member) => !member.user.bot).size;
+	}
+
+	get isOccupied() {
+		return this.isConnected && this.humanMemberCount > 0;
+	}
+
 	get isRadioPlaying() {
 		return this.radio !== null;
 	}

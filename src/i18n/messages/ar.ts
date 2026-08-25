@@ -42,6 +42,10 @@ export const ar = {
 	"command.resolveStreamFailed": "تعذر تحليل بث سورة {number}.",
 	"command.resolveFailed": "تعذّر حلّ هذه التلاوة.",
 	"command.notConnected": "أنا لست متصلًا بقناة صوتية في هذا الخادم.",
+	"command.nothingPlaying": "لا يوجد شيء قيد التشغيل.",
+	"command.joinBlocked": "أنا بالفعل في قناة صوتية مع أعضاء آخرين.",
+	"command.manageGuildRequired":
+		"تحتاج إلى صلاحية إدارة الخادم لاستخدام هذا الأمر.",
 	"command.skipped": "**<:forward:1384273873427759278> تم التخطي**",
 	"command.nowPlaying": "**<:play:1384273884622229514> يُشغَّل الآن** {label}.",
 	"command.nothingToSkip": "لا يوجد شيء قيد التشغيل للتخطي.",

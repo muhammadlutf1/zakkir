@@ -43,6 +43,10 @@ export const en = {
 	"command.resolveFailed": "Couldn't resolve that recitation.",
 	"command.notConnected":
 		"I'm not connected to a voice channel in this server.",
+	"command.nothingPlaying": "Nothing is playing.",
+	"command.joinBlocked": "I'm already in a voice channel with other members.",
+	"command.manageGuildRequired":
+		"You need the Manage Server permission to use this command.",
 	"command.skipped": "**<:forward:1384273873427759278> Skipped**",
 	"command.nowPlaying": "**<:play:1384273884622229514> Now playing** {label}.",
 	"command.nothingToSkip": "Nothing is playing to skip.",
