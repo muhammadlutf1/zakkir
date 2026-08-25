@@ -152,7 +152,7 @@ function rowOf(payload: Record<string, unknown>): RowJson {
 }
 
 describe("player panel components — shared gates", () => {
-	it("replies notInVoice when the guild has no player", async () => {
+	it("replies nothingPlaying when the guild has no player", async () => {
 		const { interaction, replies, state } = makeInteraction({
 			customId: "player-panel:pause",
 		});
@@ -161,10 +161,7 @@ describe("player panel components — shared gates", () => {
 
 		assert.equal(state.defers, 0);
 		assert.equal(replies.length, 1);
-		assert.equal(
-			replies[0]!.content,
-			"You need to join a voice channel first!",
-		);
+		assert.equal(replies[0]!.content, "Nothing is playing.");
 		assert.equal(replies[0]!.flags, MessageFlags.Ephemeral);
 	});
 

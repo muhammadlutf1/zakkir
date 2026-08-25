@@ -31,7 +31,7 @@ export async function resolvePanelPlayer(
 
 	if (!player) {
 		await interaction.reply({
-			content: context.translator.t("command.notInVoice"),
+			content: context.translator.t("command.nothingPlaying"),
 			flags: MessageFlags.Ephemeral,
 		});
 		return undefined;

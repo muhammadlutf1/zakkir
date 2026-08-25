@@ -1,4 +1,8 @@
-import { SlashCommandBuilder } from "discord.js";
+import {
+	MessageFlags,
+	PermissionFlagsBits,
+	SlashCommandBuilder,
+} from "discord.js";
 import type { Reciter, Rewayah } from "../catalog/Catalog";
 import { DEFAULT_LOCALE } from "../config";
 import type { Command } from "../core/Command";
@@ -35,6 +39,7 @@ const preferencesCommand: Command = {
 	data: new SlashCommandBuilder()
 		.setName("preferences")
 		.setDescription("View or change this server's playback preferences")
+		.setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
 		.addSubcommand((subcommand) =>
 			subcommand
 				.setName("list")
@@ -106,6 +111,30 @@ const preferencesCommand: Command = {
 	},
 
 	async execute(context, interaction) {
+		const rawMember = interaction.member as unknown as
+			| { permissions?: { has: (flag: bigint) => boolean } }
+			| undefined;
+		const hasFromMember =
+			rawMember?.permissions?.has(PermissionFlagsBits.ManageGuild) ?? false;
+		const memberPermissions = (
+			interaction as unknown as {
+				memberPermissions?: { has: (flag: bigint) => boolean };
+			}
+		).memberPermissions;
+		const hasFromPermissions =
+			memberPermissions?.has(PermissionFlagsBits.ManageGuild) ?? false;
+		const hasNeitherSource = !rawMember?.permissions && !memberPermissions;
+		const hasManageGuild =
+			hasFromMember || hasFromPermissions || hasNeitherSource;
+
+		if (!hasManageGuild) {
+			await interaction.reply({
+				content: context.translator.t("command.manageGuildRequired"),
+				flags: MessageFlags.Ephemeral,
+			});
+			return;
+		}
+
 		const subcommand = interaction.options.getSubcommand();
 		const { translator, guildConfigs } = context;
 

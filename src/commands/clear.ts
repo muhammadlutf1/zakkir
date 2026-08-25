@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { Command } from "../core/Command";
 
 const clearCommand: Command = {
@@ -10,7 +10,10 @@ const clearCommand: Command = {
 		const player = context.players.get(interaction.guildId);
 
 		if (!player) {
-			await interaction.reply(context.translator.t("command.notInVoice"));
+			await interaction.reply({
+				content: context.translator.t("command.nothingPlaying"),
+				flags: MessageFlags.Ephemeral,
+			});
 			return;
 		}
 
