@@ -44,7 +44,7 @@ type PlayerStub = {
 function makePlayback(pending?: Recitation, player?: PlayerStub) {
 	const calls: string[] = [];
 	const playback = {
-		peekPendingRadio: (_guildId: string) => pending,
+		peekPendingRecitation: (_guildId: string) => pending,
 		confirmRadio: async () => {
 			calls.push("confirmRadio");
 		},

@@ -29,7 +29,7 @@ const component: Component = {
 		// Empty states (no player / no pending recitation) resolve through the
 		// seam's own error replies BEFORE any gate/vote decision.
 		const player = context.players.get(interaction.guildId);
-		const pending = context.playback.peekPendingRadio(interaction.guildId);
+		const pending = context.playback.peekPendingRecitation(interaction.guildId);
 
 		if (!player || !pending) {
 			await context.playback.confirmRadio(input);
