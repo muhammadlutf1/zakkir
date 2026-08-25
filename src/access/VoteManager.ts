@@ -22,6 +22,7 @@ type VoteOutcome = "passed" | "rejected" | "cancelled" | "replaced";
 interface ActiveVote {
 	guildId: string;
 	initiatorId: string;
+	initiatorName?: string;
 	voters: Set<string>;
 	votes: Map<string, "yes" | "no">;
 	channel: SendableTextChannel;
@@ -37,6 +38,8 @@ interface ActiveVote {
 export interface VoteProposeInput {
 	guildId: string;
 	initiatorId: string;
+	/** Display name of the initiator, rendered in the vote prompt when present. */
+	initiatorName?: string;
 	/** Human listener ids in the Player's voice channel at proposal time. */
 	voterIds: string[];
 	channel: SendableTextChannel;
@@ -72,6 +75,7 @@ export class VoteManager {
 		const vote: ActiveVote = {
 			guildId: input.guildId,
 			initiatorId: input.initiatorId,
+			initiatorName: input.initiatorName,
 			voters: new Set(input.voterIds),
 			votes: new Map([[input.initiatorId, "yes"]]),
 			channel: input.channel,
@@ -123,14 +127,16 @@ export class VoteManager {
 		guildId: string,
 		userId: string,
 		choice: "yes" | "no",
-	): Promise<void> {
+	): Promise<"accepted" | "alreadyVoted" | "ignored"> {
 		const vote = this.votes.get(guildId);
-		if (!vote || vote.resolved) return;
-		if (!vote.voters.has(userId)) return;
+		if (!vote || vote.resolved) return "ignored";
+		if (!vote.voters.has(userId)) return "ignored";
+		if (vote.votes.has(userId)) return "alreadyVoted";
 
 		vote.votes.set(userId, choice);
 		await this.refresh(vote);
 		await this.checkEarly(vote);
+		return "accepted";
 	}
 
 	/**
@@ -218,7 +224,12 @@ export class VoteManager {
 
 	private buildContent(vote: ActiveVote, outcome?: VoteOutcome): string {
 		const mentions = [...vote.voters].map((id) => `<@${id}>`).join(" ");
-		const base = vote.translator.t("vote.prompt", { label: vote.label });
+		const base = vote.initiatorName
+			? vote.translator.t("vote.promptInitiator", {
+					initiator: vote.initiatorName,
+					label: vote.label,
+				})
+			: vote.translator.t("vote.prompt", { label: vote.label });
 		const mentionPart = mentions ? `${mentions} ` : "";
 		let suffix = "";
 		if (outcome === "passed")
@@ -240,12 +251,12 @@ export class VoteManager {
 			new ButtonBuilder()
 				.setCustomId(VOTE_YES_CUSTOM_ID)
 				.setLabel(yesLabel)
-				.setStyle(ButtonStyle.Success)
+				.setStyle(ButtonStyle.Secondary)
 				.setDisabled(disabled),
 			new ButtonBuilder()
 				.setCustomId(VOTE_NO_CUSTOM_ID)
 				.setLabel(noLabel)
-				.setStyle(ButtonStyle.Danger)
+				.setStyle(ButtonStyle.Secondary)
 				.setDisabled(disabled),
 		);
 		return [row];

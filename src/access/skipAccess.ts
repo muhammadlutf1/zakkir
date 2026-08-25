@@ -9,7 +9,11 @@ import type { VoteManager } from "./VoteManager";
 
 export interface SkipGateInput {
 	player: Player;
-	member: { id?: string; permissions?: { has: (flag: bigint) => boolean } };
+	member: {
+		id?: string;
+		displayName?: string;
+		permissions?: { has: (flag: bigint) => boolean };
+	};
 	guildId: string;
 	locale: Locale;
 	translator: Localizable;
@@ -69,6 +73,7 @@ export async function handleSkipWithGate(
 	await input.votes.propose({
 		guildId: input.guildId,
 		initiatorId: input.member.id ?? "unknown",
+		initiatorName: input.member.displayName,
 		voterIds: ids,
 		channel,
 		panel: panel ?? undefined,

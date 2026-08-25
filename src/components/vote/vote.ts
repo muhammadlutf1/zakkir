@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js";
 import {
 	VOTE_NO_CUSTOM_ID,
 	VOTE_YES_CUSTOM_ID,
@@ -11,11 +12,18 @@ const component: Component = {
 	async execute(context, interaction) {
 		await interaction.deferUpdate();
 		const choice = interaction.customId === VOTE_YES_CUSTOM_ID ? "yes" : "no";
-		await context.votes?.handleVote(
+		const result = await context.votes?.handleVote(
 			interaction.guildId,
 			interaction.user.id,
 			choice,
 		);
+
+		if (result === "alreadyVoted") {
+			await interaction.followUp({
+				content: context.translator.t("vote.alreadyVoted"),
+				flags: MessageFlags.Ephemeral,
+			});
+		}
 	},
 };
 

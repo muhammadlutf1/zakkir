@@ -111,6 +111,9 @@ export const en = {
 	"language.name.ar": "العربية",
 	// Vote (Gate tracer bullet)
 	"vote.prompt": "Vote to skip **{label}** — cast your vote:",
+	"vote.promptInitiator":
+		"**{initiator}** wants to skip **{label}** — cast your vote:",
+	"vote.alreadyVoted": "You already voted in this vote.",
 	"vote.passed": "✅ Vote passed — skipped **{label}**.",
 	"vote.rejected": "❌ Vote failed — not enough votes to skip.",
 	"vote.cancelled": "🚫 Vote cancelled — initiator left the voice channel.",
