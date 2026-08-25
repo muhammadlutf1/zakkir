@@ -3,6 +3,7 @@ import {
 	ButtonBuilder,
 	ButtonStyle,
 	type Message,
+	type PartialGroupDMChannel,
 	type TextBasedChannel,
 } from "discord.js";
 import { createLogger } from "../core/logger";
@@ -16,6 +17,8 @@ export const VOTE_NO_CUSTOM_ID = "vote:no";
 
 const VOTE_TIMEOUT_MS = 20_000;
 
+type SendableTextChannel = Exclude<TextBasedChannel, PartialGroupDMChannel>;
+
 type VoteOutcome = "passed" | "rejected" | "cancelled" | "replaced";
 
 interface ActiveVote {
@@ -23,7 +26,7 @@ interface ActiveVote {
 	initiatorId: string;
 	voters: Set<string>;
 	votes: Map<string, "yes" | "no">;
-	channel: TextBasedChannel;
+	channel: SendableTextChannel;
 	message?: Message;
 	timer?: NodeJS.Timeout;
 	locale: Locale;
@@ -38,7 +41,7 @@ export interface VoteProposeInput {
 	initiatorId: string;
 	/** Human listener ids in the Player's voice channel at proposal time. */
 	voterIds: string[];
-	channel: TextBasedChannel;
+	channel: SendableTextChannel;
 	panel?: PanelSnapshot;
 	locale: Locale;
 	translator: Localizable;
@@ -87,22 +90,17 @@ export class VoteManager {
 		const components = this.buildComponents(vote, false);
 
 		try {
-			const sendPayload: Record<string, unknown> = {
+			const sendPayload: import("discord.js").MessageCreateOptions & {
+				reply?: { messageReference: string };
+			} = {
 				content,
 				components,
+				...(input.panel
+					? { reply: { messageReference: input.panel.messageId } }
+					: {}),
 			};
 
-			if (input.panel) {
-				(sendPayload as { reply: { messageReference: string } }).reply = {
-					messageReference: input.panel.messageId,
-				};
-			}
-
-			const message = await (
-				input.channel as unknown as {
-					send: (payload: unknown) => Promise<Message>;
-				}
-			).send(sendPayload);
+			const message = await input.channel.send(sendPayload);
 
 			vote.message = message;
 
@@ -157,6 +155,7 @@ export class VoteManager {
 		}
 
 		// Sync voters: remove departed votes, keep votes of remaining
+		// oxlint-disable-next-line unicorn/no-useless-spread -- copy needed while mutating set
 		for (const id of [...vote.voters]) {
 			if (!currentSet.has(id)) {
 				vote.voters.delete(id);

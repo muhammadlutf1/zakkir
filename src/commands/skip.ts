@@ -19,7 +19,7 @@ const skipCommand: Command = {
 			return;
 		}
 
-		if ((player as unknown as { isPlaying?: boolean }).isPlaying === false) {
+		if (player.isPlaying === false) {
 			await interaction.reply({
 				content: context.translator.t("command.nothingToSkip"),
 				flags: MessageFlags.Ephemeral,
@@ -28,22 +28,16 @@ const skipCommand: Command = {
 		}
 
 		const current = player.queueView.current;
-		const channel =
-			(interaction.channel as unknown as
-				| import("discord.js").TextBasedChannel
-				| null) ?? undefined;
+		const resolvedChannel = interaction.channel ?? undefined;
 
 		const gate = await handleSkipWithGate({
 			player,
-			member: interaction.member as unknown as {
-				id: string;
-				permissions: { has: (flag: bigint) => boolean };
-			},
+			member: interaction.member,
 			guildId: interaction.guildId,
 			locale: context.locale,
 			translator: context.translator,
 			votes: context.votes,
-			channel,
+			channel: resolvedChannel,
 			recitation: current ?? undefined,
 		});
 

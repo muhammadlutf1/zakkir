@@ -1,4 +1,4 @@
-import type { TextBasedChannel } from "discord.js";
+import type { PartialGroupDMChannel, TextBasedChannel } from "discord.js";
 import type { Locale, Localizable } from "../i18n/locale";
 import { recitationLabel } from "../i18n/recitationLabel";
 import { getPanel } from "../play/playerPanel";
@@ -7,6 +7,8 @@ import type { Recitation } from "../voice/Recitation";
 import { isQualified } from "./Gate";
 import type { VoteManager } from "./VoteManager";
 
+type SendableTextChannel = Exclude<TextBasedChannel, PartialGroupDMChannel>;
+
 export interface SkipGateInput {
 	player: Player;
 	member: { id?: string; permissions?: { has: (flag: bigint) => boolean } };
@@ -14,26 +16,21 @@ export interface SkipGateInput {
 	locale: Locale;
 	translator: Localizable;
 	votes?: VoteManager;
-	channel?: TextBasedChannel;
+	channel?: SendableTextChannel | null;
 	recitation?: Recitation;
 }
 
 function voterIdsFromPlayer(player: Player): string[] {
-	if (
-		typeof (player as unknown as { humanMemberIds?: string[] })
-			.humanMemberIds !== "undefined"
-	) {
-		const ids = (player as unknown as { humanMemberIds: string[] })
-			.humanMemberIds;
-		if (ids.length > 0) return ids;
-	}
+	if (player.humanMemberIds.length > 0) return player.humanMemberIds;
 	return [];
 }
 
-function resolveChannel(input: SkipGateInput): TextBasedChannel | undefined {
+function resolveChannel(input: SkipGateInput): SendableTextChannel | undefined {
 	if (input.channel) return input.channel;
-	const p = input.player as unknown as { noticeChannel?: TextBasedChannel };
-	if (p.noticeChannel) return p.noticeChannel;
+	if (input.player.noticeChannel) {
+		// SAFETY: noticeChannel is set from a guild text channel via /play, which is sendable
+		return input.player.noticeChannel as SendableTextChannel;
+	}
 	return undefined;
 }
 
