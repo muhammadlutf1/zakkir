@@ -20,8 +20,13 @@ const joinCommand: Command = {
 		const existing = context.players.get(interaction.guildId);
 
 		if (existing?.isOccupied) {
+			const channelMention = existing.voiceChannelId
+				? `<#${existing.voiceChannelId}>`
+				: "a voice channel";
 			await interaction.reply({
-				content: context.translator.t("command.joinBlocked"),
+				content: context.translator.t("command.joinBlocked", {
+					channel: channelMention,
+				}),
 				flags: MessageFlags.Ephemeral,
 			});
 			return;

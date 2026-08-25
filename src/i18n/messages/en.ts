@@ -44,7 +44,7 @@ export const en = {
 	"command.notConnected":
 		"I'm not connected to a voice channel in this server.",
 	"command.nothingPlaying": "Nothing is playing.",
-	"command.joinBlocked": "I'm already in a voice channel with other members.",
+	"command.joinBlocked": "I'm already in {channel} with other members.",
 	"command.manageGuildRequired":
 		"You need the Manage Server permission to use this command.",
 	"command.skipped": "**<:forward:1384273873427759278> Skipped**",
