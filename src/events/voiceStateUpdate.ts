@@ -23,6 +23,11 @@ const voiceStateUpdateEvent: BotEvent<Events.VoiceStateUpdate> = {
 				const channel = newState.channel;
 				if (channel?.isVoiceBased()) {
 					player.handleExternalMove(channel as VoiceChannel);
+					// Voters set may have changed if the bot moved channels
+					void bot.votes.handleVoiceUpdate(
+						newState.guild.id,
+						player.humanMemberIds,
+					);
 					return;
 				}
 				const cached = newState.guild.channels.cache.get(
@@ -30,6 +35,10 @@ const voiceStateUpdateEvent: BotEvent<Events.VoiceStateUpdate> = {
 				);
 				if (cached?.isVoiceBased()) {
 					player.handleExternalMove(cached as VoiceChannel);
+					void bot.votes.handleVoiceUpdate(
+						newState.guild.id,
+						player.humanMemberIds,
+					);
 				}
 				return;
 			}
@@ -37,6 +46,14 @@ const voiceStateUpdateEvent: BotEvent<Events.VoiceStateUpdate> = {
 		}
 
 		player.refreshVoiceMembership();
+		// Live Voters set and Initiator-leave cancellation for any human voice update
+		const vote = bot.votes.get(newState.guild.id);
+		if (vote) {
+			void bot.votes.handleVoiceUpdate(
+				newState.guild.id,
+				player.humanMemberIds,
+			);
+		}
 	},
 } as const;
 

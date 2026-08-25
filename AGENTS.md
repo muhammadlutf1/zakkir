@@ -1,6 +1,7 @@
 ## Coding preferences
 
 - Don't specify return types that TypeScript can infer (e.g. `: void`, `: number`, `: boolean`). Only annotate where inference wouldn't be accurate or the type isn't otherwise named.
+- Never use `as unknown as` double-casts in `src/` — use proper narrowing (`is*` guards, `instanceof`, `in`), a single `as` with a `// SAFETY:` comment explaining why, or a typed helper.
 
 ## Agent skills
 

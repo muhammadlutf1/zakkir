@@ -111,21 +111,10 @@ const preferencesCommand: Command = {
 	},
 
 	async execute(context, interaction) {
-		const rawMember = interaction.member as unknown as
-			| { permissions?: { has: (flag: bigint) => boolean } }
-			| undefined;
-		const hasFromMember =
-			rawMember?.permissions?.has(PermissionFlagsBits.ManageGuild) ?? false;
-		const memberPermissions = (
-			interaction as unknown as {
-				memberPermissions?: { has: (flag: bigint) => boolean };
-			}
-		).memberPermissions;
-		const hasFromPermissions =
-			memberPermissions?.has(PermissionFlagsBits.ManageGuild) ?? false;
-		const hasNeitherSource = !rawMember?.permissions && !memberPermissions;
 		const hasManageGuild =
-			hasFromMember || hasFromPermissions || hasNeitherSource;
+			interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) ||
+			(interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild) ??
+				false);
 
 		if (!hasManageGuild) {
 			await interaction.reply({

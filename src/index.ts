@@ -1,3 +1,4 @@
+import { VoteManager } from "./access/VoteManager";
 import { config } from "./config";
 import Bot from "./core/Bot";
 import commandLoader from "./core/loaders/commandLoader";
@@ -29,6 +30,8 @@ const playbackRequest = new PlaybackRequest({
 	pickerTimeoutMs: config.rewayahPicker.timeoutMs,
 });
 
+const voteManager = new VoteManager();
+
 const playerRegistry = new PlayerRegistry((guildId) => {
 	const locale = guildConfig.language(guildId);
 	const player = new Player(guildId, new DiscordVoicePort(), {
@@ -51,6 +54,7 @@ const bot = new Bot(
 	playerRegistry,
 	guildConfig,
 	playbackRequest,
+	voteManager,
 );
 
 try {

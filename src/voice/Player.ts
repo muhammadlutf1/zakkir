@@ -138,6 +138,15 @@ export class Player {
 		return this.channel.members.filter((member) => !member.user.bot).size;
 	}
 
+	get humanMemberIds(): string[] {
+		if (!this.channel) return [];
+		const ids: string[] = [];
+		for (const [id, member] of this.channel.members) {
+			if (!member.user.bot) ids.push(id);
+		}
+		return ids;
+	}
+
 	get isOccupied() {
 		return this.isConnected && this.humanMemberCount > 0;
 	}
@@ -433,7 +442,7 @@ export class Player {
 			this.endSession();
 		}, this.gracePeriodMs);
 
-		this.graceTimer.unref?.();
+		this.graceTimer.unref();
 	}
 
 	private cancelGraceTimer() {
@@ -469,7 +478,7 @@ export class Player {
 				if (!this.radio) return;
 				this.port.play(this.radio.url);
 			}, delay);
-			this.radioRetryTimer.unref?.();
+			this.radioRetryTimer.unref();
 			return;
 		}
 		logger.warn(

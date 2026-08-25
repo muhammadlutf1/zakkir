@@ -96,6 +96,7 @@ const playCommand: Command = {
 			translator: context.translator,
 			voiceChannel: channel,
 			noticeChannel: interaction.channel ?? undefined,
+			requestedBy: interaction.user.id,
 			editReply: (reply) => interaction.editReply(reply),
 			followUp: (content) =>
 				interaction.followUp({ content, flags: MessageFlags.Ephemeral }),

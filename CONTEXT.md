@@ -113,3 +113,29 @@ _Avoid_: string id, translation key, text key
 **Config command**:
 The slash command that persists a guild's preferences through the guild-config layer, including its UI language — the `/preferences` command (`language`, `default-reciter`, `default-rewayah` subcommands). A language change applies to the live Player by swapping its injected notice formatter rather than teaching the Player about locales.
 _Avoid_: settings command, preferences command, guild settings
+
+## Access
+
+**Requester**:
+The Discord user id who requested a Recitation — recorded on every Recitation entering the Queue via `/play` or picker auto-play, and exposed wherever the queue is read.
+_Avoid_: owner, requestor
+
+**Gate**:
+The single decision point before a privileged Player action (e.g. `/skip`). It checks whether the interactor is Qualified; if not, it routes to a Vote instead of denying.
+_Avoid_: guard, permission check
+
+**Qualified**:
+A member is Qualified when any of: they hold `MoveMembers`, are alone with the Player in its voice channel, or requested the affected Recitation(s). Qualified members act directly.
+_Avoid_: admin, privileged
+
+**Vote**:
+A per-guild, single-active ballot triggered when an unqualified member requests a privileged action. Posted as a reply to the guild's PlayerPanel (standalone where none exists), mentioning every human listener in the Player's voice channel, with live Yes/No counts against the live Voters set. Passes when Yes exceeds No among current Voters; resolves early once the outcome can no longer change; 20s timeout rejects; Initiator leaving cancels; a new proposal replaces the old Vote. On resolve the message is edited to show the outcome with buttons disabled. Votes are changeable until resolve.
+_Avoid_: poll, ballot
+
+**Initiator**:
+The member who triggered the Vote. Their Yes is counted from the start.
+_Avoid_: proposer, voter
+
+**Voters**:
+The live set of human listeners in the Player's voice channel for the Vote's guild. The set updates as humans join/leave; button labels show `Yes (n/count)` against the live count.
+_Avoid_: participants, listeners

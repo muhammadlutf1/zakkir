@@ -32,6 +32,8 @@ export interface PlayRequestInput {
 	translator: Localizable;
 	voiceChannel: VoiceChannel;
 	noticeChannel?: TextBasedChannel;
+	/** Discord user id who requested the Recitation. */
+	requestedBy?: string;
 	editReply(reply: PlayReply): Promise<unknown>;
 	/** Delivers the picker's timeout notices and auto-play announcement. */
 	followUp(content: string): Promise<unknown>;
@@ -45,6 +47,8 @@ export interface RewayahPickInput {
 	locale: Locale;
 	translator: Localizable;
 	noticeChannel?: TextBasedChannel;
+	/** Discord user id who pressed the picker button. */
+	requestedBy?: string;
 	editReply(reply: PlayReply): Promise<unknown>;
 }
 
@@ -149,6 +153,7 @@ export class PlaybackRequest {
 			input.surah,
 			input.reciter,
 			input.locale,
+			input.requestedBy,
 		);
 
 		if (outcome.kind === "error") {
@@ -204,6 +209,7 @@ export class PlaybackRequest {
 				rewayahName: "",
 			},
 			input.locale,
+			input.requestedBy,
 		).catch(() => undefined);
 
 		if (!recitation) {
@@ -335,6 +341,7 @@ export class PlaybackRequest {
 			catalog: input.catalog,
 			player,
 			locale: outcome.locale,
+			requestedBy: input.requestedBy,
 			followUp: input.followUp,
 			onSettle: () => {
 				if (this.pickers.get(input.guildId) === picker) {
@@ -359,6 +366,7 @@ export class PlaybackRequest {
 		surah: Surah,
 		reciterOption?: string,
 		locale: Locale = DEFAULT_LOCALE,
+		requestedBy?: string,
 	): Promise<PlayOutcome> {
 		const { t } = localizable(locale);
 		let reciterId: number | undefined;
@@ -479,6 +487,7 @@ export class PlaybackRequest {
 				rewayahId: rewayah.id,
 				rewayahName: rewayah.name,
 				url,
+				...(requestedBy ? { requestedBy } : {}),
 			},
 		};
 	}
@@ -517,6 +526,7 @@ async function buildRecitationFromChoice(
 	catalog: Catalog,
 	choice: RewayahChoice,
 	locale: Locale = DEFAULT_LOCALE,
+	requestedBy?: string,
 ): Promise<Recitation> {
 	const surah = catalog.resolveSurah(choice.surahNumber);
 	const reciter = await catalog.resolveReciterById(choice.reciterId);
@@ -543,6 +553,7 @@ async function buildRecitationFromChoice(
 		rewayahId: rewayah.id,
 		rewayahName: rewayah.name,
 		url,
+		...(requestedBy ? { requestedBy } : {}),
 	};
 }
 
@@ -669,6 +680,7 @@ interface ActivePickerOptions {
 	defaultChoice: RewayahChoice | undefined;
 	catalog: Catalog;
 	player: Player;
+	requestedBy?: string;
 	followUp: (content: string) => Promise<unknown>;
 	locale?: Locale;
 	onSettle: () => void;
@@ -731,6 +743,7 @@ class ActivePicker {
 			this.options.catalog,
 			this.options.defaultChoice,
 			locale,
+			this.options.requestedBy,
 		);
 		const result = await this.options.player.play(recitation);
 

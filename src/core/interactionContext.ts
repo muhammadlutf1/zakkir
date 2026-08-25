@@ -1,3 +1,4 @@
+import type { VoteManager } from "../access/VoteManager";
 import type { Catalog } from "../catalog/Catalog";
 import type { GuildConfig } from "../guild/GuildConfig";
 import type { Locale, Localizable } from "../i18n/locale";
@@ -17,6 +18,7 @@ export interface CommandContext {
 	guildConfigs: GuildConfig;
 	/** The guild's PlaybackRequest: the single seam for /play flows. */
 	playback: PlaybackRequest;
+	votes?: VoteManager;
 	/** The guild's UI locale for this dispatch. */
 	locale: Locale;
 	/** The locale-bound message key resolver for every reply in this dispatch. */
@@ -30,6 +32,7 @@ export interface ComponentContext {
 	guildConfigs: GuildConfig;
 	/** The guild's PlaybackRequest: the single seam for /play flows. */
 	playback: PlaybackRequest;
+	votes?: VoteManager;
 	/** The guild's UI locale for this dispatch. */
 	locale: Locale;
 	/** The locale-bound message key resolver for every reply in this dispatch. */
