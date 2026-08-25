@@ -442,7 +442,7 @@ export class Player {
 			this.endSession();
 		}, this.gracePeriodMs);
 
-		this.graceTimer.unref?.();
+		this.graceTimer.unref();
 	}
 
 	private cancelGraceTimer() {
@@ -478,7 +478,7 @@ export class Player {
 				if (!this.radio) return;
 				this.port.play(this.radio.url);
 			}, delay);
-			this.radioRetryTimer.unref?.();
+			this.radioRetryTimer.unref();
 			return;
 		}
 		logger.warn(

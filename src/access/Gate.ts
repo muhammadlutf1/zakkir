@@ -1,11 +1,10 @@
-import { PermissionFlagsBits } from "discord.js";
+import { type GuildMember, PermissionFlagsBits } from "discord.js";
 import type { Player } from "../voice/Player";
 import type { Recitation } from "../voice/Recitation";
 
 export interface GateCheck {
-	member: {
-		id: string;
-		permissions?: { has: (flag: bigint) => boolean };
+	member: Pick<GuildMember, "id"> & {
+		permissions?: Pick<GuildMember["permissions"], "has">;
 	};
 	player: Pick<Player, "humanMemberCount">;
 	recitation?: Recitation;
@@ -19,20 +18,9 @@ export interface GateCheck {
  * - requested the affected Recitation
  */
 export function isQualified(check: GateCheck): boolean {
-	if (check.member.permissions?.has(PermissionFlagsBits.MoveMembers)) {
+	if (check.member.permissions?.has(PermissionFlagsBits.MoveMembers))
 		return true;
-	}
-
-	if (check.player.humanMemberCount === 1) {
-		return true;
-	}
-
-	if (
-		check.recitation?.requestedBy !== undefined &&
-		check.recitation.requestedBy === check.member.id
-	) {
-		return true;
-	}
-
+	if (check.player.humanMemberCount === 1) return true;
+	if (check.recitation?.requestedBy === check.member.id) return true;
 	return false;
 }

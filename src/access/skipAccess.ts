@@ -1,13 +1,11 @@
-import type { PartialGroupDMChannel, TextBasedChannel } from "discord.js";
 import type { Locale, Localizable } from "../i18n/locale";
 import { recitationLabel } from "../i18n/recitationLabel";
 import { getPanel } from "../play/playerPanel";
 import type { Player } from "../voice/Player";
 import type { Recitation } from "../voice/Recitation";
 import { isQualified } from "./Gate";
+import type { SendableTextChannel } from "./types";
 import type { VoteManager } from "./VoteManager";
-
-type SendableTextChannel = Exclude<TextBasedChannel, PartialGroupDMChannel>;
 
 export interface SkipGateInput {
 	player: Player;
@@ -18,11 +16,6 @@ export interface SkipGateInput {
 	votes?: VoteManager;
 	channel?: SendableTextChannel | null;
 	recitation?: Recitation;
-}
-
-function voterIdsFromPlayer(player: Player): string[] {
-	if (player.humanMemberIds.length > 0) return player.humanMemberIds;
-	return [];
 }
 
 function resolveChannel(input: SkipGateInput): SendableTextChannel | undefined {
@@ -62,17 +55,7 @@ export async function handleSkipWithGate(
 	if (!channel) return { kind: "noVoters" };
 	if (!input.votes) return { kind: "qualified" };
 
-	const voterIds = voterIdsFromPlayer(input.player);
-	// If player has channel members collection via discord.js, use that directly for ids
-	let ids = voterIds;
-	if (ids.length === 0) {
-		// Try via player humanMemberCount fallback — we still need ids for mentions;
-		// if we cannot enumerate, use initiator alone as voter to avoid zero
-		if (input.player.humanMemberCount > 0) {
-			ids = [input.member.id ?? "unknown"];
-		}
-	}
-
+	const ids = input.player.humanMemberIds;
 	if (ids.length === 0) return { kind: "noVoters" };
 
 	const label = recitationLabel(recitation, input.locale);

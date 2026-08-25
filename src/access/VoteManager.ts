@@ -3,12 +3,12 @@ import {
 	ButtonBuilder,
 	ButtonStyle,
 	type Message,
-	type PartialGroupDMChannel,
-	type TextBasedChannel,
+	type MessageCreateOptions,
 } from "discord.js";
 import { createLogger } from "../core/logger";
 import type { Locale, Localizable } from "../i18n/locale";
 import type { PanelSnapshot } from "../play/playerPanel";
+import type { SendableTextChannel } from "./types";
 
 const logger = createLogger("VoteManager");
 
@@ -16,8 +16,6 @@ export const VOTE_YES_CUSTOM_ID = "vote:yes";
 export const VOTE_NO_CUSTOM_ID = "vote:no";
 
 const VOTE_TIMEOUT_MS = 20_000;
-
-type SendableTextChannel = Exclude<TextBasedChannel, PartialGroupDMChannel>;
 
 type VoteOutcome = "passed" | "rejected" | "cancelled" | "replaced";
 
@@ -90,7 +88,7 @@ export class VoteManager {
 		const components = this.buildComponents(vote, false);
 
 		try {
-			const sendPayload: import("discord.js").MessageCreateOptions & {
+			const sendPayload: MessageCreateOptions & {
 				reply?: { messageReference: string };
 			} = {
 				content,
@@ -111,7 +109,7 @@ export class VoteManager {
 			vote.timer = setTimeout(() => {
 				void this.onTimeout(vote);
 			}, VOTE_TIMEOUT_MS);
-			vote.timer.unref?.();
+			vote.timer.unref();
 		} catch (error) {
 			logger.error(error, "Failed to post vote in guild %s", input.guildId);
 			this.votes.delete(input.guildId);
@@ -155,7 +153,6 @@ export class VoteManager {
 		}
 
 		// Sync voters: remove departed votes, keep votes of remaining
-		// oxlint-disable-next-line unicorn/no-useless-spread -- copy needed while mutating set
 		for (const id of [...vote.voters]) {
 			if (!currentSet.has(id)) {
 				vote.voters.delete(id);
