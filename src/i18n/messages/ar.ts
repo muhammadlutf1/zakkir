@@ -109,6 +109,13 @@ export const ar = {
 	"preferences.unset": "غير محدد",
 	"language.name.en": "الإنجليزية",
 	"language.name.ar": "العربية",
+	// Vote (Gate tracer bullet)
+	"vote.prompt": "تصويت لتخطي **{label}** — صوّت أدناه:",
+	"vote.passed": "✅ نجح التصويت — تم تخطي **{label}**.",
+	"vote.rejected": "❌ فشل التصويت — لا توجد أصوات كافية للتخطي.",
+	"vote.cancelled": "🚫 أُلغي التصويت — غادر المبادر القناة الصوتية.",
+	"vote.replaced": "🔄 استُبدل التصويت باقتراح جديد.",
+	"vote.started": "بدأ التصويت — يرجى التصويت في القناة.",
 	// Generic interaction error fallbacks
 	"error.componentGeneric": "حدث خطأ أثناء معالجة هذا المكوّن!",
 	"error.commandGeneric": "حدث خطأ أثناء تنفيذ هذا الأمر!",

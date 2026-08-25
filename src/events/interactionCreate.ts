@@ -33,6 +33,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 			catalog,
 			guildConfigs: bot.guildConfigs,
 			playback: bot.playback,
+			votes: bot.votes,
 			locale,
 			translator,
 		};
@@ -42,6 +43,7 @@ const interactionDispatcher: BotEvent<Events.InteractionCreate> = {
 			catalog,
 			guildConfigs: bot.guildConfigs,
 			playback: bot.playback,
+			votes: bot.votes,
 			locale,
 			translator,
 		};

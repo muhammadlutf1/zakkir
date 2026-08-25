@@ -138,6 +138,19 @@ export class Player {
 		return this.channel.members.filter((member) => !member.user.bot).size;
 	}
 
+	get humanMemberIds(): string[] {
+		if (!this.channel) return [];
+		const ids: string[] = [];
+		for (const [id, member] of this.channel.members as unknown as Map<
+			string,
+			{ user: { bot: boolean } }
+		>) {
+			if (!member.user.bot) ids.push(id);
+		}
+		// Collection case already covered via iterable Map interface
+		return ids;
+	}
+
 	get isOccupied() {
 		return this.isConnected && this.humanMemberCount > 0;
 	}

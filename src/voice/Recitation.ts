@@ -4,7 +4,8 @@ import type { Surah } from "../catalog/suwar";
  * The Queue's unit of playback — a Surah read by a Reciter in a specific
  * Rewayah, already resolved to a stream URL. The Reciter/Rewayah names are
  * stored in the locale they were resolved in; the Surah keeps per-locale
- * name variants.
+ * name variants. The Requester is the Discord user id who requested this
+ * Recitation (via /play or picker auto-play).
  */
 export interface Recitation {
 	surah: Surah;
@@ -13,4 +14,5 @@ export interface Recitation {
 	rewayahId: number;
 	rewayahName: string;
 	url: string;
+	requestedBy?: string;
 }

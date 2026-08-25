@@ -1,4 +1,5 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
+import type { VoteManager } from "../access/VoteManager";
 import type { GuildConfig } from "../guild/GuildConfig";
 import type { PlaybackRequest } from "../play/playbackRequest";
 import type { PlayerRegistry } from "../voice/PlayerRegistry";
@@ -19,6 +20,7 @@ export default class Bot extends Client {
 		private playerRegistry: PlayerRegistry,
 		private guildConfig: GuildConfig,
 		private playbackRequest: PlaybackRequest,
+		private voteManager: VoteManager,
 	) {
 		super({
 			intents: [
@@ -61,6 +63,10 @@ export default class Bot extends Client {
 
 	public get playback() {
 		return this.playbackRequest;
+	}
+
+	public get votes() {
+		return this.voteManager;
 	}
 
 	async init() {

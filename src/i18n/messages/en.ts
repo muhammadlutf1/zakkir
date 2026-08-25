@@ -109,6 +109,13 @@ export const en = {
 	"preferences.unset": "not set",
 	"language.name.en": "English",
 	"language.name.ar": "العربية",
+	// Vote (Gate tracer bullet)
+	"vote.prompt": "Vote to skip **{label}** — cast your vote:",
+	"vote.passed": "✅ Vote passed — skipped **{label}**.",
+	"vote.rejected": "❌ Vote failed — not enough votes to skip.",
+	"vote.cancelled": "🚫 Vote cancelled — initiator left the voice channel.",
+	"vote.replaced": "🔄 Vote replaced by a new proposal.",
+	"vote.started": "Vote started — please vote in the channel.",
 	// Generic interaction error fallbacks
 	"error.componentGeneric": "There was an error while handling that component!",
 	"error.commandGeneric": "There was an error while executing this command!",
