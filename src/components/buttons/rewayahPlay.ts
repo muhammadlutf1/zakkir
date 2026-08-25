@@ -15,7 +15,7 @@ const component: Component = {
 			locale: context.locale,
 			translator: context.translator,
 			noticeChannel: interaction.channel ?? undefined,
-			requestedBy: (interaction.user as unknown as { id?: string })?.id,
+			requestedBy: interaction.user.id,
 			editReply: (reply) => interaction.editReply(reply),
 		});
 	},

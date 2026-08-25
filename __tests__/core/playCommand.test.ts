@@ -125,6 +125,7 @@ describe("play command with a fabricated context", () => {
 		const interaction = {
 			inCachedGuild: () => true,
 			member: { voice: { channel: voiceChannel } },
+			user: { id: "user-1" },
 			options: {
 				getString: (key: string) => (key === "surah" ? "18" : "أكرم العلاقمي"),
 			},

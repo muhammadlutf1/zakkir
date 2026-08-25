@@ -851,6 +851,7 @@ describe("context wiring", () => {
 		const interaction = {
 			inCachedGuild: () => true,
 			member: { voice: { channel: { id: "voice-1" } } },
+			user: { id: "user-1" },
 			options: {
 				getString: (key: string) => (key === "surah" ? "18" : "أكرم العلاقمي"),
 			},

@@ -141,13 +141,9 @@ export class Player {
 	get humanMemberIds(): string[] {
 		if (!this.channel) return [];
 		const ids: string[] = [];
-		for (const [id, member] of this.channel.members as unknown as Map<
-			string,
-			{ user: { bot: boolean } }
-		>) {
+		for (const [id, member] of this.channel.members) {
 			if (!member.user.bot) ids.push(id);
 		}
-		// Collection case already covered via iterable Map interface
 		return ids;
 	}
 
