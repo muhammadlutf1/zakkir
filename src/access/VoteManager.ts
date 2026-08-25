@@ -30,7 +30,7 @@ interface ActiveVote {
 	timer?: NodeJS.Timeout;
 	locale: Locale;
 	translator: Localizable;
-	label: string;
+	action: string;
 	onPass: () => Promise<void>;
 	resolved: boolean;
 }
@@ -46,7 +46,8 @@ export interface VoteProposeInput {
 	panel?: PanelSnapshot;
 	locale: Locale;
 	translator: Localizable;
-	label: string;
+	/** The rendered action phrase the vote is about (e.g. "skip **X**"). */
+	action: string;
 	onPass: () => Promise<void>;
 }
 
@@ -81,7 +82,7 @@ export class VoteManager {
 			channel: input.channel,
 			locale: input.locale,
 			translator: input.translator,
-			label: input.label,
+			action: input.action,
 			onPass: input.onPass,
 			resolved: false,
 		};
@@ -227,13 +228,13 @@ export class VoteManager {
 		const base = vote.initiatorName
 			? vote.translator.t("vote.promptInitiator", {
 					initiator: vote.initiatorName,
-					label: vote.label,
+					action: vote.action,
 				})
-			: vote.translator.t("vote.prompt", { label: vote.label });
+			: vote.translator.t("vote.prompt", { action: vote.action });
 		const mentionPart = mentions ? `${mentions} ` : "";
 		let suffix = "";
 		if (outcome === "passed")
-			suffix = `\n${vote.translator.t("vote.passed", { label: vote.label })}`;
+			suffix = `\n${vote.translator.t("vote.passed", { action: vote.action })}`;
 		else if (outcome === "rejected")
 			suffix = `\n${vote.translator.t("vote.rejected")}`;
 		else if (outcome === "cancelled")

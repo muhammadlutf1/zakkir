@@ -24,6 +24,8 @@ async function runClear(context: CommandContext): Promise<string | undefined> {
 	await clearCommand.execute(context, {
 		inCachedGuild: () => true,
 		guildId: "g-1",
+		member: { id: "user-1", user: { username: "tester" } },
+		channel: null,
 		reply: async (payload: string) => {
 			captured.push(payload);
 		},

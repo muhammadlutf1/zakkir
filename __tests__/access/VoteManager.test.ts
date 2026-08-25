@@ -31,7 +31,7 @@ type ProposeOverrides = Partial<Parameters<VoteManager["propose"]>[0]>;
 function makeInput(
 	channel: SendableTextChannel,
 	overrides: ProposeOverrides = {},
-) {
+): Parameters<VoteManager["propose"]>[0] {
 	return {
 		guildId: "guild-1",
 		initiatorId: "user-a",
@@ -39,7 +39,7 @@ function makeInput(
 		channel,
 		locale: "en" as const,
 		translator: localizable("en"),
-		label: "Al-Kahf by Minshawi",
+		action: "skip **Al-Kahf by Minshawi**",
 		onPass: async () => {},
 		...overrides,
 	};

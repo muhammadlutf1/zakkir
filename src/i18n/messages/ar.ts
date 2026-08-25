@@ -109,15 +109,23 @@ export const ar = {
 	"preferences.unset": "غير محدد",
 	"language.name.en": "الإنجليزية",
 	"language.name.ar": "العربية",
-	// Vote (Gate tracer bullet)
-	"vote.prompt": "تصويت لتخطي **{label}** — صوّت أدناه:",
-	"vote.promptInitiator": "**{initiator}** يريد تخطي **{label}** — صوّت أدناه:",
+	// Vote (Gate)
+	"vote.prompt": "تصويت على {action} — يرجى التصويت أدناه:",
+	"vote.promptInitiator": "**{initiator}** يريد {action} — يرجى التصويت أدناه:",
 	"vote.alreadyVoted": "لقد صوّت بالفعل في هذا التصويت.",
-	"vote.passed": "✅ نجح التصويت — تم تخطي **{label}**.",
-	"vote.rejected": "❌ فشل التصويت — لا توجد أصوات كافية للتخطي.",
+	"vote.passed": "✅ نجح التصويت: {action}.",
+	"vote.rejected": "❌ فشل التصويت — لا توجد أصوات كافية.",
 	"vote.cancelled": "🚫 أُلغي التصويت — غادر المبادر القناة الصوتية.",
 	"vote.replaced": "🔄 استُبدل التصويت باقتراح جديد.",
 	"vote.started": "بدأ التصويت — يرجى التصويت في القناة.",
+	// Action phrases rendered inside the vote prompts
+	"vote.action.skip": "تخطي **{label}**",
+	"vote.action.clear": "مسح قائمة الانتظار",
+	"vote.action.repeat": "تغيير وضع التكرار",
+	"vote.action.remove": "إزالة **{label}**",
+	"vote.action.select": "الانتقال إلى **{label}**",
+	"vote.action.stop": "إيقاف التشغيل",
+	"vote.action.radio": "إيقاف الراديو وتشغيل **{label}**",
 	// Generic interaction error fallbacks
 	"error.componentGeneric": "حدث خطأ أثناء معالجة هذا المكوّن!",
 	"error.commandGeneric": "حدث خطأ أثناء تنفيذ هذا الأمر!",

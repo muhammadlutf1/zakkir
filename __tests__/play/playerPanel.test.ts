@@ -7,6 +7,7 @@ import type { Locale } from "../../src/i18n/locale";
 import {
 	buildPanelPayload,
 	createPanel,
+	deletePanel,
 	getPanel,
 	hasPanel,
 	PANEL_PAUSE_CUSTOM_ID,
@@ -14,6 +15,7 @@ import {
 	PANEL_SELECT_CUSTOM_ID,
 	PANEL_SKIP_CUSTOM_ID,
 	PANEL_STOP_CUSTOM_ID,
+	repostPanel,
 	updatePanel,
 } from "../../src/play/playerPanel";
 import { Player } from "../../src/voice/Player";
@@ -606,5 +608,91 @@ describe("session end", () => {
 		for (const interactive of [...buttons(container), selectOf(container)]) {
 			assert.equal(interactive.disabled, true);
 		}
+	});
+});
+
+describe("deletePanel", () => {
+	it("deletes the tracked message and forgets the panel", async () => {
+		const guildId = "panel-delete";
+		const player = makePlayer(guildId);
+		await player.play(recitation());
+		const { channel, handles } = makeChannel([]);
+		await createPanel(
+			player,
+			channel as unknown as Parameters<typeof createPanel>[1],
+			"en",
+		);
+
+		await deletePanel(guildId);
+
+		assert.equal(handles[0]!.deletions, 1);
+		assert.equal(hasPanel(guildId), false);
+		assert.equal(getPanel(guildId), undefined);
+	});
+
+	it("clears the tracking even when the message is already gone", async () => {
+		const guildId = "panel-delete-gone";
+		const player = makePlayer(guildId);
+		await player.play(recitation());
+		const { channel, handles } = makeChannel([]);
+		await createPanel(
+			player,
+			channel as unknown as Parameters<typeof createPanel>[1],
+			"en",
+		);
+		handles[0]!.message.delete = async () => {
+			throw Object.assign(new Error("Unknown Message"), { code: 10008 });
+		};
+
+		await deletePanel(guildId);
+
+		assert.equal(hasPanel(guildId), false);
+	});
+});
+
+describe("repostPanel", () => {
+	it("deletes the old panel and registers the fresh one", async () => {
+		const guildId = "panel-repost";
+		const player = makePlayer(guildId);
+		await player.play(recitation());
+		const { channel, handles } = makeChannel([]);
+		await createPanel(
+			player,
+			channel as unknown as Parameters<typeof createPanel>[1],
+			"en",
+		);
+
+		const tracked = await repostPanel(
+			player,
+			channel as unknown as Parameters<typeof createPanel>[1],
+			"en",
+		);
+
+		assert.equal(tracked, true);
+		assert.equal(handles[0]!.deletions, 1);
+		assert.equal(handles.length, 2);
+		assert.deepEqual(getPanel(guildId), {
+			messageId: handles[1]!.message.id,
+			channelId: "text-1",
+		});
+	});
+
+	it("reports failure when the new panel cannot be posted", async () => {
+		const guildId = "panel-repost-fail";
+		const player = makePlayer(guildId);
+		const { channel, handles } = makeChannel([]);
+		channel.send = async () => {
+			throw new Error("send failed");
+		};
+
+		const tracked = await repostPanel(
+			player,
+			channel as unknown as Parameters<typeof createPanel>[1],
+			"en",
+		);
+
+		assert.equal(tracked, false);
+		assert.equal(handles.length, 0);
+		assert.equal(hasPanel(guildId), false);
 	});
 });

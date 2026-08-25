@@ -1,5 +1,7 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import { gateOrVoteStarted } from "../access/actionGate";
 import type { Command } from "../core/Command";
+import { recitationLabel } from "../i18n/recitationLabel";
 
 const removeCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -35,6 +37,36 @@ const removeCommand: Command = {
 				}),
 				flags: MessageFlags.Ephemeral,
 			});
+			return;
+		}
+
+		// The relevant Recitation for requester qualification is the one being
+		// removed, not the one currently playing.
+		const target = upcoming[position - 1];
+
+		if (
+			!(await gateOrVoteStarted(
+				{
+					player,
+					member: interaction.member,
+					guildId: interaction.guildId,
+					locale: context.locale,
+					translator: context.translator,
+					votes: context.votes,
+					channel: interaction.channel ?? undefined,
+					recitation: target,
+					directAllowed: target?.requestedBy === interaction.member.id,
+					action: context.translator.t("vote.action.remove", {
+						label: target ? recitationLabel(target, context.locale) : "",
+					}),
+					onPass: async () => {
+						player.remove(position + 1);
+					},
+				},
+				interaction,
+				context.translator,
+			))
+		) {
 			return;
 		}
 

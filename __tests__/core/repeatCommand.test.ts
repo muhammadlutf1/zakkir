@@ -27,6 +27,8 @@ async function runRepeat(
 	await repeatCommand.execute(context, {
 		inCachedGuild: () => true,
 		guildId: "g-1",
+		member: { id: "user-1", user: { username: "tester" } },
+		channel: null,
 		options: {
 			getString: (key: string) => (key === "mode" ? mode : undefined),
 		},

@@ -1,4 +1,5 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
+import { gateOrVoteStarted } from "../access/actionGate";
 import type { Command } from "../core/Command";
 
 const clearCommand: Command = {
@@ -14,6 +15,28 @@ const clearCommand: Command = {
 				content: context.translator.t("command.nothingPlaying"),
 				flags: MessageFlags.Ephemeral,
 			});
+			return;
+		}
+
+		if (
+			!(await gateOrVoteStarted(
+				{
+					player,
+					member: interaction.member,
+					guildId: interaction.guildId,
+					locale: context.locale,
+					translator: context.translator,
+					votes: context.votes,
+					channel: interaction.channel ?? undefined,
+					action: context.translator.t("vote.action.clear"),
+					onPass: async () => {
+						player.clearQueue();
+					},
+				},
+				interaction,
+				context.translator,
+			))
+		) {
 			return;
 		}
 

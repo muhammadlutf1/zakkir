@@ -11,6 +11,8 @@ const component: Component = {
 
 		if (!player) return;
 
+		// Opening the mode picker changes nothing; the mode-set buttons in
+		// repeatMode.ts are what go through the Gate.
 		await interaction.reply({
 			components: [buildRepeatRow(player.repeatMode, context.locale)],
 			flags: MessageFlags.Ephemeral,

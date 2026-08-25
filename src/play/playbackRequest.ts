@@ -292,6 +292,11 @@ export class PlaybackRequest {
 		return pending;
 	}
 
+	/** Non-mutating look at the guild's pending Radio confirmation (for gating). */
+	peekPendingRadio(guildId: string): Recitation | undefined {
+		return this.pendingRadio.get(guildId);
+	}
+
 	private setNoticeChannel(player: Player, noticeChannel?: TextBasedChannel) {
 		if (noticeChannel) player.setNoticeChannel(noticeChannel);
 	}
