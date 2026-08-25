@@ -108,7 +108,11 @@ function makeInteraction(options: {
 	const interaction = {
 		customId: options.customId,
 		guildId: "g-1",
-		member: { voice: { channelId: options.voiceChannelId ?? "voice-1" } },
+		user: { id: "user-1", username: "tester" },
+		member: {
+			voice: { channelId: options.voiceChannelId ?? "voice-1" },
+			user: { username: "tester" },
+		},
 		values: options.values,
 		replied: false,
 		deferred: false,

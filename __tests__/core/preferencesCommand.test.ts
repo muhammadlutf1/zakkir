@@ -58,6 +58,8 @@ function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 interface MockInteraction {
 	inCachedGuild: () => boolean;
 	guildId: string;
+	member: { permissions: { has: () => boolean } };
+	memberPermissions: { has: () => boolean };
 	options: {
 		getSubcommand: () => string;
 		getString: (key: string) => string | undefined;
@@ -77,6 +79,8 @@ async function capture(): Promise<{
 	const interaction: MockInteraction = {
 		inCachedGuild: () => true,
 		guildId: "g-1",
+		member: { permissions: { has: () => true } },
+		memberPermissions: { has: () => true },
 		options: {
 			getSubcommand: () => "",
 			getString: () => undefined,

@@ -111,19 +111,10 @@ const preferencesCommand: Command = {
 	},
 
 	async execute(context, interaction) {
-		// SAFETY: cached guild interaction always carries member
-		const rawMember = interaction.member as
-			| import("discord.js").GuildMember
-			| null;
-		const hasFromMember =
-			rawMember?.permissions.has(PermissionFlagsBits.ManageGuild) ?? false;
-		const hasFromPermissions =
-			interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild) ??
-			false;
-		const hasNeitherSource =
-			!rawMember?.permissions && !interaction.memberPermissions;
 		const hasManageGuild =
-			hasFromMember || hasFromPermissions || hasNeitherSource;
+			interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) ||
+			(interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild) ??
+				false);
 
 		if (!hasManageGuild) {
 			await interaction.reply({

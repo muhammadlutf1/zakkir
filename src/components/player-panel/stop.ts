@@ -10,11 +10,10 @@ const component: Component = {
 
 		if (!player) return;
 
-		const userId = (interaction as { user?: { id?: string } }).user?.id;
+		const userId = interaction.user.id;
 		const displayName =
-			(interaction.member as { user?: { username?: string } } | null)?.user
-				?.username ??
-			(interaction as { user?: { username?: string } }).user?.username ??
+			interaction.member.user.username ??
+			interaction.user.username ??
 			"someone";
 		const mention = userId ? `<@${userId}> (${displayName})` : displayName;
 		setPanelStatus(player.guildId, {
