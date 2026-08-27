@@ -671,8 +671,10 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 				"setNoticeChannel",
 				"play",
 			]);
+			assert.equal(edits[1]!.content, "");
+			assert.equal(edits[1]!.flags, 32768);
 			assert.match(
-				edits[1]!.content,
+				pickerJson(edits[1]).text,
 				/\*\*<:play:1384273884622229514> Playing\*\* Al-Kahf/,
 			);
 
@@ -704,7 +706,9 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 			editReply: input.editReply,
 		});
 
-		assert.match(edits[1]!.content, /not connected to a voice channel/);
+		assert.equal(edits[1]!.content, "");
+		assert.equal(edits[1]!.flags, 32768);
+		assert.match(pickerJson(edits[1]).text, /not connected to a voice channel/);
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
 	});
 

@@ -203,10 +203,9 @@ export class PlaybackRequest {
 		const player = this.deps.players.get(input.guildId);
 
 		if (!player?.isConnected) {
-			await input.editReply({
-				content: input.translator.t("command.notConnected"),
-				components: [],
-			});
+			await input.editReply(
+				pickerTextReply(input.translator.t("command.notConnected")),
+			);
 			return;
 		}
 
@@ -224,17 +223,16 @@ export class PlaybackRequest {
 		).catch(() => undefined);
 
 		if (!recitation) {
-			await input.editReply({
-				content: input.translator.t("command.resolveFailed"),
-				components: [],
-			});
+			await input.editReply(
+				pickerTextReply(input.translator.t("command.resolveFailed")),
+			);
 			return;
 		}
 
 		this.setNoticeChannel(player, input.noticeChannel);
 
 		await this.playOrConfirm(player, recitation, input.locale, {
-			edit: (reply) => input.editReply(reply),
+			edit: (reply) => input.editReply(toPickerEditReply(reply)),
 		});
 	}
 
@@ -720,6 +718,39 @@ function formatPlayResult(
 	if (result.started) return t("play.started", { label });
 
 	return t("play.failed", { surah: surahName(recitation.surah, locale) });
+}
+
+function pickerTextReply(text: string): PlayReply {
+	return {
+		content: "",
+		components: [
+			new ContainerBuilder().addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(text),
+			),
+		],
+		flags: MessageFlags.IsComponentsV2,
+	};
+}
+
+function toPickerEditReply(reply: PlayReply): PlayReply {
+	if (reply.flags === MessageFlags.IsComponentsV2) return reply;
+
+	if (reply.components.length > 0) {
+		const rows = reply.components as ActionRowBuilder<ButtonBuilder>[];
+		return {
+			content: "",
+			components: [
+				new ContainerBuilder()
+					.addTextDisplayComponents(
+						new TextDisplayBuilder().setContent(reply.content),
+					)
+					.addActionRowComponents(...rows),
+			],
+			flags: MessageFlags.IsComponentsV2,
+		};
+	}
+
+	return pickerTextReply(reply.content);
 }
 
 interface ActivePickerOptions {
