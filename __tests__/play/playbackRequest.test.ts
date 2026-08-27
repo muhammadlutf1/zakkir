@@ -239,7 +239,7 @@ function makeRequestInput(
 	overrides: Partial<Parameters<PlaybackRequest["request"]>[0]> = {},
 ) {
 	const edits: EditRecord[] = [];
-	const followUps: string[] = [];
+	const followUps: Array<string | EditRecord> = [];
 
 	const input = {
 		guildId: overrides.guildId ?? harness?.player.guildId ?? "g-1",
@@ -256,7 +256,7 @@ function makeRequestInput(
 		editReply: async (reply: EditRecord) => {
 			edits.push(reply);
 		},
-		followUp: async (content: string) => {
+		followUp: async (content: string | EditRecord) => {
 			followUps.push(content);
 		},
 	};
@@ -601,7 +601,7 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 		assert.match(text, /إبراهيم الأخضر/);
 	});
 
-	it("renders one section per rewayah with overflow container after 7", async () => {
+	it("renders one section per rewayah with overflow via follow-up (old design)", async () => {
 		const many: Reciter = {
 			id: 3,
 			name: "متعدد الروايات",
@@ -612,29 +612,60 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 		const wideCatalog = new FakeCatalog([many]) as unknown as Catalog;
 		const harness = makePlayer();
 		const playback = makePlayback(harness);
-		const { input, edits } = makeRequestInput(harness, {
+		const { input, edits, followUps } = makeRequestInput(harness, {
 			reciter: many.name,
 		});
 		input.catalog = wideCatalog;
 
 		await playback.request(input);
 
-		assert.equal(edits[0]!.components.length, 2);
+		// Old Section design: 12 choices exceed 40 components in one message,
+		// so the first container (7 sections) goes in editReply and the
+		// overflow container (5 sections) is sent as a follow-up — same design.
+		assert.equal(edits[0]!.components.length, 1);
 		const firstJson = (
 			edits[0]!.components[0] as {
 				toJSON(): { components: { type: number }[] };
 			}
 		).toJSON();
+		const firstSections = firstJson.components.filter((c) => c.type === 9);
+		assert.equal(firstSections.length, 7);
+		assert.equal(buttonIds(edits[0]).length, 7);
+		assert.equal(followUps.length, 1);
+		const followUp = followUps[0] as EditRecord;
+		assert.equal(followUp.components.length, 1);
 		const secondJson = (
-			edits[0]!.components[1] as {
+			followUp.components[0] as {
 				toJSON(): { components: { type: number }[] };
 			}
 		).toJSON();
-		const firstSections = firstJson.components.filter((c) => c.type === 9);
-		const secondSections = secondJson.components.filter((c) => c.type === 9);
-		assert.equal(firstSections.length, 7);
-		assert.equal(secondSections.length, 5);
-		assert.equal(buttonIds(edits[0]).length, 12);
+		assert.equal(secondJson.components.filter((c) => c.type === 9).length, 5);
+		assert.equal(buttonIds(followUp).length, 5);
+		assert.equal(buttonIds(edits[0]).length + buttonIds(followUp).length, 12);
+
+		// Single-choice picker (no overflow) stays in one message
+		const huge: Reciter = {
+			id: 4,
+			name: "كثير الروايات",
+			rewayat: Array.from({ length: 2 }, (_, i) =>
+				rewayah(i + 200, `huge-${i}`, [18]),
+			),
+		};
+		const hugeCatalog = new FakeCatalog([huge]) as unknown as Catalog;
+		const harness2 = makePlayer();
+		const playback2 = makePlayback(harness2);
+		const {
+			input: input2,
+			edits: edits2,
+			followUps: followUps2,
+		} = makeRequestInput(harness2, {
+			reciter: huge.name,
+		});
+		input2.catalog = hugeCatalog;
+		await playback2.request(input2);
+		assert.equal(edits2[0]!.components.length, 1);
+		assert.equal(followUps2.length, 0);
+		assert.equal(buttonIds(edits2[0]).length, 2);
 	});
 
 	it("pickRewayah resolves the pressed choice, cancels the timeout, and plays", async () => {
@@ -729,7 +760,7 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 			await flush();
 
 			assert.equal(harness.played[0]?.rewayahId, 1);
-			assert.match(followUps[0]!, /Playing\*\* Al-Kahf/);
+			assert.match(followUps[0] as string, /Playing\*\* Al-Kahf/);
 			assert.deepEqual(edits.length, 1);
 		} finally {
 			mock.timers.reset();
@@ -750,7 +781,7 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 			mock.timers.tick(101);
 			await flush();
 
-			assert.match(followUps[0]!, /Nothing picked/);
+			assert.match(followUps[0] as string, /Nothing picked/);
 			assert.deepEqual(harness.played, []);
 		} finally {
 			mock.timers.reset();

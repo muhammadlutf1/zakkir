@@ -20,40 +20,65 @@ const playCommand: Command = {
 		),
 
 	async autocomplete(context, interaction) {
-		const focused = interaction.options.getFocused(true);
-		const query = focused.value.trim().toLowerCase();
+		try {
+			const focused = interaction.options.getFocused(true);
+			const query = focused.value.trim().toLowerCase();
 
-		// Reciters come from the localized Catalog; the value carries the
-		// localized name so `/play`'s name-based resolution picks it up.
-		if (focused.name === "reciter") {
-			const reciters = await context.catalog.fetchReciters();
-			const matches = reciters
-				.filter((reciter) => reciter.name.toLowerCase().includes(query))
+			// Reciters come from the localized Catalog; the value carries the
+			// localized name so `/play`'s name-based resolution picks it up.
+			if (focused.name === "reciter") {
+				// Race the catalog fetch against the 3s Discord deadline — on
+				// timeout or failure return empty to avoid Unknown interaction.
+				const reciters = await Promise.race([
+					context.catalog.fetchReciters(),
+					new Promise<never>((_, reject) =>
+						setTimeout(
+							() => reject(new Error("autocomplete timeout")),
+							2500,
+						).unref(),
+					),
+				]).catch(
+					() => [] as Awaited<ReturnType<typeof context.catalog.fetchReciters>>,
+				);
+				const matches = reciters
+					.filter((reciter) => reciter.name.toLowerCase().includes(query))
+					.slice(0, 25);
+
+				await interaction.respond(
+					matches.map((reciter) => ({
+						name: reciter.name,
+						value: reciter.name,
+					})),
+				);
+				return;
+			}
+
+			const matches = context.catalog.surahList
+				.filter(
+					(surah) =>
+						surah.name.toLowerCase().includes(query) ||
+						String(surah.number).includes(query),
+				)
 				.slice(0, 25);
 
 			await interaction.respond(
-				matches.map((reciter) => ({
-					name: reciter.name,
-					value: reciter.name,
+				matches.map((surah) => ({
+					name: `${surah.number}. ${surah.name}`,
+					value: String(surah.number),
 				})),
 			);
-			return;
+		} catch (error) {
+			// Unknown interaction (10062) means Discord already timed out the
+			// autocomplete — silently ignore, don't log as error.
+			if (
+				error instanceof Error &&
+				"code" in error &&
+				(error as { code: number }).code === 10062
+			) {
+				return;
+			}
+			throw error;
 		}
-
-		const matches = context.catalog.surahList
-			.filter(
-				(surah) =>
-					surah.name.toLowerCase().includes(query) ||
-					String(surah.number).includes(query),
-			)
-			.slice(0, 25);
-
-		await interaction.respond(
-			matches.map((surah) => ({
-				name: `${surah.number}. ${surah.name}`,
-				value: String(surah.number),
-			})),
-		);
 	},
 
 	async execute(context, interaction) {
@@ -67,7 +92,18 @@ const playCommand: Command = {
 			return;
 		}
 
-		await interaction.deferReply({ ephemeral: true });
+		try {
+			await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				"code" in error &&
+				(error as { code: number }).code === 10062
+			) {
+				return;
+			}
+			throw error;
+		}
 
 		const surahInput = interaction.options.getString("surah", true);
 		const reciterOption = interaction.options.getString("reciter") ?? undefined;
@@ -98,8 +134,19 @@ const playCommand: Command = {
 			noticeChannel: interaction.channel ?? undefined,
 			requestedBy: interaction.user.id,
 			editReply: (reply) => interaction.editReply(reply),
-			followUp: (content) =>
-				interaction.followUp({ content, flags: MessageFlags.Ephemeral }),
+			followUp: (content) => {
+				if (typeof content === "string") {
+					return interaction.followUp({
+						content,
+						flags: MessageFlags.Ephemeral,
+					});
+				}
+				// Overflow picker container(s) keep the old Section design
+				return interaction.followUp({
+					...content,
+					flags: MessageFlags.Ephemeral | (content.flags ?? 0),
+				});
+			},
 		});
 	},
 };

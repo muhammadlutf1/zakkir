@@ -45,8 +45,13 @@ export interface PlayRequestInput {
 	/** Discord user id who requested the Recitation. */
 	requestedBy?: string;
 	editReply(reply: PlayReply): Promise<unknown>;
-	/** Delivers the picker's timeout notices and auto-play announcement. */
-	followUp(content: string): Promise<unknown>;
+	/**
+	 * Delivers the picker's timeout notices and auto-play announcement, and
+	 * overflow picker containers when the choice list exceeds the 40-component
+	 * limit (sent as a follow-up with the same Section design as the first
+	 * container, per user request to keep the old design).
+	 */
+	followUp(content: string | PlayReply): Promise<unknown>;
 }
 
 export interface RewayahPickInput {
@@ -178,7 +183,29 @@ export class PlaybackRequest {
 
 		if (outcome.kind === "picker") {
 			this.startPickerSession(input, player, outcome);
-			await input.editReply(renderPicker(outcome));
+			const reply = renderPicker(outcome);
+			// Keep the old Section design. If the picker exceeds Discord's
+			// 40-component limit, send the first container in the deferred
+			// reply and each overflow container as a follow-up — same design
+			// as the second container, per user request.
+			if (reply.components.length <= 1) {
+				await input.editReply(reply);
+			} else {
+				const [first, ...rest] = reply.components;
+				await input.editReply({
+					content: "",
+					components: [first],
+					flags: MessageFlags.IsComponentsV2,
+				});
+				for (const component of rest) {
+					// SAFETY: followUp is typed as string|PlayReply for overflow; this is the PlayReply branch
+					await input.followUp({
+						content: "",
+						components: [component],
+						flags: MessageFlags.IsComponentsV2,
+					} as PlayReply);
+				}
+			}
 			return;
 		}
 

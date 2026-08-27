@@ -123,6 +123,21 @@ async function dispatchWithErrorPolicy(
 	try {
 		await execute();
 	} catch (error) {
+		// 10062 Unknown interaction and 40060 Already acknowledged are
+		// expected when Discord times out the 3s window or the interaction
+		// was already handled — don't spam error logs or try to reply.
+		const code =
+			error instanceof Error && "code" in error
+				? (error as { code: number }).code
+				: undefined;
+		if (code === 10062 || code === 40060) {
+			logger.warn(
+				error,
+				"Interaction expired for %s — skipping error reply",
+				logLabel,
+			);
+			return;
+		}
 		logger.error(error, "Error handling %s", logLabel);
 
 		const decision = decideFailureResponse(
@@ -137,16 +152,28 @@ async function dispatchWithErrorPolicy(
 
 		const responder = interaction as CommandInteraction;
 
-		if (decision.action === "reply") {
-			await responder.reply({
-				content: decision.content,
-				flags: MessageFlags.Ephemeral,
-			});
-		} else {
-			await responder.followUp({
-				content: decision.content,
-				flags: MessageFlags.Ephemeral,
-			});
+		try {
+			if (decision.action === "reply") {
+				await responder.reply({
+					content: decision.content,
+					flags: MessageFlags.Ephemeral,
+				});
+			} else {
+				await responder.followUp({
+					content: decision.content,
+					flags: MessageFlags.Ephemeral,
+				});
+			}
+		} catch (replyError) {
+			const replyCode =
+				replyError instanceof Error && "code" in replyError
+					? (replyError as { code: number }).code
+					: undefined;
+			if (replyCode === 10062 || replyCode === 40060) {
+				logger.warn(replyError, "Error reply expired for %s", logLabel);
+				return;
+			}
+			throw replyError;
 		}
 	}
 }
