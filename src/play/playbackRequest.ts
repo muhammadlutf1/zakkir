@@ -220,11 +220,9 @@ export class PlaybackRequest {
 		const player = this.deps.players.get(input.guildId);
 
 		if (!player?.isConnected) {
-			await input.editReply({
-				content: input.translator.t("command.notConnected"),
-				components: [],
-				flags: MessageFlags.IsComponentsV2,
-			});
+			await input.editReply(
+				v2TextReply(input.translator.t("command.notConnected")),
+			);
 			return;
 		}
 
@@ -242,11 +240,9 @@ export class PlaybackRequest {
 		).catch(() => undefined);
 
 		if (!recitation) {
-			await input.editReply({
-				content: input.translator.t("command.resolveFailed"),
-				components: [],
-				flags: MessageFlags.IsComponentsV2,
-			});
+			await input.editReply(
+				v2TextReply(input.translator.t("command.resolveFailed")),
+			);
 			return;
 		}
 
@@ -259,7 +255,7 @@ export class PlaybackRequest {
 			recitation,
 			input.locale,
 			{
-				edit: (reply) => input.editReply(reply),
+				edit: (reply) => input.editReply(v2EditReply(reply)),
 			},
 			true,
 		);
@@ -282,28 +278,28 @@ export class PlaybackRequest {
 
 		this.setNoticeChannel(player, input.noticeChannel);
 
-		const v2 = pending.componentsV2
-			? { flags: MessageFlags.IsComponentsV2 }
-			: {};
+		const v2 = pending.componentsV2;
 
 		try {
 			const result = await player.play(pending.recitation);
-			await input.update({
-				content: formatPlayResult(pending.recitation, result, input.locale),
-				components: [],
-				...v2,
-			});
+			const body = formatPlayResult(pending.recitation, result, input.locale);
+			await input.update(
+				v2 ? v2TextReply(body) : { content: body, components: [] },
+			);
 		} catch (error) {
 			logger.error(
 				error,
 				"Radio confirm play failed in guild %s",
 				input.guildId,
 			);
-			await input.update({
-				content: input.translator.t("command.resolveFailed"),
-				components: [],
-				...v2,
-			});
+			await input.update(
+				v2
+					? v2TextReply(input.translator.t("command.resolveFailed"))
+					: {
+							content: input.translator.t("command.resolveFailed"),
+							components: [],
+						},
+			);
 		}
 	}
 
@@ -314,18 +310,15 @@ export class PlaybackRequest {
 		if (!player) return;
 
 		const pending = this.pendingRecitation.get(input.guildId);
-		const v2 = pending?.componentsV2
-			? { flags: MessageFlags.IsComponentsV2 }
-			: {};
+		const v2 = pending?.componentsV2 ?? false;
 		this.pendingRecitation.delete(input.guildId);
 		const station = player.radioInfo?.name ?? "radio";
+		const body = input.translator.t("command.radioContinuing", { station });
 
 		try {
-			await input.update({
-				content: input.translator.t("command.radioContinuing", { station }),
-				components: [],
-				...v2,
-			});
+			await input.update(
+				v2 ? v2TextReply(body) : { content: body, components: [] },
+			);
 		} catch (error) {
 			logger.error(
 				error,
@@ -384,10 +377,11 @@ export class PlaybackRequest {
 
 		const result = await player.play(recitation);
 
+		// The caller decides whether this is a V2 (picker) or legacy (direct
+		// /play) edit; a V2 caller wraps the reply via `v2EditReply`.
 		await sink.edit({
 			content: formatPlayResult(recitation, result, locale),
 			components: [],
-			...(componentsV2 ? { flags: MessageFlags.IsComponentsV2 } : {}),
 		});
 	}
 
@@ -781,6 +775,49 @@ function radioConfirmPrompt(
 					new ActionRowBuilder<ButtonBuilder>().addComponents(yes, no),
 				),
 		],
+	};
+}
+
+/**
+ * A Components V2 text-only reply: the text lives inside a Container
+ * TextDisplay because the legacy `content` field is forbidden on a
+ * Components V2 message. Used to safely edit the V2 picker message.
+ */
+function v2TextReply(content: string): PlayReply {
+	return {
+		content: "",
+		components: [
+			new ContainerBuilder().addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(content),
+			),
+		],
+		flags: MessageFlags.IsComponentsV2,
+	};
+}
+
+/**
+ * Wraps a legacy {@link PlayReply} (content + optional action rows) as a
+ * Components V2 payload, so it can edit the V2 picker message. Replies that
+ * are already Components V2 (e.g. the radio-confirm prompt) pass through
+ * unchanged.
+ */
+function v2EditReply(reply: PlayReply): PlayReply {
+	if (reply.flags === MessageFlags.IsComponentsV2) return reply;
+
+	const container = new ContainerBuilder().addTextDisplayComponents(
+		new TextDisplayBuilder().setContent(reply.content ?? ""),
+	);
+
+	for (const component of reply.components) {
+		if (component instanceof ActionRowBuilder) {
+			container.addActionRowComponents(component);
+		}
+	}
+
+	return {
+		content: "",
+		components: [container],
+		flags: MessageFlags.IsComponentsV2,
 	};
 }
 

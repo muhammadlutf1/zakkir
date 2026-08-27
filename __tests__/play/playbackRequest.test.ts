@@ -632,9 +632,11 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 				"setNoticeChannel",
 				"play",
 			]);
-			assert.match(
-				edits[1]!.content!,
-				/\*\*<:play:1384273884622229514> Playing\*\* Al-Kahf/,
+			const resultText = textContents(containerOf(edits[1]!));
+			assert.ok(
+				resultText.some((text) =>
+					/\*\*<:play:1384273884622229514> Playing\*\* Al-Kahf/.test(text),
+				),
 			);
 			// The success edit keeps the Components V2 flag (edits the picker).
 			assert.equal(edits[1]!.flags, MessageFlags.IsComponentsV2);
@@ -667,7 +669,11 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 			editReply: input.editReply,
 		});
 
-		assert.match(edits[1]!.content!, /not connected to a voice channel/);
+		assert.ok(
+			textContents(containerOf(edits[1]!)).some((text) =>
+				/not connected to a voice channel/.test(text),
+			),
+		);
 		assert.equal(edits[1]!.flags, MessageFlags.IsComponentsV2);
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
 	});
