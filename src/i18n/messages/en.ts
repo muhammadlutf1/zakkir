@@ -13,9 +13,8 @@ export const en = {
 	// The recitation label rendered across play/notice/picker surfaces
 	"recitation.label": "{surah} by {reciter} ({rewayah})",
 	// Rewayah picker
-	"picker.header":
-		"Available riwayat for Surah **{surah} ({number})** by **{reciter}**:",
-	"picker.prompt": "Pick a riwayah to play it.",
+	"picker.header": "Available riwayat for Surah **{surah}** by **{reciter}**:",
+	"picker.playLabel": "Play",
 	"picker.timeoutNoDefault":
 		"Nothing picked — no default riwayah is set. Playback cancelled.",
 	// Player notices
@@ -135,6 +134,16 @@ export const en = {
 	"emote.failed": "<:error:1385171040098979961>",
 	"emote.picker": "<:play:1384273884622229514>",
 	"emote.notice": "<:error:1385171040098979961>",
+	// Custom Discord emotes used by the player panel and picker surfaces.
+	// These are bot assets — the same ids ship in every locale, so they are
+	// mirrored verbatim in the `ar` catalog.
+	"emote.book": "<:book:1384273893149249546>",
+	"emote.microphone": "<:microphone:1387684996587851877>",
+	"emote.pause": "<:pause:1384273881040289924>",
+	"emote.play": "<:play:1384273884622229514>",
+	"emote.stop": "<:stop:1384273886652137665>",
+	"emote.forward": "<:forward:1384273873427759278>",
+	"emote.repeat": "<:repeat:1384278335114449060>",
 } as const;
 
 /** Every message key the bot knows — derived from the English catalog. */

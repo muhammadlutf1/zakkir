@@ -98,8 +98,12 @@ const playCommand: Command = {
 			noticeChannel: interaction.channel ?? undefined,
 			requestedBy: interaction.user.id,
 			editReply: (reply) => interaction.editReply(reply),
-			followUp: (content) =>
-				interaction.followUp({ content, flags: MessageFlags.Ephemeral }),
+			followUp: (reply) =>
+				interaction.followUp({
+					content: reply.content,
+					components: reply.components,
+					flags: (reply.flags ?? 0) | MessageFlags.Ephemeral,
+				}),
 		});
 	},
 };

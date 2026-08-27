@@ -21,14 +21,6 @@ type SendableTextChannel = Exclude<TextBasedChannel, PartialGroupDMChannel>;
 
 const logger = createLogger("playerPanel");
 
-const BOOK_EMOJI = "<:book:1384273893149249546>";
-const MICROPHONE_EMOJI = "<:microphone:1387684996587851877>";
-const PAUSE_EMOJI = "<:pause:1384273881040289924>";
-const PLAY_EMOJI = "<:play:1384273884622229514>";
-const STOP_EMOJI = "<:stop:1384273886652137665>";
-const FORWARD_EMOJI = "<:forward:1384273873427759278>";
-const REPEAT_EMOJI = "<:repeat:1384278335114449060>";
-
 export const PANEL_SELECT_CUSTOM_ID = "player-panel:select";
 export const PANEL_PAUSE_CUSTOM_ID = "player-panel:pause";
 export const PANEL_STOP_CUSTOM_ID = "player-panel:stop";
@@ -104,7 +96,7 @@ function buildContainer(
 		const station = player.radioInfo?.name ?? "radio";
 		texts.push(
 			new TextDisplayBuilder().setContent(
-				`## ${MICROPHONE_EMOJI} ${translator.t("panel.radioTitle", { station })}`,
+				`## ${translator.t("emote.microphone")} ${translator.t("panel.radioTitle", { station })}`,
 			),
 		);
 		const modeLabel = translator.t(`repeat.mode.${view.repeatMode}` as never);
@@ -116,7 +108,7 @@ function buildContainer(
 	} else if (current) {
 		texts.push(
 			new TextDisplayBuilder().setContent(
-				`## ${BOOK_EMOJI} ${translator.t("panel.title", {
+				`## ${translator.t("emote.book")} ${translator.t("panel.title", {
 					surah: surahName(current.surah, locale),
 					reciter: current.reciterName,
 				})}`,
@@ -210,25 +202,25 @@ function buildControlsRow(player: Player, locale: Locale, disabled: boolean) {
 				? translator.t("panel.buttonResume")
 				: translator.t("panel.buttonPause"),
 		)
-		.setEmoji(paused ? PLAY_EMOJI : PAUSE_EMOJI)
+		.setEmoji(paused ? translator.t("emote.play") : translator.t("emote.pause"))
 		.setStyle(ButtonStyle.Secondary);
 
 	const stopButton = new ButtonBuilder()
 		.setCustomId(PANEL_STOP_CUSTOM_ID)
 		.setLabel(translator.t("panel.buttonStop"))
-		.setEmoji(STOP_EMOJI)
+		.setEmoji(translator.t("emote.stop"))
 		.setStyle(ButtonStyle.Secondary);
 
 	const skipButton = new ButtonBuilder()
 		.setCustomId(PANEL_SKIP_CUSTOM_ID)
 		.setLabel(translator.t("panel.buttonSkip"))
-		.setEmoji(FORWARD_EMOJI)
+		.setEmoji(translator.t("emote.forward"))
 		.setStyle(ButtonStyle.Secondary);
 
 	const repeatButton = new ButtonBuilder()
 		.setCustomId(PANEL_REPEAT_CUSTOM_ID)
 		.setLabel(translator.t("panel.buttonLoop"))
-		.setEmoji(REPEAT_EMOJI)
+		.setEmoji(translator.t("emote.repeat"))
 		.setStyle(ButtonStyle.Secondary);
 
 	return new ActionRowBuilder<ButtonBuilder>().addComponents(

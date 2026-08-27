@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it, mock } from "node:test";
-import type { ActionRowBuilder, ButtonBuilder, VoiceChannel } from "discord.js";
+import type {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ContainerBuilder,
+	VoiceChannel,
+} from "discord.js";
+import { MessageFlags } from "discord.js";
 import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog";
 import { resolveSurah } from "../../src/catalog/suwar";
 import playCommand from "../../src/commands/play";
@@ -11,6 +17,7 @@ import type { GlobalDefaults } from "../../src/guild/types";
 import { localizable } from "../../src/i18n/locale";
 import {
 	PlaybackRequest,
+	type PlayReply,
 	parsePickerCustomId,
 	pickerCustomId,
 } from "../../src/play/playbackRequest";
@@ -227,8 +234,9 @@ function makePlayback(
 }
 
 interface EditRecord {
-	content: string;
-	components: ActionRowBuilder<ButtonBuilder>[];
+	content?: string;
+	components: Array<ActionRowBuilder<ButtonBuilder> | ContainerBuilder>;
+	flags?: number;
 }
 
 function makeRequestInput(
@@ -236,7 +244,7 @@ function makeRequestInput(
 	overrides: Partial<Parameters<PlaybackRequest["request"]>[0]> = {},
 ) {
 	const edits: EditRecord[] = [];
-	const followUps: string[] = [];
+	const followUps: PlayReply[] = [];
 
 	const input = {
 		guildId: overrides.guildId ?? harness?.player.guildId ?? "g-1",
@@ -253,23 +261,94 @@ function makeRequestInput(
 		editReply: async (reply: EditRecord) => {
 			edits.push(reply);
 		},
-		followUp: async (content: string) => {
-			followUps.push(content);
+		followUp: async (reply: PlayReply) => {
+			followUps.push(reply);
 		},
 	};
 
 	return { input, edits, followUps };
 }
 
-/** The customIds of the picker buttons in an edit, in render order. */
+/** The customIds of every button in an edit, in render order (V2 or legacy). */
 function buttonIds(edit: EditRecord | undefined): string[] {
 	if (!edit) return [];
 
-	return edit.components.flatMap((row) =>
-		(row.components as { toJSON(): { custom_id?: string } }[]).map(
-			(button) => button.toJSON().custom_id ?? "",
-		),
-	);
+	const ids: string[] = [];
+
+	const walk = (node: unknown) => {
+		if (!node || typeof node !== "object") return;
+		const record = node as Record<string, unknown>;
+		if (typeof record.custom_id === "string") ids.push(record.custom_id);
+		if (Array.isArray(record.components)) {
+			for (const child of record.components) walk(child);
+		}
+		if (record.accessory && typeof record.accessory === "object") {
+			walk(record.accessory);
+		}
+		if (Array.isArray(record.items)) {
+			for (const child of record.items) walk(child);
+		}
+	};
+
+	for (const component of edit.components) {
+		const json =
+			typeof (component as { toJSON?: () => unknown }).toJSON === "function"
+				? (component as { toJSON: () => unknown }).toJSON()
+				: component;
+		walk(json);
+	}
+
+	return ids;
+}
+
+/** The first (and only) top-level Container in a Components V2 edit. */
+function containerOf(edit: EditRecord) {
+	const component = edit.components[0] as { toJSON?: () => unknown };
+	const json =
+		typeof component.toJSON === "function"
+			? (component.toJSON() as Record<string, unknown>)
+			: (component as unknown as Record<string, unknown>);
+	return json;
+}
+
+function flatten(node: unknown, out: Record<string, unknown>[] = []): void {
+	if (!node || typeof node !== "object") return;
+	out.push(node as Record<string, unknown>);
+	if (Array.isArray((node as Record<string, unknown>).components)) {
+		for (const child of (node as Record<string, unknown>)
+			.components as unknown[]) {
+			flatten(child, out);
+		}
+	}
+}
+
+function componentTypes(container: Record<string, unknown>): number[] {
+	const top =
+		(container.components as Record<string, unknown>[] | undefined) ?? [];
+	return top.map((c) => c.type as number);
+}
+
+function textContents(container: Record<string, unknown>): string[] {
+	const all: Record<string, unknown>[] = [];
+	flatten(container, all);
+	return all
+		.filter((c) => c.type === 10 && typeof c.content === "string")
+		.map((c) => c.content as string);
+}
+
+function mediaGalleryUrls(container: Record<string, unknown>): string[] {
+	const all: Record<string, unknown>[] = [];
+	flatten(container, all);
+	const urls: string[] = [];
+	for (const c of all) {
+		if (c.type === 12 && Array.isArray(c.items)) {
+			for (const item of c.items as Record<string, unknown>[]) {
+				const media = item.media as Record<string, string> | undefined;
+				if (media?.url) urls.push(media.url);
+			}
+		}
+	}
+	return urls;
 }
 
 function flush() {
@@ -288,7 +367,7 @@ describe("PlaybackRequest — direct play", () => {
 
 		assert.equal(edits.length, 1);
 		assert.equal(
-			edits[0]!.content,
+			edits[0]!.content!,
 			"**<:play:1384273884622229514> Playing** Al-Kahf by أكرم العلاقمي (حفص عن عاصم - مرتل).",
 		);
 		assert.deepEqual(edits[0]!.components, []);
@@ -346,7 +425,7 @@ describe("PlaybackRequest — direct play", () => {
 		await playback.request(input);
 
 		assert.equal(
-			edits[0]!.content,
+			edits[0]!.content!,
 			"✅ Added **Al-Kahf by أكرم العلاقمي (حفص عن عاصم - مرتل)** to the queue.",
 		);
 	});
@@ -362,7 +441,7 @@ describe("PlaybackRequest — direct play", () => {
 
 		await playback.request(input);
 
-		assert.match(edits[0]!.content, /Couldn't play Al-Kahf/);
+		assert.match(edits[0]!.content!, /Couldn't play Al-Kahf/);
 	});
 
 	it("renders announcements in the requesting locale", async () => {
@@ -375,7 +454,7 @@ describe("PlaybackRequest — direct play", () => {
 
 		await playback.request(input);
 
-		assert.match(edits[0]!.content, /جارٍ تشغيل/);
+		assert.match(edits[0]!.content!, /جارٍ تشغيل/);
 	});
 });
 
@@ -387,7 +466,7 @@ describe("PlaybackRequest — resolution errors", () => {
 
 		await playback.request(input);
 
-		assert.match(edits[0]!.content, /default reciter/);
+		assert.match(edits[0]!.content!, /default reciter/);
 		assert.deepEqual(harness.calls, []);
 	});
 
@@ -400,7 +479,7 @@ describe("PlaybackRequest — resolution errors", () => {
 
 		await playback.request(input);
 
-		assert.match(edits[0]!.content, /not found|أبو العيون/);
+		assert.match(edits[0]!.content!, /not found|أبو العيون/);
 	});
 
 	it("returns an error when no Rewayah covers the Surah for the Reciter", async () => {
@@ -412,7 +491,7 @@ describe("PlaybackRequest — resolution errors", () => {
 
 		await playback.request(input);
 
-		assert.match(edits[0]!.content, /no recitation/);
+		assert.match(edits[0]!.content!, /no recitation/);
 	});
 });
 
@@ -428,7 +507,7 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 		return store;
 	}
 
-	it("shows the picker when more than one Rewayah covers, defaulting to the resolved default", async () => {
+	it("shows the picker as a single Components V2 Container with header, image, and one section per Rewayah", async () => {
 		const harness = makePlayer();
 		const config = new GuildConfig(storeWithReciter(1, 1));
 		const playback = makePlayback(harness, config);
@@ -437,9 +516,25 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 		await playback.request(input);
 
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
-		assert.match(edits[0]!.content, /Surah \*\*Al-Kahf \(18\)\*\*/);
-		assert.match(edits[0]!.content, /1\. حفص عن عاصم - مرتل/);
-		assert.match(edits[0]!.content, /2\. ورش عن نافع - مرتل/);
+		assert.equal(edits.length, 1);
+		assert.equal(edits[0]!.flags, MessageFlags.IsComponentsV2);
+		assert.equal(edits[0]!.content!, undefined);
+
+		const container = containerOf(edits[0]!);
+		// header TextDisplay, MediaGallery, Separator, then two Sections.
+		assert.deepEqual(componentTypes(container), [10, 12, 14, 9, 9]);
+		assert.ok(
+			mediaGalleryUrls(container).includes(
+				"https://qurantv.fr/images/surat/18.png",
+			),
+		);
+		assert.ok(
+			textContents(container).some((text) =>
+				text.includes(
+					"Available riwayat for Surah **Al-Kahf** by **إبراهيم الأخضر**",
+				),
+			),
+		);
 		assert.deepEqual(buttonIds(edits[0]), [
 			"rewayah-play:18:1:1",
 			"rewayah-play:18:1:2",
@@ -454,6 +549,7 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 
 		await playback.request(input);
 
+		assert.equal(edits[0]!.flags, MessageFlags.IsComponentsV2);
 		assert.deepEqual(buttonIds(edits[0]), ["rewayah-play:18:10:10"]);
 	});
 
@@ -467,10 +563,13 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 
 		await playback.request(input);
 
-		assert.match(edits[0]!.content, /إبراهيم الأخضر/);
+		const container = containerOf(edits[0]!);
+		assert.ok(
+			textContents(container).some((text) => text.includes("إبراهيم الأخضر")),
+		);
 	});
 
-	it("splits buttons into rows of at most five", async () => {
+	it("overflows extra Rewayat into a follow-up Components V2 Container", async () => {
 		const many: Reciter = {
 			id: 3,
 			name: "متعدد الروايات",
@@ -481,16 +580,22 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 		const wideCatalog = new FakeCatalog([many]) as unknown as Catalog;
 		const harness = makePlayer();
 		const playback = makePlayback(harness);
-		const { input, edits } = makeRequestInput(harness, {
+		const { input, edits, followUps } = makeRequestInput(harness, {
 			reciter: many.name,
 		});
 		input.catalog = wideCatalog;
 
 		await playback.request(input);
 
-		assert.equal(edits[0]!.components.length, 3);
-		assert.equal(edits[0]!.components[0]!.components.length, 5);
-		assert.equal(edits[0]!.components[2]!.components.length, 2);
+		assert.equal(edits.length, 1);
+		assert.equal(edits[0]!.flags, MessageFlags.IsComponentsV2);
+		// First Container holds the image + 7 sections; the rest overflow.
+		assert.equal(buttonIds(edits[0]).length, 7);
+		assert.equal(followUps.length, 1);
+		assert.equal(followUps[0]!.flags, MessageFlags.IsComponentsV2);
+		assert.equal(buttonIds(followUps[0]).length, 5);
+		// The overflow Container carries no header image.
+		assert.deepEqual(mediaGalleryUrls(containerOf(followUps[0]!)), []);
 	});
 
 	it("pickRewayah resolves the pressed choice, cancels the timeout, and plays", async () => {
@@ -528,9 +633,11 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 				"play",
 			]);
 			assert.match(
-				edits[1]!.content,
+				edits[1]!.content!,
 				/\*\*<:play:1384273884622229514> Playing\*\* Al-Kahf/,
 			);
+			// The success edit keeps the Components V2 flag (edits the picker).
+			assert.equal(edits[1]!.flags, MessageFlags.IsComponentsV2);
 
 			// The settled picker's timeout never fires.
 			mock.timers.tick(500);
@@ -560,7 +667,8 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 			editReply: input.editReply,
 		});
 
-		assert.match(edits[1]!.content, /not connected to a voice channel/);
+		assert.match(edits[1]!.content!, /not connected to a voice channel/);
+		assert.equal(edits[1]!.flags, MessageFlags.IsComponentsV2);
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
 	});
 
@@ -581,7 +689,7 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 			await flush();
 
 			assert.equal(harness.played[0]?.rewayahId, 1);
-			assert.match(followUps[0]!, /Playing\*\* Al-Kahf/);
+			assert.match(followUps[0]!.content!, /Playing\*\* Al-Kahf/);
 			assert.deepEqual(edits.length, 1);
 		} finally {
 			mock.timers.reset();
@@ -602,7 +710,7 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 			mock.timers.tick(101);
 			await flush();
 
-			assert.match(followUps[0]!, /Nothing picked/);
+			assert.match(followUps[0]!.content!, /Nothing picked/);
 			assert.deepEqual(harness.played, []);
 		} finally {
 			mock.timers.reset();
@@ -629,7 +737,7 @@ describe("PlaybackRequest — Radio confirm branch", () => {
 		await playback.request(input);
 
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
-		assert.match(edits[0]!.content, /Quran Radio/);
+		assert.match(edits[0]!.content!, /Quran Radio/);
 		assert.deepEqual(buttonIds(edits[0]), ["radio:confirm", "radio:cancel"]);
 	});
 
@@ -655,7 +763,7 @@ describe("PlaybackRequest — Radio confirm branch", () => {
 			"stopRadio",
 			"play",
 		]);
-		assert.match(updates[0]!.content, /Playing\*\* Al-Kahf/);
+		assert.match(updates[0]!.content!, /Playing\*\* Al-Kahf/);
 		assert.equal(edits.length, 1);
 	});
 
@@ -701,7 +809,7 @@ describe("PlaybackRequest — Radio confirm branch", () => {
 			replyEphemeral: async () => undefined,
 		});
 
-		assert.match(updates[0]!.content, /Quran Radio/);
+		assert.match(updates[0]!.content!, /Quran Radio/);
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
 
 		const ephemerals: string[] = [];
@@ -871,7 +979,7 @@ describe("context wiring", () => {
 		await playCommand.execute(context, interaction as never);
 
 		assert.equal(edits.length, 1);
-		assert.match(edits[0]!.content, /Playing\*\* Al-Kahf/);
+		assert.match(edits[0]!.content!, /Playing\*\* Al-Kahf/);
 		assert.deepEqual(harness.calls, [
 			"join:voice-1",
 			"setNoticeChannel",

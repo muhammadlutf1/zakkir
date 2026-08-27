@@ -1,5 +1,15 @@
 import type { TextBasedChannel, VoiceChannel } from "discord.js";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	ContainerBuilder,
+	MediaGalleryBuilder,
+	MessageFlags,
+	SectionBuilder,
+	SeparatorBuilder,
+	TextDisplayBuilder,
+} from "discord.js";
 import type { Catalog, Rewayah } from "../catalog/Catalog";
 import { type Surah, surahName } from "../catalog/suwar";
 import { DEFAULT_LOCALE } from "../config";
@@ -16,7 +26,14 @@ import { createPanel, hasPanel } from "./playerPanel";
 const logger = createLogger("PlaybackRequest");
 
 const PICKER_CUSTOM_ID_PREFIX = "rewayah-play:";
-const MAX_BUTTONS_PER_ROW = 5;
+/** Base URL for the QuranTV surat preview image used in the picker card. */
+const PICKER_IMAGE_BASE = "https://qurantv.fr/images/surat";
+/**
+ * How many Rewayah sections fit in the first (image-bearing) picker Container.
+ * A Discord Container holds at most 10 components; the header TextDisplay, the
+ * MediaGallery, and the Separator take three, leaving seven for sections.
+ */
+const FIRST_CONTAINER_SECTIONS = 7;
 
 /**
  * Everything a caller hands the module for one interaction path. The reply
@@ -35,8 +52,8 @@ export interface PlayRequestInput {
 	/** Discord user id who requested the Recitation. */
 	requestedBy?: string;
 	editReply(reply: PlayReply): Promise<unknown>;
-	/** Delivers the picker's timeout notices and auto-play announcement. */
-	followUp(content: string): Promise<unknown>;
+	/** Delivers the picker's timeout notices, auto-play, or overflow Container. */
+	followUp(reply: PlayReply): Promise<unknown>;
 }
 
 export interface RewayahPickInput {
@@ -63,10 +80,16 @@ export interface RadioConfirmInput {
 	update(reply: PlayReply): Promise<unknown>;
 }
 
-/** A ready-to-post reply payload: text plus (usually cleared) components. */
+/**
+ * A ready-to-post reply payload. `components` carries either legacy
+ * ActionRows (radio-confirm buttons) or Components V2 Containers (the
+ * RewayahPicker card); `flags` carries `MessageFlags.IsComponentsV2` for the
+ * latter so edits to the same message stay Components V2 compatible.
+ */
 export interface PlayReply {
-	content: string;
-	components: ActionRowBuilder<ButtonBuilder>[];
+	content?: string;
+	components: Array<ActionRowBuilder<ButtonBuilder> | ContainerBuilder>;
+	flags?: number;
 }
 
 /**
@@ -79,7 +102,10 @@ export interface PlayReply {
  */
 export class PlaybackRequest {
 	private readonly pickers = new Map<string, ActivePicker>();
-	private readonly pendingRecitation = new Map<string, Recitation>();
+	private readonly pendingRecitation = new Map<
+		string,
+		{ recitation: Recitation; componentsV2: boolean }
+	>();
 	private readonly wired = new WeakSet<Player>();
 
 	constructor(
@@ -167,7 +193,9 @@ export class PlaybackRequest {
 
 		if (outcome.kind === "picker") {
 			this.startPickerSession(input, player, outcome);
-			await input.editReply(renderPicker(outcome));
+			const rendered = renderPicker(outcome);
+			await input.editReply(rendered.reply);
+			if (rendered.overflow) await input.followUp(rendered.overflow);
 			return;
 		}
 
@@ -195,6 +223,7 @@ export class PlaybackRequest {
 			await input.editReply({
 				content: input.translator.t("command.notConnected"),
 				components: [],
+				flags: MessageFlags.IsComponentsV2,
 			});
 			return;
 		}
@@ -216,15 +245,24 @@ export class PlaybackRequest {
 			await input.editReply({
 				content: input.translator.t("command.resolveFailed"),
 				components: [],
+				flags: MessageFlags.IsComponentsV2,
 			});
 			return;
 		}
 
 		this.setNoticeChannel(player, input.noticeChannel);
 
-		await this.playOrConfirm(player, recitation, input.locale, {
-			edit: (reply) => input.editReply(reply),
-		});
+		// The picker message is already Components V2, so every edit to it
+		// (success, radio-confirm) must stay Components V2 compatible.
+		await this.playOrConfirm(
+			player,
+			recitation,
+			input.locale,
+			{
+				edit: (reply) => input.editReply(reply),
+			},
+			true,
+		);
 	}
 
 	/** The confirm press on a radio-confirm prompt: stops the Radio, plays the pending Recitation. */
@@ -244,11 +282,16 @@ export class PlaybackRequest {
 
 		this.setNoticeChannel(player, input.noticeChannel);
 
+		const v2 = pending.componentsV2
+			? { flags: MessageFlags.IsComponentsV2 }
+			: {};
+
 		try {
-			const result = await player.play(pending);
+			const result = await player.play(pending.recitation);
 			await input.update({
-				content: formatPlayResult(pending, result, input.locale),
+				content: formatPlayResult(pending.recitation, result, input.locale),
 				components: [],
+				...v2,
 			});
 		} catch (error) {
 			logger.error(
@@ -259,6 +302,7 @@ export class PlaybackRequest {
 			await input.update({
 				content: input.translator.t("command.resolveFailed"),
 				components: [],
+				...v2,
 			});
 		}
 	}
@@ -269,6 +313,10 @@ export class PlaybackRequest {
 
 		if (!player) return;
 
+		const pending = this.pendingRecitation.get(input.guildId);
+		const v2 = pending?.componentsV2
+			? { flags: MessageFlags.IsComponentsV2 }
+			: {};
 		this.pendingRecitation.delete(input.guildId);
 		const station = player.radioInfo?.name ?? "radio";
 
@@ -276,6 +324,7 @@ export class PlaybackRequest {
 			await input.update({
 				content: input.translator.t("command.radioContinuing", { station }),
 				components: [],
+				...v2,
 			});
 		} catch (error) {
 			logger.error(
@@ -286,7 +335,9 @@ export class PlaybackRequest {
 		}
 	}
 
-	private takePendingRecitation(guildId: string) {
+	private takePendingRecitation(
+		guildId: string,
+	): { recitation: Recitation; componentsV2: boolean } | undefined {
 		const pending = this.pendingRecitation.get(guildId);
 		this.pendingRecitation.delete(guildId);
 		return pending;
@@ -294,7 +345,7 @@ export class PlaybackRequest {
 
 	/** Non-mutating look at the guild's pending Radio confirmation (for gating). */
 	peekPendingRecitation(guildId: string): Recitation | undefined {
-		return this.pendingRecitation.get(guildId);
+		return this.pendingRecitation.get(guildId)?.recitation;
 	}
 
 	private setNoticeChannel(player: Player, noticeChannel?: TextBasedChannel) {
@@ -318,10 +369,16 @@ export class PlaybackRequest {
 		recitation: Recitation,
 		locale: Locale,
 		sink: { edit: (reply: PlayReply) => Promise<unknown> },
+		componentsV2 = false,
 	) {
 		if (player.isRadioPlaying) {
-			this.pendingRecitation.set(player.guildId, recitation);
-			await sink.edit(radioConfirmPrompt(player, recitation, locale));
+			this.pendingRecitation.set(player.guildId, {
+				recitation,
+				componentsV2,
+			});
+			await sink.edit(
+				radioConfirmPrompt(player, recitation, locale, componentsV2),
+			);
 			return;
 		}
 
@@ -330,6 +387,7 @@ export class PlaybackRequest {
 		await sink.edit({
 			content: formatPlayResult(recitation, result, locale),
 			components: [],
+			...(componentsV2 ? { flags: MessageFlags.IsComponentsV2 } : {}),
 		});
 	}
 
@@ -594,69 +652,135 @@ interface PickerRenderOptions {
 	locale?: Locale;
 }
 
-function renderPicker(options: PickerRenderOptions): PlayReply {
-	const locale = options.locale ?? DEFAULT_LOCALE;
-	const { t } = localizable(locale);
-	const surah = surahName(options.surah, locale);
+/** A rendered picker: the primary V2 Container, plus an overflow Container. */
+interface PickerRender {
+	reply: PlayReply;
+	overflow?: PlayReply;
+}
 
-	const content = [
-		t("picker.header", {
-			surah,
-			number: String(options.surah.number),
-			reciter: options.reciterName,
-		}),
-		...options.choices.map(
-			(choice, index) => `${index + 1}. ${choice.rewayahName}`,
-		),
-		t("picker.prompt"),
-	].join("\n");
-
-	const buttons = options.choices.map((choice) =>
-		new ButtonBuilder()
-			.setCustomId(pickerCustomId(choice))
-			.setLabel(choice.rewayahName)
-			.setStyle(ButtonStyle.Primary),
-	);
-
-	const components: ActionRowBuilder<ButtonBuilder>[] = [];
-
-	for (let i = 0; i < buttons.length; i += MAX_BUTTONS_PER_ROW) {
-		components.push(
-			new ActionRowBuilder<ButtonBuilder>().addComponents(
-				buttons.slice(i, i + MAX_BUTTONS_PER_ROW),
-			),
+/**
+ * One Rewayah row in the picker: the rewayah name on the left, a green Play
+ * button (Success style + `emote.picker`) on the right.
+ */
+function buildPickerSection(
+	choice: RewayahChoice,
+	translator: Localizable,
+): SectionBuilder {
+	return new SectionBuilder()
+		.addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(choice.rewayahName),
+		)
+		.setButtonAccessory(
+			new ButtonBuilder()
+				.setCustomId(pickerCustomId(choice))
+				.setLabel(translator.t("picker.playLabel"))
+				.setEmoji(translator.t("emote.picker"))
+				.setStyle(ButtonStyle.Success),
 		);
-	}
+}
 
-	return { content, components };
+/**
+ * Re-skins the RewayahPicker as a single QuranTV dark card: one Container with
+ * a localized header, the surat preview image, a separator, and one Section
+ * per Rewayah. If the Rewayat overflow a single Container, the remainder go in
+ * a follow-up Container (no header/image) — Discord never truncates them.
+ */
+function renderPicker(options: PickerRenderOptions): PickerRender {
+	const locale = options.locale ?? DEFAULT_LOCALE;
+	const translator = localizable(locale);
+	const surah = surahName(options.surah, locale);
+	const number = options.surah.number;
+
+	const header = translator.t("picker.header", {
+		surah,
+		reciter: options.reciterName,
+	});
+
+	const firstChoices = options.choices.slice(0, FIRST_CONTAINER_SECTIONS);
+	const restChoices = options.choices.slice(FIRST_CONTAINER_SECTIONS);
+
+	const reply: PlayReply = {
+		flags: MessageFlags.IsComponentsV2,
+		components: [
+			new ContainerBuilder()
+				.addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
+				.addMediaGalleryComponents(
+					new MediaGalleryBuilder().addItems([
+						{
+							media: { url: `${PICKER_IMAGE_BASE}/${number}.png` },
+							description: surah,
+						},
+					]),
+				)
+				.addSeparatorComponents(new SeparatorBuilder())
+				.addSectionComponents(
+					firstChoices.map((choice) => buildPickerSection(choice, translator)),
+				),
+		],
+	};
+
+	if (restChoices.length === 0) return { reply };
+
+	const overflow: PlayReply = {
+		flags: MessageFlags.IsComponentsV2,
+		components: [
+			new ContainerBuilder().addSectionComponents(
+				restChoices.map((choice) => buildPickerSection(choice, translator)),
+			),
+		],
+	};
+
+	return { reply, overflow };
 }
 
 /**
  * Builds the radio-confirm prompt for a Recitation requested while a Radio
  * plays: it parks the Recitation as pending and asks whether to interrupt.
+ * When `componentsV2` is set the prompt is a Components V2 Container (so it
+ * can safely edit a Components V2 picker message); otherwise it is a legacy
+ * ActionRow of buttons.
  */
 function radioConfirmPrompt(
 	player: Player,
 	recitation: Recitation,
 	locale: Locale,
+	componentsV2: boolean,
 ): PlayReply {
 	const translator = localizable(locale);
 	const station = player.radioInfo?.name ?? "radio";
 	const label = recitationLabel(recitation, locale);
-	const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-		new ButtonBuilder()
-			.setCustomId("radio:confirm")
-			.setLabel(translator.t("command.radioConfirmYes"))
-			.setStyle(ButtonStyle.Success),
-		new ButtonBuilder()
-			.setCustomId("radio:cancel")
-			.setLabel(translator.t("command.radioConfirmNo"))
-			.setStyle(ButtonStyle.Secondary),
-	);
+	const content = translator.t("command.radioConfirmPrompt", {
+		station,
+		label,
+	});
+
+	const yes = new ButtonBuilder()
+		.setCustomId("radio:confirm")
+		.setLabel(translator.t("command.radioConfirmYes"))
+		.setStyle(ButtonStyle.Success);
+	const no = new ButtonBuilder()
+		.setCustomId("radio:cancel")
+		.setLabel(translator.t("command.radioConfirmNo"))
+		.setStyle(ButtonStyle.Secondary);
+
+	if (!componentsV2) {
+		return {
+			content,
+			components: [
+				new ActionRowBuilder<ButtonBuilder>().addComponents(yes, no),
+			],
+		};
+	}
 
 	return {
-		content: translator.t("command.radioConfirmPrompt", { station, label }),
-		components: [row],
+		flags: MessageFlags.IsComponentsV2,
+		components: [
+			new ContainerBuilder()
+				.addTextDisplayComponents(new TextDisplayBuilder().setContent(content))
+				.addActionRowComponents(
+					new ActionRowBuilder<ButtonBuilder>().addComponents(yes, no),
+				),
+		],
 	};
 }
 
@@ -686,7 +810,7 @@ interface ActivePickerOptions {
 	catalog: Catalog;
 	player: Player;
 	requestedBy?: string;
-	followUp: (content: string) => Promise<unknown>;
+	followUp: (reply: PlayReply) => Promise<unknown>;
 	locale?: Locale;
 	onSettle: () => void;
 }
@@ -740,7 +864,10 @@ class ActivePicker {
 
 		if (!this.options.defaultChoice) {
 			const { t } = localizable(locale);
-			await this.options.followUp(t("picker.timeoutNoDefault"));
+			await this.options.followUp({
+				content: t("picker.timeoutNoDefault"),
+				components: [],
+			});
 			return;
 		}
 
@@ -752,7 +879,10 @@ class ActivePicker {
 		);
 		const result = await this.options.player.play(recitation);
 
-		await this.options.followUp(formatPlayResult(recitation, result, locale));
+		await this.options.followUp({
+			content: formatPlayResult(recitation, result, locale),
+			components: [],
+		});
 	}
 
 	private settle() {
