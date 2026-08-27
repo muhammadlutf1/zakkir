@@ -1,5 +1,15 @@
 import type { TextBasedChannel, VoiceChannel } from "discord.js";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	ContainerBuilder,
+	MediaGalleryBuilder,
+	MediaGalleryItemBuilder,
+	MessageFlags,
+	SeparatorBuilder,
+	TextDisplayBuilder,
+} from "discord.js";
 import type { Catalog, Rewayah } from "../catalog/Catalog";
 import { type Surah, surahName } from "../catalog/suwar";
 import { DEFAULT_LOCALE } from "../config";
@@ -66,7 +76,8 @@ export interface RadioConfirmInput {
 /** A ready-to-post reply payload: text plus (usually cleared) components. */
 export interface PlayReply {
 	content: string;
-	components: ActionRowBuilder<ButtonBuilder>[];
+	components: Array<ActionRowBuilder<ButtonBuilder> | ContainerBuilder>;
+	flags?: number;
 }
 
 /**
@@ -599,36 +610,68 @@ function renderPicker(options: PickerRenderOptions): PlayReply {
 	const { t } = localizable(locale);
 	const surah = surahName(options.surah, locale);
 
-	const content = [
-		t("picker.header", {
-			surah,
-			number: String(options.surah.number),
-			reciter: options.reciterName,
-		}),
-		...options.choices.map(
-			(choice, index) => `${index + 1}. ${choice.rewayahName}`,
-		),
-		t("picker.prompt"),
-	].join("\n");
+	const header = new TextDisplayBuilder().setContent(
+		t("picker.header", { surah, reciter: options.reciterName }),
+	);
+
+	const gallery = new MediaGalleryBuilder().addItems(
+		new MediaGalleryItemBuilder()
+			.setURL(`https://qurantv.fr/images/surat/${options.surah.number}.png`)
+			.setDescription(surah),
+	);
 
 	const buttons = options.choices.map((choice) =>
 		new ButtonBuilder()
 			.setCustomId(pickerCustomId(choice))
 			.setLabel(choice.rewayahName)
-			.setStyle(ButtonStyle.Primary),
+			.setStyle(ButtonStyle.Success)
+			.setEmoji(t("emote.picker")),
 	);
 
-	const components: ActionRowBuilder<ButtonBuilder>[] = [];
+	const rows: ActionRowBuilder<ButtonBuilder>[] = [];
 
 	for (let i = 0; i < buttons.length; i += MAX_BUTTONS_PER_ROW) {
-		components.push(
+		rows.push(
 			new ActionRowBuilder<ButtonBuilder>().addComponents(
 				buttons.slice(i, i + MAX_BUTTONS_PER_ROW),
 			),
 		);
 	}
 
-	return { content, components };
+	const FIRST_CONTAINER_MAX_ROWS = 7;
+	const firstRows = rows.slice(0, FIRST_CONTAINER_MAX_ROWS);
+	const overflowRows = rows.slice(FIRST_CONTAINER_MAX_ROWS);
+
+	const firstContainer = new ContainerBuilder()
+		.addTextDisplayComponents(header)
+		.addMediaGalleryComponents(gallery)
+		.addSeparatorComponents(new SeparatorBuilder())
+		.addActionRowComponents(...firstRows);
+
+	const components: Array<ContainerBuilder | ActionRowBuilder<ButtonBuilder>> =
+		[firstContainer];
+
+	if (overflowRows.length > 0) {
+		const MAX_ROWS_PER_OVERFLOW_CONTAINER = 10;
+
+		for (
+			let i = 0;
+			i < overflowRows.length;
+			i += MAX_ROWS_PER_OVERFLOW_CONTAINER
+		) {
+			const chunk = overflowRows.slice(i, i + MAX_ROWS_PER_OVERFLOW_CONTAINER);
+			const overflowContainer = new ContainerBuilder().addActionRowComponents(
+				...chunk,
+			);
+			components.push(overflowContainer);
+		}
+	}
+
+	return {
+		content: "",
+		components,
+		flags: MessageFlags.IsComponentsV2,
+	};
 }
 
 /**

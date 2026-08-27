@@ -228,7 +228,10 @@ function makePlayback(
 
 interface EditRecord {
 	content: string;
-	components: ActionRowBuilder<ButtonBuilder>[];
+	components: Array<
+		ActionRowBuilder<ButtonBuilder> | import("discord.js").ContainerBuilder
+	>;
+	flags?: number;
 }
 
 function makeRequestInput(
@@ -265,11 +268,103 @@ function makeRequestInput(
 function buttonIds(edit: EditRecord | undefined): string[] {
 	if (!edit) return [];
 
-	return edit.components.flatMap((row) =>
-		(row.components as { toJSON(): { custom_id?: string } }[]).map(
-			(button) => button.toJSON().custom_id ?? "",
-		),
-	);
+	return edit.components.flatMap((top) => {
+		const json = (
+			top as {
+				toJSON(): { type?: number; components?: unknown[]; custom_id?: string };
+			}
+		).toJSON() as {
+			type?: number;
+			components?: unknown[];
+			custom_id?: string;
+		};
+
+		// Components V2 picker: top is a Container (17) with ActionRows inside
+		if (json.type === 17 && json.components) {
+			return (json.components as { type: number; components?: unknown[] }[])
+				.filter((c) => c.type === 1)
+				.flatMap((row) =>
+					(
+						(row.components ?? []) as {
+							toJSON?: () => { custom_id?: string };
+							custom_id?: string;
+						}[]
+					).map((btn) =>
+						typeof (btn as { toJSON?: () => unknown }).toJSON === "function"
+							? ((btn as { toJSON(): { custom_id?: string } }).toJSON()
+									.custom_id ?? "")
+							: ((btn as { custom_id?: string }).custom_id ?? ""),
+					),
+				);
+		}
+
+		// Legacy ActionRow top-level (type 1, e.g. radio confirm) or direct button
+		if (json.type === 1 && json.components) {
+			return (
+				json.components as {
+					toJSON(): { custom_id?: string };
+					custom_id?: string;
+				}[]
+			).map((btn) =>
+				typeof (btn as { toJSON?: () => unknown }).toJSON === "function"
+					? ((btn as { toJSON(): { custom_id?: string } }).toJSON().custom_id ??
+						"")
+					: ((btn as { custom_id?: string }).custom_id ?? ""),
+			);
+		}
+
+		return [];
+	});
+}
+
+function pickerJson(edit: EditRecord | undefined) {
+	if (!edit) return { text: "", galleryUrl: "", buttonStyles: [] as number[] };
+
+	const containers = edit.components
+		.map((c) =>
+			(c as { toJSON(): { type: number; components?: unknown[] } }).toJSON(),
+		)
+		.filter((j) => j.type === 17) as {
+		type: number;
+		components: {
+			type: number;
+			content?: string;
+			items?: { media: { url: string } }[];
+		}[];
+	}[];
+
+	const text = containers
+		.flatMap((ctr) => ctr.components)
+		.filter((c) => c.type === 10)
+		.map((c) => c.content ?? "")
+		.join("\n");
+
+	const galleryUrl =
+		containers.flatMap((ctr) => ctr.components).find((c) => c.type === 12)
+			?.items?.[0]?.media.url ?? "";
+
+	const buttonStyles = edit.components
+		.flatMap((top) => {
+			const json = (
+				top as {
+					toJSON(): {
+						components?: { type: number; components?: { style?: number }[] }[];
+					};
+				}
+			).toJSON();
+
+			if (json.components) {
+				return json.components
+					.filter((c) => c.type === 1)
+					.flatMap((row) => row.components ?? [])
+					.map((btn) => (btn as { style?: number }).style ?? -1);
+			}
+
+			return [];
+		})
+		.filter((s) => s !== -1);
+
+	return { text, galleryUrl, buttonStyles };
 }
 
 function flush() {
@@ -437,9 +532,15 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 		await playback.request(input);
 
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
-		assert.match(edits[0]!.content, /Surah \*\*Al-Kahf \(18\)\*\*/);
-		assert.match(edits[0]!.content, /1\. حفص عن عاصم - مرتل/);
-		assert.match(edits[0]!.content, /2\. ورش عن نافع - مرتل/);
+		assert.equal(edits[0]!.content, "");
+		assert.equal(edits[0]!.flags, 32768);
+		const { text, galleryUrl, buttonStyles } = pickerJson(edits[0]);
+		assert.match(
+			text,
+			/Available riwayat for Surah \*\*Al-Kahf\*\* by \*\*إبراهيم الأخضر\*\*/,
+		);
+		assert.match(galleryUrl, /\/surat\/18\.png$/);
+		assert.deepEqual(buttonStyles, [3, 3]);
 		assert.deepEqual(buttonIds(edits[0]), [
 			"rewayah-play:18:1:1",
 			"rewayah-play:18:1:2",
@@ -467,7 +568,8 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 
 		await playback.request(input);
 
-		assert.match(edits[0]!.content, /إبراهيم الأخضر/);
+		const { text } = pickerJson(edits[0]);
+		assert.match(text, /إبراهيم الأخضر/);
 	});
 
 	it("splits buttons into rows of at most five", async () => {
@@ -488,9 +590,19 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 
 		await playback.request(input);
 
-		assert.equal(edits[0]!.components.length, 3);
-		assert.equal(edits[0]!.components[0]!.components.length, 5);
-		assert.equal(edits[0]!.components[2]!.components.length, 2);
+		assert.equal(edits[0]!.components.length, 1);
+		const containerJson = (
+			edits[0]!.components[0] as {
+				toJSON(): { components: { type: number }[] };
+			}
+		).toJSON();
+		const rows = containerJson.components.filter((c) => c.type === 1) as {
+			type: number;
+			components: unknown[];
+		}[];
+		assert.equal(rows.length, 3);
+		assert.equal(rows[0]!.components.length, 5);
+		assert.equal(rows[2]!.components.length, 2);
 	});
 
 	it("pickRewayah resolves the pressed choice, cancels the timeout, and plays", async () => {
