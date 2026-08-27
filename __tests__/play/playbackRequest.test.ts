@@ -276,16 +276,24 @@ function buttonIds(edit: EditRecord | undefined): string[] {
 		).toJSON() as {
 			type?: number;
 			components?: unknown[];
+			accessory?: { custom_id?: string };
 			custom_id?: string;
 		};
 
-		// Components V2 picker: top is a Container (17) with ActionRows inside
+		// Components V2 picker: top is a Container (17) with Sections (9) or ActionRows (1) inside
 		if (json.type === 17 && json.components) {
-			return (json.components as { type: number; components?: unknown[] }[])
-				.filter((c) => c.type === 1)
-				.flatMap((row) =>
-					(
-						(row.components ?? []) as {
+			return (
+				json.components as {
+					type: number;
+					components?: unknown[];
+					accessory?: { custom_id?: string };
+				}[]
+			).flatMap((c) => {
+				if (c.type === 9 && c.accessory?.custom_id)
+					return [c.accessory.custom_id];
+				if (c.type === 1) {
+					return (
+						(c.components ?? []) as {
 							toJSON?: () => { custom_id?: string };
 							custom_id?: string;
 						}[]
@@ -294,8 +302,10 @@ function buttonIds(edit: EditRecord | undefined): string[] {
 							? ((btn as { toJSON(): { custom_id?: string } }).toJSON()
 									.custom_id ?? "")
 							: ((btn as { custom_id?: string }).custom_id ?? ""),
-					),
-				);
+					);
+				}
+				return [];
+			});
 		}
 
 		// Legacy ActionRow top-level (type 1, e.g. radio confirm) or direct button
@@ -329,14 +339,24 @@ function pickerJson(edit: EditRecord | undefined) {
 		components: {
 			type: number;
 			content?: string;
+			components?: { type: number; content?: string }[];
+			accessory?: { style?: number };
 			items?: { media: { url: string } }[];
 		}[];
 	}[];
 
 	const text = containers
 		.flatMap((ctr) => ctr.components)
-		.filter((c) => c.type === 10)
-		.map((c) => c.content ?? "")
+		.flatMap((c) => {
+			if (c.type === 10) return [c.content ?? ""];
+			if (c.type === 9)
+				return (
+					c.components
+						?.filter((inner) => inner.type === 10)
+						.map((inner) => inner.content ?? "") ?? []
+				);
+			return [];
+		})
 		.join("\n");
 
 	const galleryUrl =
@@ -348,16 +368,25 @@ function pickerJson(edit: EditRecord | undefined) {
 			const json = (
 				top as {
 					toJSON(): {
-						components?: { type: number; components?: { style?: number }[] }[];
+						components?: {
+							type: number;
+							components?: { style?: number }[];
+							accessory?: { style?: number };
+						}[];
 					};
 				}
 			).toJSON();
 
 			if (json.components) {
-				return json.components
-					.filter((c) => c.type === 1)
-					.flatMap((row) => row.components ?? [])
-					.map((btn) => (btn as { style?: number }).style ?? -1);
+				return json.components.flatMap((c) => {
+					if (c.type === 1)
+						return (c.components ?? []).map(
+							(btn) => (btn as { style?: number }).style ?? -1,
+						);
+					if (c.type === 9 && c.accessory?.style !== undefined)
+						return [c.accessory.style];
+					return [];
+				});
 			}
 
 			return [];
@@ -572,7 +601,7 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 		assert.match(text, /إبراهيم الأخضر/);
 	});
 
-	it("splits buttons into rows of at most five", async () => {
+	it("renders one section per rewayah with overflow container after 7", async () => {
 		const many: Reciter = {
 			id: 3,
 			name: "متعدد الروايات",
@@ -590,19 +619,22 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 
 		await playback.request(input);
 
-		assert.equal(edits[0]!.components.length, 1);
-		const containerJson = (
+		assert.equal(edits[0]!.components.length, 2);
+		const firstJson = (
 			edits[0]!.components[0] as {
 				toJSON(): { components: { type: number }[] };
 			}
 		).toJSON();
-		const rows = containerJson.components.filter((c) => c.type === 1) as {
-			type: number;
-			components: unknown[];
-		}[];
-		assert.equal(rows.length, 3);
-		assert.equal(rows[0]!.components.length, 5);
-		assert.equal(rows[2]!.components.length, 2);
+		const secondJson = (
+			edits[0]!.components[1] as {
+				toJSON(): { components: { type: number }[] };
+			}
+		).toJSON();
+		const firstSections = firstJson.components.filter((c) => c.type === 9);
+		const secondSections = secondJson.components.filter((c) => c.type === 9);
+		assert.equal(firstSections.length, 7);
+		assert.equal(secondSections.length, 5);
+		assert.equal(buttonIds(edits[0]).length, 12);
 	});
 
 	it("pickRewayah resolves the pressed choice, cancels the timeout, and plays", async () => {

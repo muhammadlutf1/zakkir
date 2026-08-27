@@ -7,6 +7,7 @@ import {
 	MediaGalleryBuilder,
 	MediaGalleryItemBuilder,
 	MessageFlags,
+	SectionBuilder,
 	SeparatorBuilder,
 	TextDisplayBuilder,
 } from "discord.js";
@@ -26,7 +27,6 @@ import { createPanel, hasPanel } from "./playerPanel";
 const logger = createLogger("PlaybackRequest");
 
 const PICKER_CUSTOM_ID_PREFIX = "rewayah-play:";
-const MAX_BUTTONS_PER_ROW = 5;
 
 /**
  * Everything a caller hands the module for one interaction path. The reply
@@ -611,7 +611,7 @@ function renderPicker(options: PickerRenderOptions): PlayReply {
 	const surah = surahName(options.surah, locale);
 
 	const header = new TextDisplayBuilder().setContent(
-		t("picker.header", { surah, reciter: options.reciterName }),
+		`-# ${t("picker.header", { surah, reciter: options.reciterName })}`,
 	);
 
 	const gallery = new MediaGalleryBuilder().addItems(
@@ -620,47 +620,46 @@ function renderPicker(options: PickerRenderOptions): PlayReply {
 			.setDescription(surah),
 	);
 
-	const buttons = options.choices.map((choice) =>
-		new ButtonBuilder()
-			.setCustomId(pickerCustomId(choice))
-			.setLabel(choice.rewayahName)
-			.setStyle(ButtonStyle.Success)
-			.setEmoji(t("emote.picker")),
+	const sections = options.choices.map((choice) =>
+		new SectionBuilder()
+			.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(choice.rewayahName),
+			)
+			.setButtonAccessory(
+				new ButtonBuilder()
+					.setCustomId(pickerCustomId(choice))
+					.setLabel("Play")
+					.setStyle(ButtonStyle.Success)
+					.setEmoji(t("emote.picker")),
+			),
 	);
 
-	const rows: ActionRowBuilder<ButtonBuilder>[] = [];
-
-	for (let i = 0; i < buttons.length; i += MAX_BUTTONS_PER_ROW) {
-		rows.push(
-			new ActionRowBuilder<ButtonBuilder>().addComponents(
-				buttons.slice(i, i + MAX_BUTTONS_PER_ROW),
-			),
-		);
-	}
-
 	const FIRST_CONTAINER_MAX_ROWS = 7;
-	const firstRows = rows.slice(0, FIRST_CONTAINER_MAX_ROWS);
-	const overflowRows = rows.slice(FIRST_CONTAINER_MAX_ROWS);
+	const firstSections = sections.slice(0, FIRST_CONTAINER_MAX_ROWS);
+	const overflowSections = sections.slice(FIRST_CONTAINER_MAX_ROWS);
 
 	const firstContainer = new ContainerBuilder()
-		.addTextDisplayComponents(header)
 		.addMediaGalleryComponents(gallery)
+		.addTextDisplayComponents(header)
 		.addSeparatorComponents(new SeparatorBuilder())
-		.addActionRowComponents(...firstRows);
+		.addSectionComponents(...firstSections);
 
 	const components: Array<ContainerBuilder | ActionRowBuilder<ButtonBuilder>> =
 		[firstContainer];
 
-	if (overflowRows.length > 0) {
+	if (overflowSections.length > 0) {
 		const MAX_ROWS_PER_OVERFLOW_CONTAINER = 10;
 
 		for (
 			let i = 0;
-			i < overflowRows.length;
+			i < overflowSections.length;
 			i += MAX_ROWS_PER_OVERFLOW_CONTAINER
 		) {
-			const chunk = overflowRows.slice(i, i + MAX_ROWS_PER_OVERFLOW_CONTAINER);
-			const overflowContainer = new ContainerBuilder().addActionRowComponents(
+			const chunk = overflowSections.slice(
+				i,
+				i + MAX_ROWS_PER_OVERFLOW_CONTAINER,
+			);
+			const overflowContainer = new ContainerBuilder().addSectionComponents(
 				...chunk,
 			);
 			components.push(overflowContainer);
