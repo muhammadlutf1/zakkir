@@ -245,6 +245,7 @@ function makeRequestInput(
 ) {
 	const edits: EditRecord[] = [];
 	const followUps: PlayReply[] = [];
+	const siblingEdits: EditRecord[] = [];
 
 	const input = {
 		guildId: overrides.guildId ?? harness?.player.guildId ?? "g-1",
@@ -263,10 +264,17 @@ function makeRequestInput(
 		},
 		followUp: async (reply: PlayReply) => {
 			followUps.push(reply);
+			// Stand-in for the Discord Message interaction.followUp returns;
+			// its edit handle drives the linked (overflow) picker message.
+			return {
+				edit: async (recorderReply: EditRecord) => {
+					siblingEdits.push(recorderReply);
+				},
+			};
 		},
 	};
 
-	return { input, edits, followUps };
+	return { input, edits, followUps, siblingEdits };
 }
 
 /** The customIds of every button in an edit, in render order (V2 or legacy). */
@@ -623,7 +631,6 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 				customId,
 				locale: "en",
 				translator: localizable("en"),
-				editReply: input.editReply,
 			});
 
 			assert.equal(harness.played[0]?.rewayahId, 2);
@@ -666,7 +673,6 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 			customId: buttonIds(edits[0])[0]!,
 			locale: "en",
 			translator: localizable("en"),
-			editReply: input.editReply,
 		});
 
 		assert.ok(
@@ -676,6 +682,51 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 		);
 		assert.equal(edits[1]!.flags, MessageFlags.IsComponentsV2);
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
+	});
+
+	it("resolving a pick also resolves the linked overflow message", async () => {
+		const many: Reciter = {
+			id: 3,
+			name: "متعدد الروايات",
+			rewayat: Array.from({ length: 12 }, (_, i) =>
+				rewayah(i + 100, `riwayat-${i}`, [18]),
+			),
+		};
+		const wideCatalog = new FakeCatalog([many]) as unknown as Catalog;
+		const harness = makePlayer();
+		const playback = makePlayback(harness);
+		const { input, edits, followUps, siblingEdits } = makeRequestInput(
+			harness,
+			{
+				reciter: many.name,
+			},
+		);
+		input.catalog = wideCatalog;
+
+		await playback.request(input);
+		assert.equal(followUps.length, 1); // overflow Container posted
+
+		const customId = buttonIds(edits[0])[2]!; // a primary-message button
+		await playback.pickRewayah({
+			guildId: "g-1",
+			catalog: wideCatalog,
+			customId,
+			locale: "en",
+			translator: localizable("en"),
+		});
+
+		// The pressed primary message resolves...
+		const primaryText = textContents(containerOf(edits[1]!));
+		assert.ok(
+			primaryText.some((text) => /Playing/.test(text)),
+			"primary message should show the play result",
+		);
+		// ...and so does the linked overflow message (same content).
+		const siblingText = textContents(containerOf(siblingEdits[0]!));
+		assert.ok(
+			siblingText.some((text) => /Playing/.test(text)),
+			"sibling overflow message should mirror the play result",
+		);
 	});
 
 	it("the picker timeout auto-plays the default Rewayah", async () => {

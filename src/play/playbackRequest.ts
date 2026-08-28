@@ -1,4 +1,4 @@
-import type { TextBasedChannel, VoiceChannel } from "discord.js";
+import type { Message, TextBasedChannel, VoiceChannel } from "discord.js";
 import {
 	ActionRowBuilder,
 	ButtonBuilder,
@@ -66,7 +66,6 @@ export interface RewayahPickInput {
 	noticeChannel?: TextBasedChannel;
 	/** Discord user id who pressed the picker button. */
 	requestedBy?: string;
-	editReply(reply: PlayReply): Promise<unknown>;
 }
 
 export interface RadioConfirmInput {
@@ -104,7 +103,11 @@ export class PlaybackRequest {
 	private readonly pickers = new Map<string, ActivePicker>();
 	private readonly pendingRecitation = new Map<
 		string,
-		{ recitation: Recitation; componentsV2: boolean }
+		{
+			recitation: Recitation;
+			componentsV2: boolean;
+			linkedEdits?: Array<(reply: PlayReply) => Promise<unknown>>;
+		}
 	>();
 	private readonly wired = new WeakSet<Player>();
 
@@ -192,10 +195,26 @@ export class PlaybackRequest {
 		this.setNoticeChannel(player, input.noticeChannel);
 
 		if (outcome.kind === "picker") {
-			this.startPickerSession(input, player, outcome);
+			const picker = this.startPickerSession(input, player, outcome);
 			const rendered = renderPicker(outcome);
+			// Register before sending so a fast button press still finds the
+			// linked handles.
+			picker.registerMessage((reply) => input.editReply(reply));
 			await input.editReply(rendered.reply);
-			if (rendered.overflow) await input.followUp(rendered.overflow);
+			if (rendered.overflow) {
+				const overflow = await input.followUp(rendered.overflow);
+				if (overflow) {
+					picker.registerMessage((reply) =>
+						// SAFETY: in production play.ts forwards interaction.followUp,
+						// which returns the Discord Message it created.
+						(overflow as Message).edit({
+							content: reply.content,
+							components: reply.components,
+							flags: reply.flags,
+						}),
+					);
+				}
+			}
 			return;
 		}
 
@@ -214,13 +233,20 @@ export class PlaybackRequest {
 
 		if (!parsed) return;
 
-		// A press resolves the picker and cancels its timer.
-		this.pickers.get(input.guildId)?.press();
+		// Capture the picker before settling it: it owns every picker message
+		// (primary + any overflow) and we keep the reference so we can still
+		// update them after it leaves the per-guild map.
+		const picker = this.pickers.get(input.guildId);
+
+		// A press resolves the picker and cancels its timeout; a second press
+		// on either linked message is therefore a no-op.
+		if (!picker) return;
+		picker.press();
 
 		const player = this.deps.players.get(input.guildId);
 
 		if (!player?.isConnected) {
-			await input.editReply(
+			await picker.updateAll(
 				v2TextReply(input.translator.t("command.notConnected")),
 			);
 			return;
@@ -240,7 +266,7 @@ export class PlaybackRequest {
 		).catch(() => undefined);
 
 		if (!recitation) {
-			await input.editReply(
+			await picker.updateAll(
 				v2TextReply(input.translator.t("command.resolveFailed")),
 			);
 			return;
@@ -248,16 +274,18 @@ export class PlaybackRequest {
 
 		this.setNoticeChannel(player, input.noticeChannel);
 
-		// The picker message is already Components V2, so every edit to it
-		// (success, radio-confirm) must stay Components V2 compatible.
+		// Every picker message (primary + overflow) is Components V2, so each
+		// edit must stay Components V2 compatible and update all linked
+		// messages at once.
 		await this.playOrConfirm(
 			player,
 			recitation,
 			input.locale,
 			{
-				edit: (reply) => input.editReply(v2EditReply(reply)),
+				edit: (reply) => picker.updateAll(v2EditReply(reply)),
 			},
 			true,
+			[...picker.linkedHandles()],
 		);
 	}
 
@@ -279,27 +307,30 @@ export class PlaybackRequest {
 		this.setNoticeChannel(player, input.noticeChannel);
 
 		const v2 = pending.componentsV2;
+		const linked = pending.linkedEdits;
 
 		try {
 			const result = await player.play(pending.recitation);
 			const body = formatPlayResult(pending.recitation, result, input.locale);
-			await input.update(
-				v2 ? v2TextReply(body) : { content: body, components: [] },
-			);
+			const reply = v2
+				? v2TextReply(body)
+				: { content: body, components: [] as never[] };
+			await input.update(reply);
+			if (linked) await this.updateLinked(linked, reply);
 		} catch (error) {
 			logger.error(
 				error,
 				"Radio confirm play failed in guild %s",
 				input.guildId,
 			);
-			await input.update(
-				v2
-					? v2TextReply(input.translator.t("command.resolveFailed"))
-					: {
-							content: input.translator.t("command.resolveFailed"),
-							components: [],
-						},
-			);
+			const reply = v2
+				? v2TextReply(input.translator.t("command.resolveFailed"))
+				: {
+						content: input.translator.t("command.resolveFailed"),
+						components: [] as never[],
+					};
+			await input.update(reply);
+			if (linked) await this.updateLinked(linked, reply);
 		}
 	}
 
@@ -311,14 +342,17 @@ export class PlaybackRequest {
 
 		const pending = this.pendingRecitation.get(input.guildId);
 		const v2 = pending?.componentsV2 ?? false;
+		const linked = pending?.linkedEdits;
 		this.pendingRecitation.delete(input.guildId);
 		const station = player.radioInfo?.name ?? "radio";
 		const body = input.translator.t("command.radioContinuing", { station });
+		const reply = v2
+			? v2TextReply(body)
+			: { content: body, components: [] as never[] };
 
 		try {
-			await input.update(
-				v2 ? v2TextReply(body) : { content: body, components: [] },
-			);
+			await input.update(reply);
+			if (linked) await this.updateLinked(linked, reply);
 		} catch (error) {
 			logger.error(
 				error,
@@ -328,9 +362,20 @@ export class PlaybackRequest {
 		}
 	}
 
-	private takePendingRecitation(
-		guildId: string,
-	): { recitation: Recitation; componentsV2: boolean } | undefined {
+	private async updateLinked(
+		linked: Array<(reply: PlayReply) => Promise<unknown>>,
+		reply: PlayReply,
+	) {
+		await Promise.all(
+			linked.map((edit) =>
+				Promise.resolve(edit(reply)).catch((error: unknown) => {
+					logger.error(error, "Picker linked-message update failed");
+				}),
+			),
+		);
+	}
+
+	private takePendingRecitation(guildId: string) {
 		const pending = this.pendingRecitation.get(guildId);
 		this.pendingRecitation.delete(guildId);
 		return pending;
@@ -363,11 +408,13 @@ export class PlaybackRequest {
 		locale: Locale,
 		sink: { edit: (reply: PlayReply) => Promise<unknown> },
 		componentsV2 = false,
+		linkedEdits?: Array<(reply: PlayReply) => Promise<unknown>>,
 	) {
 		if (player.isRadioPlaying) {
 			this.pendingRecitation.set(player.guildId, {
 				recitation,
 				componentsV2,
+				...(linkedEdits ? { linkedEdits } : {}),
 			});
 			await sink.edit(
 				radioConfirmPrompt(player, recitation, locale, componentsV2),
@@ -389,7 +436,7 @@ export class PlaybackRequest {
 		input: PlayRequestInput,
 		player: Player,
 		outcome: PickerOutcome,
-	) {
+	): ActivePicker {
 		this.pickers.get(input.guildId)?.dispose();
 
 		const picker = new ActivePicker({
@@ -408,6 +455,7 @@ export class PlaybackRequest {
 		});
 
 		this.pickers.set(input.guildId, picker);
+		return picker;
 	}
 
 	/**
@@ -860,6 +908,8 @@ interface ActivePickerOptions {
 class ActivePicker {
 	private timer: NodeJS.Timeout | null = null;
 	private settled = false;
+	/** One edit handle per rendered picker message (primary + overflow). */
+	private edits: Array<(reply: PlayReply) => Promise<unknown>> = [];
 
 	constructor(private readonly options: ActivePickerOptions) {
 		this.arm();
@@ -926,6 +976,34 @@ class ActivePicker {
 		if (this.settled) return;
 		this.settled = true;
 		this.options.onSettle();
+	}
+
+	/**
+	 * Registers one picker message's edit handle. The primary message is the
+	 * command's reply; an overflow Container (when the Rewayah list overflows)
+	 * is a second, linked message edited through its own handle.
+	 */
+	registerMessage(edit: (reply: PlayReply) => Promise<unknown>): void {
+		this.edits.push(edit);
+	}
+
+	linkedHandles() {
+		return [...this.edits];
+	}
+
+	/**
+	 * Updates every linked picker message with the same reply. Best-effort: a
+	 * single message failing to edit must not block the others, so each update
+	 * is isolated and its error is logged.
+	 */
+	async updateAll(reply: PlayReply): Promise<void> {
+		await Promise.all(
+			this.edits.map((edit) =>
+				Promise.resolve(edit(reply)).catch((error: unknown) => {
+					logger.error(error, "Picker linked-message update failed");
+				}),
+			),
+		);
 	}
 
 	private disposeTimer() {
