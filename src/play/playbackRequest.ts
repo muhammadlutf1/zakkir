@@ -369,6 +369,13 @@ export class PlaybackRequest {
 		await Promise.all(
 			linked.map((edit) =>
 				Promise.resolve(edit(reply)).catch((error: unknown) => {
+					if (isUnknownMessage(error)) {
+						logger.debug(
+							{ err: error },
+							"Picker linked message not found (already deleted)",
+						);
+						return;
+					}
 					logger.error(error, "Picker linked-message update failed");
 				}),
 			),
@@ -869,6 +876,15 @@ function v2EditReply(reply: PlayReply): PlayReply {
 	};
 }
 
+function isUnknownMessage(error: unknown): boolean {
+	return (
+		!!error &&
+		typeof error === "object" &&
+		"code" in error &&
+		(error as { code?: unknown }).code === 10008
+	);
+}
+
 /**
  * The single user-facing wording for the outcome of playing a Recitation,
  * shared by the direct `/play` path, the picker button, and the picker
@@ -1000,6 +1016,13 @@ class ActivePicker {
 		await Promise.all(
 			this.edits.map((edit) =>
 				Promise.resolve(edit(reply)).catch((error: unknown) => {
+					if (isUnknownMessage(error)) {
+						logger.debug(
+							{ err: error },
+							"Picker linked message not found (already deleted)",
+						);
+						return;
+					}
 					logger.error(error, "Picker linked-message update failed");
 				}),
 			),
