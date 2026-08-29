@@ -19,12 +19,15 @@ export async function replyWithAutoDelete(
 	interaction: Replyable,
 	options: Record<string, unknown>,
 ) {
-	const response = await interaction.reply({
+	const response = (await interaction.reply({
 		...options,
 		withResponse: true,
-	});
-
-	scheduleDelete(response.resource?.message);
+	})) as
+		| { resource?: { message?: DeletableMessage | null } | null }
+		| null
+		| undefined;
+	// SAFETY: discord.js with withResponse:true returns InteractionResponse with resource; test mocks may return void
+	scheduleDelete(response?.resource?.message);
 }
 
 export async function followUpWithAutoDelete(
@@ -32,6 +35,5 @@ export async function followUpWithAutoDelete(
 	options: Record<string, unknown>,
 ) {
 	const message = await interaction.followUp(options);
-
 	scheduleDelete(message);
 }
