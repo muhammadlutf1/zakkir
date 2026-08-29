@@ -5,7 +5,7 @@ import type { Command } from "../core/Command";
 const clearCommand: Command = {
 	data: new SlashCommandBuilder()
 		.setName("clear")
-		.setDescription("Clear the queue"),
+		.setDescription("Clear all upcoming recitations — current keeps playing"),
 
 	async execute(context, interaction) {
 		const player = context.players.get(interaction.guildId);
