@@ -203,10 +203,17 @@ export class PlaybackRequest {
 			await input.editReply(rendered.reply);
 			if (rendered.overflow) {
 				const overflow = await input.followUp(rendered.overflow);
-				if (overflow) {
+				if (overflow && typeof overflow === "object" && "edit" in overflow) {
+					// Production play.ts returns {edit: (reply)=>webhook.editMessage} for ephemeral overflow.
 					picker.registerMessage((reply) =>
-						// SAFETY: in production play.ts forwards interaction.followUp,
-						// which returns the Discord Message it created.
+						// SAFETY: followUp returns an edit handle, not a plain Message.
+						(overflow as { edit: (r: PlayReply) => Promise<unknown> }).edit(
+							reply,
+						),
+					);
+				} else if (overflow) {
+					picker.registerMessage((reply) =>
+						// SAFETY: fallback for non-ephemeral / test harness Message.
 						(overflow as Message).edit({
 							content: reply.content,
 							components: reply.components,
