@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { MessageFlags, PermissionFlagsBits } from "discord.js";
+import { PermissionFlagsBits } from "discord.js";
 import type {
 	VoteManager,
 	VoteProposeInput,
@@ -174,7 +174,7 @@ describe("gated panel buttons", () => {
 		assert.equal(state.defers, 0);
 		assert.equal(proposals[0]!.action, en["vote.action.stop"]);
 		assert.equal(replies[0]!.content, en["vote.started"]);
-		assert.equal(replies[0]!.flags, MessageFlags.Ephemeral);
+		assert.equal(replies[0]!.flags, undefined);
 
 		await proposals[0]!.onPass();
 		assert.deepEqual(calls, ["endSession"]);

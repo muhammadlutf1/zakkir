@@ -1,4 +1,5 @@
-import { MessageFlags } from "discord.js";
+import type { MessageComponentInteraction } from "discord.js";
+import { replyWithAutoDelete } from "../components/player-panel/autoDelete";
 import type { Locale, Localizable } from "../i18n/locale";
 import { getPanel } from "../play/playerPanel";
 import type { Player } from "../voice/Player";
@@ -94,21 +95,19 @@ export async function handleActionWithGate(
 
 /**
  * Runs the action through the Gate; when a Vote starts instead, replies
- * ephemerally that a vote is underway and reports false so the caller stops.
+ * visibly (auto-deleted after 3s) that a vote is underway and reports false
+ * so the caller stops.
  */
 export async function gateOrVoteStarted(
 	input: ActionGateInput,
-	replyable: {
-		reply(options: { content: string; flags?: number }): Promise<unknown>;
-	},
+	replyable: Pick<MessageComponentInteraction<"cached">, "reply">,
 	translator: Localizable,
 ): Promise<boolean> {
 	const gate = await handleActionWithGate(input);
 
 	if (gate.kind === "voted") {
-		await replyable.reply({
+		await replyWithAutoDelete(replyable, {
 			content: translator.t("vote.started"),
-			flags: MessageFlags.Ephemeral,
 		});
 		return false;
 	}

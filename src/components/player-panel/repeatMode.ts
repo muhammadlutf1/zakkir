@@ -1,8 +1,8 @@
-import { MessageFlags } from "discord.js";
 import { gateOrVoteStarted } from "../../access/actionGate";
 import type { Component } from "../../core/Component";
 import { PANEL_REPEAT_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
 import { RepeatMode } from "../../voice/Queue";
+import { followUpWithAutoDelete } from "./autoDelete";
 import { buildRepeatRow, resolvePanelPlayer } from "./shared";
 
 const MODES: Record<string, RepeatMode> = {
@@ -61,11 +61,10 @@ const component: Component = {
 		await interaction.update({
 			components: [buildRepeatRow(mode, context.locale, true)],
 		});
-		await interaction.followUp({
+		await followUpWithAutoDelete(interaction, {
 			content: context.translator.t("command.repeatSet", {
 				mode: context.translator.t(`repeat.mode.${mode}` as never),
 			}),
-			flags: MessageFlags.Ephemeral,
 		});
 	},
 };

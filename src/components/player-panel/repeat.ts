@@ -1,6 +1,6 @@
-import { MessageFlags } from "discord.js";
 import type { Component } from "../../core/Component";
 import { PANEL_REPEAT_CUSTOM_ID } from "../../play/playerPanel";
+import { replyWithAutoDelete } from "./autoDelete";
 import { buildRepeatRow, resolvePanelPlayer } from "./shared";
 
 const component: Component = {
@@ -11,9 +11,8 @@ const component: Component = {
 
 		if (!player) return;
 
-		await interaction.reply({
+		await replyWithAutoDelete(interaction, {
 			components: [buildRepeatRow(player.repeatMode, context.locale)],
-			flags: MessageFlags.Ephemeral,
 		});
 	},
 };
