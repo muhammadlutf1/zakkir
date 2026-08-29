@@ -21,7 +21,7 @@ export type InterpolationParams = Record<string, string | number>;
  */
 export function t(template: string, params: InterpolationParams = {}): string {
 	return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key: string) =>
-		params[key] ? String(params[key]) : match,
+		params[key] !== undefined ? String(params[key]) : match,
 	);
 }
 
