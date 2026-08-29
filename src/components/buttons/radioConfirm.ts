@@ -2,6 +2,7 @@ import { MessageFlags } from "discord.js";
 import { gateOrVoteStarted } from "../../access/actionGate";
 import type { Component } from "../../core/Component";
 import { recitationLabel } from "../../i18n/recitationLabel";
+import type { PlayReply } from "../../play/playbackRequest";
 
 const component: Component = {
 	match: (customId) =>
@@ -17,8 +18,7 @@ const component: Component = {
 			noticeChannel: interaction.channel ?? undefined,
 			replyEphemeral: (content: string) =>
 				interaction.reply({ content, flags: MessageFlags.Ephemeral }),
-			update: (reply: { content: string }) =>
-				interaction.update({ content: reply.content, components: [] }),
+			update: (reply: PlayReply) => interaction.update(reply),
 		};
 
 		if (interaction.customId === "radio:cancel") {
@@ -56,7 +56,7 @@ const component: Component = {
 							// SAFETY: by vote-pass time the interaction is already acked, so the
 							// prompt is edited via its message and stray ephemeral replies are dropped.
 							replyEphemeral: async () => {},
-							update: (reply) => interaction.message.edit(reply),
+							update: (reply: PlayReply) => interaction.message.edit(reply),
 						});
 					},
 				},

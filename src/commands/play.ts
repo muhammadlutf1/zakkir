@@ -98,8 +98,23 @@ const playCommand: Command = {
 			noticeChannel: interaction.channel ?? undefined,
 			requestedBy: interaction.user.id,
 			editReply: (reply) => interaction.editReply(reply),
-			followUp: (content) =>
-				interaction.followUp({ content, flags: MessageFlags.Ephemeral }),
+			followUp: async (reply) => {
+				const msg = await interaction.followUp({
+					content: reply.content,
+					components: reply.components,
+					flags: (reply.flags ?? 0) | MessageFlags.Ephemeral,
+				});
+				// SAFETY: ephemeral followUps are not real channel messages — GuildMessageManager.edit
+				// PATCH /channels/.../messages/... always 404s (10008). Edit via the interaction webhook instead.
+				return {
+					edit: (next: typeof reply) =>
+						interaction.webhook.editMessage(msg.id, {
+							content: next.content,
+							components: next.components as never,
+							flags: next.flags,
+						}),
+				};
+			},
 		});
 	},
 };

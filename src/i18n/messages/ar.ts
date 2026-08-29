@@ -15,9 +15,8 @@ export const ar = {
 	// The recitation label rendered across play/notice/picker surfaces
 	"recitation.label": "{surah} بصوت {reciter} ({rewayah})",
 	// Rewayah picker
-	"picker.header":
-		"الروايات المتاحة لسورة **{surah} ({number})** للقارئ **{reciter}**:",
-	"picker.prompt": "اختر رواية لتشغيلها.",
+	"picker.header": "الروايات المتاحة لسورة **{surah}** للقارئ **{reciter}**:",
+	"picker.playLabel": "تشغيل",
 	"picker.timeoutNoDefault":
 		"لم يتم الاختيار — لا توجد رواية افتراضية محددة. تم إلغاء التشغيل.",
 	// Player notices
@@ -135,4 +134,14 @@ export const ar = {
 	"emote.failed": "<:error:1385171040098979961>",
 	"emote.picker": "<:play:1384273884622229514>",
 	"emote.notice": "<:error:1385171040098979961>",
+	// Custom Discord emotes used by the player panel and picker surfaces.
+	// These are bot assets — the same ids ship in every locale, so they are
+	// mirrored verbatim from the `en` catalog.
+	"emote.book": "<:book:1384273893149249546>",
+	"emote.microphone": "<:microphone:1387684996587851877>",
+	"emote.pause": "<:pause:1384273881040289924>",
+	"emote.play": "<:play:1384273884622229514>",
+	"emote.stop": "<:stop:1384273886652137665>",
+	"emote.forward": "<:forward:1384273873427759278>",
+	"emote.repeat": "<:repeat:1384278335114449060>",
 } as const satisfies MessageCatalog;
