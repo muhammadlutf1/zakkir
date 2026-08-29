@@ -1,8 +1,8 @@
-import { MessageFlags } from "discord.js";
 import { gateOrVoteStarted } from "../../access/actionGate";
 import type { Component } from "../../core/Component";
 import { recitationLabel } from "../../i18n/recitationLabel";
 import { PANEL_SELECT_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
+import { followUpWithAutoDelete } from "./autoDelete";
 import { resolvePanelPlayer } from "./shared";
 
 const TRACK_VALUE_PREFIX = "track-";
@@ -76,11 +76,10 @@ const component: Component = {
 
 		const jumped = player.queueView.current;
 		if (jumped) {
-			await interaction.followUp({
+			await followUpWithAutoDelete(interaction, {
 				content: context.translator.t("panel.jumpedTo", {
 					label: recitationLabel(jumped, context.locale),
 				}),
-				flags: MessageFlags.Ephemeral,
 			});
 		}
 	},

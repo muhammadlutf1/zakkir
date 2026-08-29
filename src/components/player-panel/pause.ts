@@ -1,6 +1,6 @@
-import { MessageFlags } from "discord.js";
 import type { Component } from "../../core/Component";
 import { PANEL_PAUSE_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
+import { followUpWithAutoDelete } from "./autoDelete";
 import { resolvePanelPlayer } from "./shared";
 
 const component: Component = {
@@ -20,11 +20,10 @@ const component: Component = {
 
 		updatePanel(player.guildId);
 
-		await interaction.followUp({
+		await followUpWithAutoDelete(interaction, {
 			content: context.translator.t(
 				wasPaused ? "panel.resumed" : "panel.paused",
 			),
-			flags: MessageFlags.Ephemeral,
 		});
 	},
 };
