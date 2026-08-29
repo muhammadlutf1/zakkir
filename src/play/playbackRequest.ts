@@ -737,10 +737,10 @@ function renderPicker(options: PickerRenderOptions): PickerRender {
 	const surah = surahName(options.surah, locale);
 	const number = options.surah.number;
 
-	const header = translator.t("picker.header", {
+	const header = `-# ${translator.t("picker.header", {
 		surah,
 		reciter: options.reciterName,
-	});
+	})}`;
 
 	const firstChoices = options.choices.slice(0, FIRST_CONTAINER_SECTIONS);
 	const restChoices = options.choices.slice(FIRST_CONTAINER_SECTIONS);
@@ -749,7 +749,6 @@ function renderPicker(options: PickerRenderOptions): PickerRender {
 		flags: MessageFlags.IsComponentsV2,
 		components: [
 			new ContainerBuilder()
-				.addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
 				.addMediaGalleryComponents(
 					new MediaGalleryBuilder().addItems([
 						{
@@ -758,6 +757,7 @@ function renderPicker(options: PickerRenderOptions): PickerRender {
 						},
 					]),
 				)
+				.addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
 				.addSeparatorComponents(new SeparatorBuilder())
 				.addSectionComponents(
 					firstChoices.map((choice) => buildPickerSection(choice, translator)),

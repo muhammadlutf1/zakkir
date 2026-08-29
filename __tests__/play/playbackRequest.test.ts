@@ -529,8 +529,8 @@ describe("PlaybackRequest — RewayahPicker branch", () => {
 		assert.equal(edits[0]!.content!, undefined);
 
 		const container = containerOf(edits[0]!);
-		// header TextDisplay, MediaGallery, Separator, then two Sections.
-		assert.deepEqual(componentTypes(container), [10, 12, 14, 9, 9]);
+		// MediaGallery, header TextDisplay, Separator, then two Sections.
+		assert.deepEqual(componentTypes(container), [12, 10, 14, 9, 9]);
 		assert.ok(
 			mediaGalleryUrls(container).includes(
 				"https://qurantv.fr/images/surat/18.png",
