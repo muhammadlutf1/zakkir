@@ -2,6 +2,7 @@ import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import { gateOrVoteStarted } from "../access/actionGate";
 import type { Command } from "../core/Command";
 import { recitationLabel } from "../i18n/recitationLabel";
+import { updatePanel } from "../play/playerPanel";
 
 const removeCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -60,7 +61,7 @@ const removeCommand: Command = {
 						label: target ? recitationLabel(target, context.locale) : "",
 					}),
 					onPass: async () => {
-						player.remove(position + 1);
+						if (player.remove(position + 1)) updatePanel(player.guildId);
 					},
 				},
 				interaction,
@@ -72,7 +73,7 @@ const removeCommand: Command = {
 
 		// Queue positions are 1-based over the whole queue (current at 1), so an
 		// upcoming position N maps to queue position N + 1.
-		player.remove(position + 1);
+		if (player.remove(position + 1)) updatePanel(player.guildId);
 
 		await interaction.reply(
 			context.translator.t("command.removed", { position: String(position) }),

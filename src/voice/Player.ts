@@ -394,12 +394,16 @@ export class Player {
 	 * playing Recitation keeps playing.
 	 */
 	remove(position: number) {
-		return this.queue.remove(position);
+		const removed = this.queue.remove(position);
+		if (removed) this.emitChange();
+		return removed;
 	}
 
 	/** Empties the Queue while the current Recitation continues playing. */
 	clearQueue() {
+		const hadPending = this.queue.view().upcoming.length > 0;
 		this.queue.clearPending();
+		if (hadPending) this.emitChange();
 	}
 
 	pause(): void {

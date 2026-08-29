@@ -1,6 +1,7 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import { gateOrVoteStarted } from "../access/actionGate";
 import type { Command } from "../core/Command";
+import { updatePanel } from "../play/playerPanel";
 
 const clearCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -31,6 +32,7 @@ const clearCommand: Command = {
 					action: context.translator.t("vote.action.clear"),
 					onPass: async () => {
 						player.clearQueue();
+						updatePanel(player.guildId);
 					},
 				},
 				interaction,
@@ -41,6 +43,7 @@ const clearCommand: Command = {
 		}
 
 		player.clearQueue();
+		updatePanel(player.guildId);
 
 		await interaction.reply(context.translator.t("command.queueCleared"));
 	},
