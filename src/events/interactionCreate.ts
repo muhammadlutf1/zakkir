@@ -13,6 +13,7 @@ import type {
 } from "../core/interactionContext";
 import { createLogger } from "../core/logger";
 import { type Localizable, localizable } from "../i18n/locale";
+import type { CodedDiscordError } from "../types";
 
 const logger = createLogger("interactionCreate");
 
@@ -137,16 +138,32 @@ async function dispatchWithErrorPolicy(
 
 		const responder = interaction as CommandInteraction;
 
-		if (decision.action === "reply") {
-			await responder.reply({
-				content: decision.content,
-				flags: MessageFlags.Ephemeral,
-			});
-		} else {
-			await responder.followUp({
-				content: decision.content,
-				flags: MessageFlags.Ephemeral,
-			});
+		try {
+			if (decision.action === "reply") {
+				await responder.reply({
+					content: decision.content,
+					flags: MessageFlags.Ephemeral,
+				});
+			} else {
+				await responder.followUp({
+					content: decision.content,
+					flags: MessageFlags.Ephemeral,
+				});
+			}
+		} catch (replyError) {
+			// SAFETY: discord.js exposes `code` on DiscordAPIError.
+			// 10062 Unknown interaction — token expired (>3s without defer, >15m after defer).
+			// 40060 Interaction has already been acknowledged — already replied/deferred.
+			const code = (replyError as CodedDiscordError).code;
+			if (code === 10062 || code === 40060) {
+				logger.debug(
+					replyError,
+					"Skipped error reply for %s — interaction expired",
+					logLabel,
+				);
+			} else {
+				logger.warn(replyError, "Failed to send error reply for %s", logLabel);
+			}
 		}
 	}
 }

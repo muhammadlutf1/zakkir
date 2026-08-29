@@ -27,6 +27,8 @@ const panelCommand: Command = {
 			return;
 		}
 
+		await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
 		const hasManageGuild =
 			interaction.member.permissions.has(PermissionFlagsBits.ManageGuild) ||
 			(interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild) ??
@@ -44,9 +46,8 @@ const panelCommand: Command = {
 			await createPanel(player, channel, context.locale);
 		}
 
-		await interaction.reply({
+		await interaction.editReply({
 			content: context.translator.t("panel.showing"),
-			flags: MessageFlags.Ephemeral,
 		});
 	},
 };

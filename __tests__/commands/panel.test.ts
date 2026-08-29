@@ -125,6 +125,12 @@ function makeInteraction(guildId: string, channel: unknown, isAdmin = false) {
 		async reply(payload: Record<string, unknown>) {
 			replies.push(payload);
 		},
+		async deferReply() {
+			(this as { deferred: boolean }).deferred = true;
+		},
+		async editReply(payload: Record<string, unknown>) {
+			replies.push(payload);
+		},
 	};
 
 	return {
@@ -160,7 +166,7 @@ describe("/panel command", () => {
 
 		assert.equal(sends.length, 1);
 		assert.equal(hasPanel(guildId), true);
-		assert.equal(replies[0]!.flags, MessageFlags.Ephemeral);
+		assert.equal(replies.length, 1);
 	});
 
 	it("re-renders instead of double-posting when a panel already exists", async () => {
@@ -204,7 +210,7 @@ describe("/panel command", () => {
 			messageId: "sent-2",
 			channelId: "text-1",
 		});
-		assert.equal(admin.replies[0]!.flags, MessageFlags.Ephemeral);
+		assert.equal(admin.replies.length, 1);
 	});
 
 	it("creates the panel when an admin invokes /panel with none posted", async () => {
