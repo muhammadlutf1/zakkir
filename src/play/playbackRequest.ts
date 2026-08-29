@@ -1,4 +1,4 @@
-import type { Message, TextBasedChannel, VoiceChannel } from "discord.js";
+import type { TextBasedChannel, VoiceChannel } from "discord.js";
 import {
 	ActionRowBuilder,
 	ButtonBuilder,
@@ -204,21 +204,11 @@ export class PlaybackRequest {
 			if (rendered.overflow) {
 				const overflow = await input.followUp(rendered.overflow);
 				if (overflow && typeof overflow === "object" && "edit" in overflow) {
-					// Production play.ts returns {edit: (reply)=>webhook.editMessage} for ephemeral overflow.
 					picker.registerMessage((reply) =>
-						// SAFETY: followUp returns an edit handle, not a plain Message.
+						// SAFETY: followUp always returns an edit handle (ephemeral overflow via webhook).
 						(overflow as { edit: (r: PlayReply) => Promise<unknown> }).edit(
 							reply,
 						),
-					);
-				} else if (overflow) {
-					picker.registerMessage((reply) =>
-						// SAFETY: fallback for non-ephemeral / test harness Message.
-						(overflow as Message).edit({
-							content: reply.content,
-							components: reply.components,
-							flags: reply.flags,
-						}),
 					);
 				}
 			}
