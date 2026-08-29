@@ -1,8 +1,8 @@
-import { MessageFlags } from "discord.js";
 import { handleSkipWithGate } from "../../access/skipAccess";
 import type { Component } from "../../core/Component";
 import { recitationLabel } from "../../i18n/recitationLabel";
 import { PANEL_SKIP_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
+import { followUpWithAutoDelete, replyWithAutoDelete } from "./autoDelete";
 import { resolvePanelPlayer } from "./shared";
 
 const component: Component = {
@@ -14,9 +14,8 @@ const component: Component = {
 		if (!player) return;
 
 		if (player.isPlaying === false) {
-			await interaction.reply({
+			await replyWithAutoDelete(interaction, {
 				content: context.translator.t("command.nothingToSkip"),
-				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -36,9 +35,8 @@ const component: Component = {
 		});
 
 		if (gate.kind === "voted") {
-			await interaction.reply({
+			await replyWithAutoDelete(interaction, {
 				content: context.translator.t("vote.started"),
-				flags: MessageFlags.Ephemeral,
 			});
 			return;
 		}
@@ -60,9 +58,8 @@ const component: Component = {
 		} else {
 			content = context.translator.t("command.skipped");
 		}
-		await interaction.followUp({
+		await followUpWithAutoDelete(interaction, {
 			content,
-			flags: MessageFlags.Ephemeral,
 		});
 	},
 };
