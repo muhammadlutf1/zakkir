@@ -84,11 +84,16 @@ export const en = {
 	"command.radioStationNotFound":
 		'<:error:1385171040098979961> Radio station "{station}" not found.',
 	"command.radioStarted": "📻 Now playing radio **{station}**.",
-	"command.radioConfirmPrompt":
+	"command.radioToQueueConfirmPrompt":
 		"📻 Radio **{station}** is playing. Do you want to stop the radio and play **{label}**?",
-	"command.radioConfirmYes": "Yes, play it",
-	"command.radioConfirmNo": "No, keep radio",
-	"command.radioContinuing": "📻 Continuing radio **{station}**.",
+	"command.radioToQueueConfirmYes": "Yes, play it",
+	"command.radioToQueueConfirmNo": "No, keep radio",
+	"command.radioToQueueContinuing": "📻 Continuing radio **{station}**.",
+	"command.queueToRadioConfirmPrompt":
+		"Queue has {count} track(s) (now playing **{label}**). Clear the queue and play radio **{station}**?",
+	"command.queueToRadioConfirmYes": "Yes, clear and play",
+	"command.queueToRadioConfirmNo": "No, keep queue",
+	"command.queueToRadioContinuing": "Queue unchanged — continuing **{label}**.",
 	"command.radioStopped": "📻 Radio stopped.",
 	"notice.radioFailed":
 		"<:error:1385171040098979961> Radio **{station}** failed after retries — stopped.",
@@ -124,7 +129,8 @@ export const en = {
 	"vote.action.remove": "remove **{label}**",
 	"vote.action.select": "jump to **{label}**",
 	"vote.action.stop": "stop playback",
-	"vote.action.radio": "stop the radio and play **{label}**",
+	"vote.action.radioToQueue": "stop the radio and play **{label}**",
+	"vote.action.queueToRadio": "clear the queue and play radio **{station}**",
 	// Generic interaction error fallbacks
 	"error.componentGeneric": "There was an error while handling that component!",
 	"error.commandGeneric": "There was an error while executing this command!",

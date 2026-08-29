@@ -174,13 +174,6 @@ export class VoteManager {
 		await this.checkEarly(vote);
 	}
 
-	async handleInitiatorLeave(guildId: string, userId: string): Promise<void> {
-		const vote = this.votes.get(guildId);
-		if (!vote || vote.resolved) return;
-		if (vote.initiatorId !== userId) return;
-		await this.resolve(vote, "cancelled");
-	}
-
 	private async onTimeout(vote: ActiveVote): Promise<void> {
 		if (vote.resolved) return;
 		const { yes, no } = this.counts(vote);

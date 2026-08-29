@@ -1,4 +1,3 @@
-// import { clientId, guildId, token } from "./config.json";
 import { REST, Routes } from "discord.js";
 import { config } from "../config";
 import commandLoader from "../core/loaders/commandLoader";

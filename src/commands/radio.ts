@@ -59,19 +59,15 @@ const radioCommand: Command = {
 			return;
 		}
 
-		const player = context.players.getOrCreate(interaction.guildId);
-		await player.join(channel);
-
-		if (interaction.channel) {
-			player.setNoticeChannel(interaction.channel);
-		}
-
-		await player.playRadio(radio);
-
-		await interaction.editReply({
-			content: context.translator.t("command.radioStarted", {
-				station: radio.name,
-			}),
+		await context.playback.requestQueueToRadio({
+			guildId: interaction.guildId,
+			radio,
+			locale: context.locale,
+			translator: context.translator,
+			voiceChannel: channel,
+			noticeChannel: interaction.channel ?? undefined,
+			requestedBy: interaction.user.id,
+			editReply: (reply) => interaction.editReply(reply),
 		});
 	},
 };

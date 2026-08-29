@@ -10,7 +10,7 @@ import {
 	SeparatorBuilder,
 	TextDisplayBuilder,
 } from "discord.js";
-import type { Catalog, Rewayah } from "../catalog/Catalog";
+import type { Catalog, Radio, Rewayah } from "../catalog/Catalog";
 import { type Surah, surahName } from "../catalog/suwar";
 import { DEFAULT_LOCALE } from "../config";
 import { createLogger } from "../core/logger";
@@ -25,6 +25,11 @@ import type { Recitation } from "../voice/Recitation";
 import { createPanel, hasPanel } from "./playerPanel";
 
 const logger = createLogger("PlaybackRequest");
+
+export const CONFIRM_RADIO_TO_QUEUE_CUSTOM_ID = "confirm:radio-to-queue";
+export const CANCEL_RADIO_TO_QUEUE_CUSTOM_ID = "cancel:radio-to-queue";
+export const CONFIRM_QUEUE_TO_RADIO_CUSTOM_ID = "confirm:queue-to-radio";
+export const CANCEL_QUEUE_TO_RADIO_CUSTOM_ID = "cancel:queue-to-radio";
 
 const PICKER_CUSTOM_ID_PREFIX = "rewayah-play:";
 /** Base URL for the QuranTV surat preview image used in the picker card. */
@@ -80,6 +85,17 @@ export interface RadioConfirmInput {
 	update(reply: PlayReply): Promise<unknown>;
 }
 
+export interface RadioRequestInput {
+	guildId: string;
+	radio: Radio;
+	locale: Locale;
+	translator: Localizable;
+	voiceChannel: VoiceChannel;
+	noticeChannel?: TextBasedChannel;
+	requestedBy?: string;
+	editReply(reply: PlayReply): Promise<unknown>;
+}
+
 /**
  * A ready-to-post reply payload. `components` carries either legacy
  * ActionRows (radio-confirm buttons) or Components V2 Containers (the
@@ -95,14 +111,15 @@ export interface PlayReply {
 /**
  * The deep module behind the `/play` seam. Owns the full PlayOutcome
  * lifecycle for a guild — Reciter/Rewayah fallback resolution, the
- * RewayahPicker session lifecycle, pending-Radio confirmations, and the
- * notice-channel / PlayerPanel side-effects — behind four narrow calls:
- * `request`, `pickRewayah`, `confirmRadio`, `cancelRadio`. Callers hand in
- * reply sinks and never branch on the outcome themselves.
+ * RewayahPicker session lifecycle, pending confirmations, and the
+ * notice-channel / PlayerPanel side-effects — behind narrow calls:
+ * `request`, `pickRewayah`, `confirmRadioToQueue`, `cancelRadioToQueue`,
+ * `requestQueueToRadio`, `confirmQueueToRadio`, `cancelQueueToRadio`. Callers
+ * hand in reply sinks and never branch on the outcome themselves.
  */
 export class PlaybackRequest {
 	private readonly pickers = new Map<string, ActivePicker>();
-	private readonly pendingRecitation = new Map<
+	private readonly pendingRadioToQueue = new Map<
 		string,
 		{
 			recitation: Recitation;
@@ -110,6 +127,7 @@ export class PlaybackRequest {
 			linkedEdits?: Array<(reply: PlayReply) => Promise<unknown>>;
 		}
 	>();
+	private readonly pendingQueueToRadio = new Map<string, Radio>();
 	private readonly wired = new WeakSet<Player>();
 
 	constructor(
@@ -132,11 +150,17 @@ export class PlaybackRequest {
 		if (this.wired.has(player)) return;
 		this.wired.add(player);
 
-		player.onEnd(() => this.pendingRecitation.delete(player.guildId));
+		player.onEnd(() => {
+			this.pendingRadioToQueue.delete(player.guildId);
+			this.pendingQueueToRadio.delete(player.guildId);
+		});
 
 		// Any Radio transition (a new station starting, a stop, session end)
 		// invalidates an outstanding play confirmation for that station.
-		player.onRadioChange(() => this.pendingRecitation.delete(player.guildId));
+		player.onRadioChange(() => {
+			this.pendingRadioToQueue.delete(player.guildId);
+			this.pendingQueueToRadio.delete(player.guildId);
+		});
 
 		player.onNotice((message) => {
 			const channel = player.noticeChannel;
@@ -153,21 +177,21 @@ export class PlaybackRequest {
 		});
 
 		let posting = false;
-
-		player.onChange(() => {
-			if (posting || !player.isPlaying || hasPanel(player.guildId)) return;
-
+		const maybePostPanel = () => {
+			if (posting || hasPanel(player.guildId)) return;
+			const isActive = player.isPlaying || player.isRadioPlaying;
+			if (!isActive) return;
 			const channel = player.noticeChannel;
-
 			if (!channel || !("send" in channel)) return;
-
 			posting = true;
-
 			void createPanel(player, channel, locale).catch((error: unknown) => {
 				logger.error(error, "Failed to post panel in guild %s", player.guildId);
 				posting = false;
 			});
-		});
+		};
+
+		player.onChange(maybePostPanel);
+		player.onRadioChange(maybePostPanel);
 	}
 
 	/**
@@ -286,13 +310,40 @@ export class PlaybackRequest {
 		);
 	}
 
+	/** Queue → Radio: request with confirm when queue has content. */
+	async requestQueueToRadio(input: RadioRequestInput): Promise<void> {
+		const player = this.deps.players.getOrCreate(input.guildId);
+		await player.join(input.voiceChannel);
+		this.setNoticeChannel(player, input.noticeChannel);
+
+		const hasQueue =
+			player.isPlaying ||
+			player.queueView.current !== undefined ||
+			player.queueView.upcoming.length > 0;
+		if (player.isRadioPlaying || !hasQueue) {
+			await player.playRadio(input.radio);
+			await input.editReply({
+				content: input.translator.t("command.radioStarted", {
+					station: input.radio.name,
+				}),
+				components: [],
+			});
+			return;
+		}
+
+		this.pendingQueueToRadio.set(input.guildId, input.radio);
+		await input.editReply(
+			queueToRadioConfirmPrompt(player, input.radio, input.locale),
+		);
+	}
+
 	/** The confirm press on a radio-confirm prompt: stops the Radio, plays the pending Recitation. */
-	async confirmRadio(input: RadioConfirmInput): Promise<void> {
+	async confirmRadioToQueue(input: RadioConfirmInput): Promise<void> {
 		const player = await this.requirePlayer(input);
 
 		if (!player) return;
 
-		const pending = this.takePendingRecitation(input.guildId);
+		const pending = this.takePendingRadioToQueue(input.guildId);
 
 		if (!pending) {
 			await input.replyEphemeral(input.translator.t("command.resolveFailed"));
@@ -309,9 +360,7 @@ export class PlaybackRequest {
 		try {
 			const result = await player.play(pending.recitation);
 			const body = formatPlayResult(pending.recitation, result, input.locale);
-			const reply = v2
-				? v2TextReply(body)
-				: { content: body, components: [] as never[] };
+			const reply = v2 ? v2TextReply(body) : { content: body, components: [] };
 			await input.update(reply);
 			if (linked) await this.updateLinked(linked, reply);
 		} catch (error) {
@@ -324,28 +373,46 @@ export class PlaybackRequest {
 				? v2TextReply(input.translator.t("command.resolveFailed"))
 				: {
 						content: input.translator.t("command.resolveFailed"),
-						components: [] as never[],
+						components: [],
 					};
 			await input.update(reply);
 			if (linked) await this.updateLinked(linked, reply);
 		}
 	}
 
+	/** Queue → Radio confirm: clears queue and starts the pending Radio. */
+	async confirmQueueToRadio(input: RadioConfirmInput): Promise<void> {
+		const player = await this.requirePlayer(input);
+		if (!player) return;
+		const pending = this.takePendingQueueToRadio(input.guildId);
+		if (!pending) {
+			await input.replyEphemeral(input.translator.t("command.resolveFailed"));
+			return;
+		}
+		this.setNoticeChannel(player, input.noticeChannel);
+		player.clearForRadio();
+		await player.playRadio(pending);
+		const body = input.translator.t("command.radioStarted", {
+			station: pending.name,
+		});
+		await input.update({ content: body, components: [] });
+	}
+
 	/** The cancel press on a radio-confirm prompt: keeps the Radio playing. */
-	async cancelRadio(input: RadioConfirmInput): Promise<void> {
+	async cancelRadioToQueue(input: RadioConfirmInput): Promise<void> {
 		const player = await this.requirePlayer(input);
 
 		if (!player) return;
 
-		const pending = this.pendingRecitation.get(input.guildId);
+		const pending = this.pendingRadioToQueue.get(input.guildId);
 		const v2 = pending?.componentsV2 ?? false;
 		const linked = pending?.linkedEdits;
-		this.pendingRecitation.delete(input.guildId);
+		this.pendingRadioToQueue.delete(input.guildId);
 		const station = player.radioInfo?.name ?? "radio";
-		const body = input.translator.t("command.radioContinuing", { station });
-		const reply = v2
-			? v2TextReply(body)
-			: { content: body, components: [] as never[] };
+		const body = input.translator.t("command.radioToQueueContinuing", {
+			station,
+		});
+		const reply = v2 ? v2TextReply(body) : { content: body, components: [] };
 
 		try {
 			await input.update(reply);
@@ -354,6 +421,27 @@ export class PlaybackRequest {
 			logger.error(
 				error,
 				"Radio cancel update failed in guild %s",
+				input.guildId,
+			);
+		}
+	}
+
+	/** Queue → Radio cancel: keeps the queue. */
+	async cancelQueueToRadio(input: RadioConfirmInput): Promise<void> {
+		const player = await this.requirePlayer(input);
+		if (!player) return;
+		this.pendingQueueToRadio.delete(input.guildId);
+		const current = player.queueView.current;
+		const label = current ? recitationLabel(current, input.locale) : "queue";
+		const body = input.translator.t("command.queueToRadioContinuing", {
+			label,
+		});
+		try {
+			await input.update({ content: body, components: [] });
+		} catch (error) {
+			logger.error(
+				error,
+				"Queue-radio cancel update failed in guild %s",
 				input.guildId,
 			);
 		}
@@ -379,15 +467,24 @@ export class PlaybackRequest {
 		);
 	}
 
-	private takePendingRecitation(guildId: string) {
-		const pending = this.pendingRecitation.get(guildId);
-		this.pendingRecitation.delete(guildId);
+	private takePendingRadioToQueue(guildId: string) {
+		const pending = this.pendingRadioToQueue.get(guildId);
+		this.pendingRadioToQueue.delete(guildId);
 		return pending;
 	}
 
-	/** Non-mutating look at the guild's pending Radio confirmation (for gating). */
-	peekPendingRecitation(guildId: string): Recitation | undefined {
-		return this.pendingRecitation.get(guildId)?.recitation;
+	private takePendingQueueToRadio(guildId: string) {
+		const pending = this.pendingQueueToRadio.get(guildId);
+		this.pendingQueueToRadio.delete(guildId);
+		return pending;
+	}
+
+	peekPendingRadioToQueue(guildId: string): Recitation | undefined {
+		return this.pendingRadioToQueue.get(guildId)?.recitation;
+	}
+
+	peekPendingQueueToRadio(guildId: string): Radio | undefined {
+		return this.pendingQueueToRadio.get(guildId);
 	}
 
 	private setNoticeChannel(player: Player, noticeChannel?: TextBasedChannel) {
@@ -415,13 +512,13 @@ export class PlaybackRequest {
 		linkedEdits?: Array<(reply: PlayReply) => Promise<unknown>>,
 	) {
 		if (player.isRadioPlaying) {
-			this.pendingRecitation.set(player.guildId, {
+			this.pendingRadioToQueue.set(player.guildId, {
 				recitation,
 				componentsV2,
 				...(linkedEdits ? { linkedEdits } : {}),
 			});
 			await sink.edit(
-				radioConfirmPrompt(player, recitation, locale, componentsV2),
+				radioToQueueConfirmPrompt(player, recitation, locale, componentsV2),
 			);
 			return;
 		}
@@ -786,7 +883,7 @@ function renderPicker(options: PickerRenderOptions): PickerRender {
  * can safely edit a Components V2 picker message); otherwise it is a legacy
  * ActionRow of buttons.
  */
-function radioConfirmPrompt(
+function radioToQueueConfirmPrompt(
 	player: Player,
 	recitation: Recitation,
 	locale: Locale,
@@ -795,18 +892,18 @@ function radioConfirmPrompt(
 	const translator = localizable(locale);
 	const station = player.radioInfo?.name ?? "radio";
 	const label = recitationLabel(recitation, locale);
-	const content = translator.t("command.radioConfirmPrompt", {
+	const content = translator.t("command.radioToQueueConfirmPrompt", {
 		station,
 		label,
 	});
 
 	const yes = new ButtonBuilder()
-		.setCustomId("radio:confirm")
-		.setLabel(translator.t("command.radioConfirmYes"))
+		.setCustomId(CONFIRM_RADIO_TO_QUEUE_CUSTOM_ID)
+		.setLabel(translator.t("command.radioToQueueConfirmYes"))
 		.setStyle(ButtonStyle.Success);
 	const no = new ButtonBuilder()
-		.setCustomId("radio:cancel")
-		.setLabel(translator.t("command.radioConfirmNo"))
+		.setCustomId(CANCEL_RADIO_TO_QUEUE_CUSTOM_ID)
+		.setLabel(translator.t("command.radioToQueueConfirmNo"))
 		.setStyle(ButtonStyle.Secondary);
 
 	if (!componentsV2) {
@@ -827,6 +924,36 @@ function radioConfirmPrompt(
 					new ActionRowBuilder<ButtonBuilder>().addComponents(yes, no),
 				),
 		],
+	};
+}
+
+function queueToRadioConfirmPrompt(
+	player: Player,
+	radio: Radio,
+	locale: Locale,
+): PlayReply {
+	const translator = localizable(locale);
+	const current = player.queueView.current;
+	const count = player.queueView.current
+		? 1 + player.queueView.upcoming.length
+		: player.queueView.upcoming.length;
+	const label = current ? recitationLabel(current, locale) : "queue";
+	const content = translator.t("command.queueToRadioConfirmPrompt", {
+		count: String(count || player.queueView.upcoming.length || 1),
+		label,
+		station: radio.name,
+	});
+	const yes = new ButtonBuilder()
+		.setCustomId(CONFIRM_QUEUE_TO_RADIO_CUSTOM_ID)
+		.setLabel(translator.t("command.queueToRadioConfirmYes"))
+		.setStyle(ButtonStyle.Success);
+	const no = new ButtonBuilder()
+		.setCustomId(CANCEL_QUEUE_TO_RADIO_CUSTOM_ID)
+		.setLabel(translator.t("command.queueToRadioConfirmNo"))
+		.setStyle(ButtonStyle.Secondary);
+	return {
+		content,
+		components: [new ActionRowBuilder<ButtonBuilder>().addComponents(yes, no)],
 	};
 }
 

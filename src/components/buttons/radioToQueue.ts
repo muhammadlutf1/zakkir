@@ -2,15 +2,18 @@ import { MessageFlags } from "discord.js";
 import { gateOrVoteStarted } from "../../access/actionGate";
 import type { Component } from "../../core/Component";
 import { recitationLabel } from "../../i18n/recitationLabel";
-import type { PlayReply } from "../../play/playbackRequest";
+import {
+	CANCEL_RADIO_TO_QUEUE_CUSTOM_ID,
+	CONFIRM_RADIO_TO_QUEUE_CUSTOM_ID,
+	type PlayReply,
+} from "../../play/playbackRequest";
 
 const component: Component = {
 	match: (customId) =>
-		customId === "radio:confirm" || customId === "radio:cancel",
+		customId === CONFIRM_RADIO_TO_QUEUE_CUSTOM_ID ||
+		customId === CANCEL_RADIO_TO_QUEUE_CUSTOM_ID,
 
 	async execute(context, interaction) {
-		// One seam call per path: the module owns the pending-Radio state
-		// and the play/cancel behaviour; we only supply reply sinks.
 		const input = {
 			guildId: interaction.guildId,
 			locale: context.locale,
@@ -21,18 +24,18 @@ const component: Component = {
 			update: (reply: PlayReply) => interaction.update(reply),
 		};
 
-		if (interaction.customId === "radio:cancel") {
-			await context.playback.cancelRadio(input);
+		if (interaction.customId === CANCEL_RADIO_TO_QUEUE_CUSTOM_ID) {
+			await context.playback.cancelRadioToQueue(input);
 			return;
 		}
 
-		// Empty states (no player / no pending recitation) resolve through the
-		// seam's own error replies BEFORE any gate/vote decision.
 		const player = context.players.get(interaction.guildId);
-		const pending = context.playback.peekPendingRecitation(interaction.guildId);
+		const pending = context.playback.peekPendingRadioToQueue(
+			interaction.guildId,
+		);
 
 		if (!player || !pending) {
-			await context.playback.confirmRadio(input);
+			await context.playback.confirmRadioToQueue(input);
 			return;
 		}
 
@@ -47,15 +50,15 @@ const component: Component = {
 					votes: context.votes,
 					channel: interaction.channel ?? undefined,
 					recitation: pending,
-					action: context.translator.t("vote.action.radio", {
+					action: context.translator.t("vote.action.radioToQueue", {
 						label: recitationLabel(pending, context.locale),
 					}),
 					onPass: async () => {
-						await context.playback.confirmRadio({
+						await context.playback.confirmRadioToQueue({
 							...input,
 							// SAFETY: by vote-pass time the interaction is already acked, so the
 							// prompt is edited via its message and stray ephemeral replies are dropped.
-							replyEphemeral: async () => {},
+							replyEphemeral: async (_content: string) => {},
 							update: (reply: PlayReply) => interaction.message.edit(reply),
 						});
 					},
@@ -67,7 +70,7 @@ const component: Component = {
 			return;
 		}
 
-		await context.playback.confirmRadio(input);
+		await context.playback.confirmRadioToQueue(input);
 	},
 };
 

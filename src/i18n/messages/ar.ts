@@ -84,11 +84,16 @@ export const ar = {
 	"command.radioStationNotFound":
 		'<:error:1385171040098979961> محطة الراديو "{station}" غير موجودة.',
 	"command.radioStarted": "📻 يتم الآن تشغيل راديو **{station}**.",
-	"command.radioConfirmPrompt":
+	"command.radioToQueueConfirmPrompt":
 		"📻 راديو **{station}** قيد التشغيل. هل تريد إيقاف الراديو وتشغيل **{label}**؟",
-	"command.radioConfirmYes": "نعم، شغّلها",
-	"command.radioConfirmNo": "لا، استمر في الراديو",
-	"command.radioContinuing": "📻 مستمر في راديو **{station}**.",
+	"command.radioToQueueConfirmYes": "نعم، شغّلها",
+	"command.radioToQueueConfirmNo": "لا، استمر في الراديو",
+	"command.radioToQueueContinuing": "📻 مستمر في راديو **{station}**.",
+	"command.queueToRadioConfirmPrompt":
+		"قائمة التشغيل بها {count} مقطع (يُشغَّل الآن **{label}**). هل تريد مسح القائمة وتشغيل راديو **{station}**؟",
+	"command.queueToRadioConfirmYes": "نعم، امسح وشغّل",
+	"command.queueToRadioConfirmNo": "لا، أبقِ القائمة",
+	"command.queueToRadioContinuing": "القائمة كما هي — مستمر في **{label}**.",
 	"command.radioStopped": "📻 تم إيقاف الراديو.",
 	"notice.radioFailed":
 		"<:error:1385171040098979961> فشل راديو **{station}** بعد عدة محاولات — تم إيقافه.",
@@ -124,7 +129,8 @@ export const ar = {
 	"vote.action.remove": "إزالة **{label}**",
 	"vote.action.select": "الانتقال إلى **{label}**",
 	"vote.action.stop": "إيقاف التشغيل",
-	"vote.action.radio": "إيقاف الراديو وتشغيل **{label}**",
+	"vote.action.radioToQueue": "إيقاف الراديو وتشغيل **{label}**",
+	"vote.action.queueToRadio": "مسح قائمة التشغيل وتشغيل راديو **{station}**",
 	// Generic interaction error fallbacks
 	"error.componentGeneric": "حدث خطأ أثناء معالجة هذا المكوّن!",
 	"error.commandGeneric": "حدث خطأ أثناء تنفيذ هذا الأمر!",
