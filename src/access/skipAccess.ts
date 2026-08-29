@@ -1,5 +1,6 @@
 import type { Locale, Localizable } from "../i18n/locale";
 import { recitationLabel } from "../i18n/recitationLabel";
+import type { HasPermissions } from "../types";
 import type { Player } from "../voice/Player";
 import type { Recitation } from "../voice/Recitation";
 import { handleActionWithGate } from "./actionGate";
@@ -11,7 +12,7 @@ export interface SkipGateInput {
 	member: {
 		id?: string;
 		displayName?: string;
-		permissions?: { has: (flag: bigint) => boolean };
+		permissions?: HasPermissions;
 	};
 	guildId: string;
 	locale: Locale;

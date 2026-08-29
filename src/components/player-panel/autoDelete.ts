@@ -1,8 +1,9 @@
-import type { Message, MessageComponentInteraction } from "discord.js";
-
-type DeletableMessage = Pick<Message, "delete">;
-type Replyable = Pick<MessageComponentInteraction<"cached">, "reply">;
-type FollowUpable = Pick<MessageComponentInteraction<"cached">, "followUp">;
+import type { InteractionReplyOptions } from "discord.js";
+import type {
+	DeletableMessage,
+	FollowUpableInteraction,
+	ReplyableInteraction,
+} from "../../types";
 
 export const AUTO_DELETE_MS = 3_000;
 export const PANEL_REPLY_DELETE_MS = AUTO_DELETE_MS;
@@ -20,8 +21,8 @@ function scheduleDelete(
 }
 
 export async function replyWithAutoDelete(
-	interaction: Replyable,
-	options: Record<string, unknown>,
+	interaction: ReplyableInteraction,
+	options: InteractionReplyOptions,
 	deleteAfterMs = AUTO_DELETE_MS,
 ) {
 	const response = (await interaction.reply({
@@ -36,8 +37,8 @@ export async function replyWithAutoDelete(
 }
 
 export async function followUpWithAutoDelete(
-	interaction: FollowUpable,
-	options: Record<string, unknown>,
+	interaction: FollowUpableInteraction,
+	options: InteractionReplyOptions,
 	deleteAfterMs = AUTO_DELETE_MS,
 ) {
 	const message = await interaction.followUp(options);

@@ -18,6 +18,7 @@ import type { GuildConfig } from "../guild/GuildConfig";
 import type { GlobalDefaults, RewayahCoverage } from "../guild/types";
 import { type Locale, type Localizable, localizable } from "../i18n/locale";
 import { recitationLabel } from "../i18n/recitationLabel";
+import type { CodedDiscordError, EditableMessage } from "../types";
 import type { Player, PlayResult } from "../voice/Player";
 import type { PlayerRegistry } from "../voice/PlayerRegistry";
 import type { Recitation } from "../voice/Recitation";
@@ -206,9 +207,8 @@ export class PlaybackRequest {
 				if (overflow && typeof overflow === "object" && "edit" in overflow) {
 					picker.registerMessage((reply) =>
 						// SAFETY: followUp always returns an edit handle (ephemeral overflow via webhook).
-						(overflow as { edit: (r: PlayReply) => Promise<unknown> }).edit(
-							reply,
-						),
+						// SAFETY: PlayReply is compatible with Message edit options
+						(overflow as EditableMessage).edit(reply as never),
 					);
 				}
 			}
@@ -878,7 +878,8 @@ function isUnknownMessage(error: unknown): boolean {
 		!!error &&
 		typeof error === "object" &&
 		"code" in error &&
-		(error as { code?: unknown }).code === 10008
+		// SAFETY: discord.js errors expose code; 10008 is Unknown Message
+		(error as CodedDiscordError).code === 10008
 	);
 }
 

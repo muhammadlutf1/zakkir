@@ -15,6 +15,7 @@ import {
 import { surahName } from "../catalog/suwar";
 import { createLogger } from "../core/logger";
 import { type Locale, localizable } from "../i18n/locale";
+import type { CodedDiscordError } from "../types";
 import type { Player } from "../voice/Player";
 
 type SendableTextChannel = Exclude<TextBasedChannel, PartialGroupDMChannel>;
@@ -291,7 +292,8 @@ export async function deletePanel(guildId: string) {
 	try {
 		await entry.message.delete();
 	} catch (error) {
-		if ((error as { code?: number })?.code === 10008) return;
+		// SAFETY: discord.js errors expose code; 10008 is Unknown Message
+		if ((error as CodedDiscordError)?.code === 10008) return;
 		logger.warn(error, "Could not delete old panel in guild %s", guildId);
 	}
 }
@@ -376,7 +378,8 @@ async function refreshEntry(entry: PanelEntry) {
 		}
 
 		await entry.message.delete().catch((error: unknown) => {
-			if ((error as { code?: number })?.code === 10008) return;
+			// SAFETY: discord.js errors expose code; 10008 is Unknown Message
+			if ((error as CodedDiscordError)?.code === 10008) return;
 			logger.debug(
 				error,
 				"Old panel already gone in guild %s",
