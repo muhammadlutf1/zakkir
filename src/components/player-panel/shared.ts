@@ -53,6 +53,7 @@ export function buildRepeatRow(
 	current: RepeatMode,
 	locale: Locale,
 	disabled = false,
+	ownerId?: string,
 ) {
 	const translator = localizable(locale);
 	const row = new ActionRowBuilder<ButtonBuilder>();
@@ -60,7 +61,11 @@ export function buildRepeatRow(
 	for (const { mode, key } of REPEAT_MODES) {
 		row.addComponents(
 			new ButtonBuilder()
-				.setCustomId(`${PANEL_REPEAT_CUSTOM_ID}:${mode}`)
+				.setCustomId(
+					ownerId
+						? `${PANEL_REPEAT_CUSTOM_ID}:${mode}:${ownerId}`
+						: `${PANEL_REPEAT_CUSTOM_ID}:${mode}`,
+				)
 				.setLabel(translator.t(key))
 				.setStyle(ButtonStyle.Secondary)
 				.setDisabled(disabled || mode === current),

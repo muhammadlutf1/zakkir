@@ -12,9 +12,12 @@ const MODES: Record<string, RepeatMode> = {
 };
 
 const component: Component = {
-	match: (customId) =>
-		customId.startsWith(`${PANEL_REPEAT_CUSTOM_ID}:`) &&
-		(customId.slice(PANEL_REPEAT_CUSTOM_ID.length + 1) as RepeatMode) in MODES,
+	match: (customId) => {
+		if (!customId.startsWith(`${PANEL_REPEAT_CUSTOM_ID}:`)) return false;
+		const suffix = customId.slice(PANEL_REPEAT_CUSTOM_ID.length + 1);
+		const [rawMode] = suffix.split(":");
+		return (rawMode as RepeatMode) in MODES;
+	},
 
 	async execute(context, interaction) {
 		const player = await resolvePanelPlayer(context, interaction);
@@ -24,7 +27,14 @@ const component: Component = {
 		const suffix = interaction.customId.slice(
 			PANEL_REPEAT_CUSTOM_ID.length + 1,
 		);
-		const mode = MODES[suffix];
+		const [rawMode, ownerId] = suffix.split(":");
+
+		if (ownerId && ownerId !== interaction.user.id) {
+			await interaction.deferUpdate();
+			return;
+		}
+
+		const mode = rawMode ? MODES[rawMode] : undefined;
 
 		if (!mode) {
 			await interaction.deferUpdate();

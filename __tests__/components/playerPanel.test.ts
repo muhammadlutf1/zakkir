@@ -252,9 +252,9 @@ describe("player panel components — controls", () => {
 		assert.deepEqual(
 			buttons.map((b) => b.custom_id),
 			[
-				"player-panel:repeat:off",
-				"player-panel:repeat:current",
-				"player-panel:repeat:all",
+				"player-panel:repeat:off:user-1",
+				"player-panel:repeat:current:user-1",
+				"player-panel:repeat:all:user-1",
 			],
 		);
 		assert.deepEqual(
@@ -265,9 +265,21 @@ describe("player panel components — controls", () => {
 			assert.equal(button.style, 2);
 			assert.equal(
 				button.disabled,
-				button.custom_id === "player-panel:repeat:current",
+				button.custom_id === "player-panel:repeat:current:user-1",
 			);
 		}
+	});
+
+	it("ignores a repeat-mode press from another user", async () => {
+		const { player, calls } = makeFakePlayer();
+		const { interaction, state } = makeInteraction({
+			customId: "player-panel:repeat:all:user-2",
+		});
+
+		await repeatModeComponent.execute(makeContext(player), interaction);
+
+		assert.deepEqual(calls, []);
+		assert.equal(state.defers, 1);
 	});
 
 	it("a mode press sets RepeatMode and disables every menu button", async () => {
