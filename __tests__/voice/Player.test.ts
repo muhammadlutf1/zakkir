@@ -329,6 +329,7 @@ describe("Player", () => {
 			assert.deepEqual(port.calls, [
 				"play:https://example.com/018.mp3",
 				"play:https://example.com/018.mp3",
+				"stop",
 			]);
 			assert.deepEqual(messages, [
 				"<:error:1385171040098979961> Playback of الكهف by إبراهيم الأخضر (حفص عن عاصم) failed.",

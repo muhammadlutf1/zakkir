@@ -386,7 +386,9 @@ export class Player {
 		if (this.isRadioPlaying) return { started: false, queued: false };
 		if (!this.active) return { started: false, queued: false };
 
-		return this.advance();
+		const result = await this.advance();
+		if (!result.started) this.port.stop();
+		return result;
 	}
 
 	/**
@@ -539,7 +541,9 @@ export class Player {
 
 		this.emitNotice(this.notices?.render("playbackFailed", active.item));
 
-		void this.advance();
+		void this.advance().then((result) => {
+			if (!result.started) this.port.stop();
+		});
 	}
 
 	private async advance() {
