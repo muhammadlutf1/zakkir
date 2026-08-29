@@ -1,10 +1,11 @@
 import { type GuildMember, PermissionFlagsBits } from "discord.js";
+import type { GuildPermissionsLike } from "../types";
 import type { Player } from "../voice/Player";
 import type { Recitation } from "../voice/Recitation";
 
 export interface GateCheck {
 	member: Pick<GuildMember, "id"> & {
-		permissions?: Pick<GuildMember["permissions"], "has">;
+		permissions?: GuildPermissionsLike;
 	};
 	player: Pick<Player, "humanMemberCount">;
 	recitation?: Recitation;

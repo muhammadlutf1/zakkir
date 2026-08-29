@@ -1,7 +1,7 @@
-import type { MessageComponentInteraction } from "discord.js";
 import { replyWithAutoDelete } from "../components/player-panel/autoDelete";
 import type { Locale, Localizable } from "../i18n/locale";
 import { getPanel } from "../play/playerPanel";
+import type { HasPermissions, ReplyableInteraction } from "../types";
 import type { Player } from "../voice/Player";
 import type { Recitation } from "../voice/Recitation";
 import { isQualified } from "./Gate";
@@ -13,7 +13,7 @@ export interface ActionGateInput {
 	member: {
 		id?: string;
 		displayName?: string;
-		permissions?: { has: (flag: bigint) => boolean };
+		permissions?: HasPermissions;
 	};
 	guildId: string;
 	locale: Locale;
@@ -100,7 +100,7 @@ export async function handleActionWithGate(
  */
 export async function gateOrVoteStarted(
 	input: ActionGateInput,
-	replyable: Pick<MessageComponentInteraction<"cached">, "reply">,
+	replyable: ReplyableInteraction,
 	translator: Localizable,
 ): Promise<boolean> {
 	const gate = await handleActionWithGate(input);
