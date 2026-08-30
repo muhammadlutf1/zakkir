@@ -5,7 +5,7 @@ import type {
 	VoteManager,
 	VoteProposeInput,
 } from "../../src/access/VoteManager";
-import radioConfirmComponent from "../../src/components/buttons/radioConfirm";
+import radioConfirmComponent from "../../src/components/buttons/radioToQueue";
 import type { ComponentContext } from "../../src/core/interactionContext";
 import { localizable, t as renderTemplate } from "../../src/i18n/locale";
 import { en } from "../../src/i18n/messages";
@@ -44,12 +44,12 @@ type PlayerStub = {
 function makePlayback(pending?: Recitation, player?: PlayerStub) {
 	const calls: string[] = [];
 	const playback = {
-		peekPendingRecitation: (_guildId: string) => pending,
-		confirmRadio: async () => {
-			calls.push("confirmRadio");
+		peekPendingRadioToQueue: (_guildId: string) => pending,
+		confirmRadioToQueue: async () => {
+			calls.push("confirmRadioToQueue");
 		},
-		cancelRadio: async () => {
-			calls.push("cancelRadio");
+		cancelRadioToQueue: async () => {
+			calls.push("cancelRadioToQueue");
 		},
 	};
 
@@ -79,7 +79,7 @@ function makeInteraction(
 	const messageEdits: Array<Record<string, unknown>> = [];
 
 	const interaction = {
-		customId: "radio:confirm",
+		customId: "confirm:radio-to-queue",
 		guildId: "g-1",
 		user: { id: "user-a", username: "tester" },
 		member: options.member ?? makeMember(),
@@ -144,14 +144,14 @@ describe("the Radio Confirm button goes through the Gate", () => {
 		assert.equal(proposals.length, 1);
 		assert.equal(
 			proposals[0]!.action,
-			renderTemplate(en["vote.action.radio"], {
+			renderTemplate(en["vote.action.radioToQueue"], {
 				label: recitationLabel(pending, "en"),
 			}),
 		);
 		assert.equal(replies[0]!.content, en["vote.started"]);
 
 		await proposals[0]!.onPass();
-		assert.deepEqual(calls, ["confirmRadio"]);
+		assert.deepEqual(calls, ["confirmRadioToQueue"]);
 	});
 
 	it("a Qualified member confirms directly", async () => {
@@ -167,7 +167,7 @@ describe("the Radio Confirm button goes through the Gate", () => {
 			interaction,
 		);
 
-		assert.deepEqual(calls, ["confirmRadio"]);
+		assert.deepEqual(calls, ["confirmRadioToQueue"]);
 		assert.equal(proposals.length, 0);
 	});
 
@@ -181,7 +181,7 @@ describe("the Radio Confirm button goes through the Gate", () => {
 			interaction,
 		);
 
-		assert.deepEqual(calls, ["confirmRadio"]);
+		assert.deepEqual(calls, ["confirmRadioToQueue"]);
 		assert.equal(proposals.length, 0);
 	});
 });

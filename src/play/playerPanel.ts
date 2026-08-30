@@ -332,11 +332,13 @@ function registerPanel(
 	message: Message,
 ) {
 	const offChange = player.onChange(() => updatePanel(player.guildId));
+	const offRadio = player.onRadioChange(() => updatePanel(player.guildId));
 	const offEnd = player.onEnd(() => {
 		void disablePanel(player.guildId);
 	});
 	const dispose = () => {
 		offChange();
+		offRadio();
 		offEnd();
 		panels.delete(player.guildId);
 	};

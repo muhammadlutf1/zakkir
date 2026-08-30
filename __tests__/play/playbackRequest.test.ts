@@ -795,16 +795,19 @@ describe("PlaybackRequest — Radio confirm branch", () => {
 
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
 		assert.match(edits[0]!.content!, /Quran Radio/);
-		assert.deepEqual(buttonIds(edits[0]), ["radio:confirm", "radio:cancel"]);
+		assert.deepEqual(buttonIds(edits[0]), [
+			"confirm:radio-to-queue",
+			"cancel:radio-to-queue",
+		]);
 	});
 
-	it("confirmRadio stops the Radio and plays the pending Recitation", async () => {
+	it("confirmRadioToQueue stops the Radio and plays the pending Recitation", async () => {
 		const { harness, playback, input, edits } = setupRadioPending();
 		await playback.request(input);
 
 		const updates: EditRecord[] = [];
 
-		await playback.confirmRadio({
+		await playback.confirmRadioToQueue({
 			guildId: "g-1",
 			locale: "en",
 			translator: localizable("en"),
@@ -835,7 +838,7 @@ describe("PlaybackRequest — Radio confirm branch", () => {
 
 		const ephemerals: string[] = [];
 
-		await playback.confirmRadio({
+		await playback.confirmRadioToQueue({
 			guildId: "g-1",
 			locale: "en",
 			translator: localizable("en"),
@@ -850,13 +853,13 @@ describe("PlaybackRequest — Radio confirm branch", () => {
 		assert.deepEqual(harness.calls, ["join:voice-1", "setNoticeChannel"]);
 	});
 
-	it("cancelRadio keeps the Radio playing and drops the pending Recitation", async () => {
+	it("cancelRadioToQueue keeps the Radio playing and drops the pending Recitation", async () => {
 		const { harness, playback, input } = setupRadioPending();
 		await playback.request(input);
 
 		const updates: EditRecord[] = [];
 
-		await playback.cancelRadio({
+		await playback.cancelRadioToQueue({
 			guildId: "g-1",
 			locale: "en",
 			translator: localizable("en"),
@@ -872,7 +875,7 @@ describe("PlaybackRequest — Radio confirm branch", () => {
 		const ephemerals: string[] = [];
 
 		// Nothing is pending anymore — a late confirm is refused ephemerally.
-		await playback.confirmRadio({
+		await playback.confirmRadioToQueue({
 			guildId: "g-1",
 			locale: "en",
 			translator: localizable("en"),
@@ -890,7 +893,7 @@ describe("PlaybackRequest — Radio confirm branch", () => {
 		const playback = makePlayback(undefined);
 		const ephemerals: string[] = [];
 
-		await playback.confirmRadio({
+		await playback.confirmRadioToQueue({
 			guildId: "g-1",
 			locale: "en",
 			translator: localizable("en"),

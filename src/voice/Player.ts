@@ -330,8 +330,10 @@ export class Player {
 		logger.info("Player leaving voice channel in guild %s", this.guildId);
 		this.cancelGraceTimer();
 		this.cancelRadioRetry();
-		this.radio = null;
-		this.emitRadioChange();
+		if (this.radio) {
+			this.radio = null;
+			this.emitRadioChange();
+		}
 		this.channel = undefined;
 		this.connectionState = VoiceConnectionStatus.Destroyed;
 		this.active = null;
@@ -369,8 +371,10 @@ export class Player {
 
 	stop(): void {
 		this.cancelRadioRetry();
-		this.radio = null;
-		this.emitRadioChange();
+		if (this.radio) {
+			this.radio = null;
+			this.emitRadioChange();
+		}
 		this.active = null;
 		this.queue.clear();
 		this.port.stop();
@@ -408,6 +412,15 @@ export class Player {
 		if (hadPending) this.emitChange();
 	}
 
+	/** Clears the entire Queue (including current) and stops current playback. */
+	clearForRadio() {
+		this.queue.clear();
+		if (this.active) {
+			this.active = null;
+			this.port.stop();
+		}
+	}
+
 	pause(): void {
 		this.port.pause();
 		this.paused = true;
@@ -427,8 +440,10 @@ export class Player {
 	 */
 	endSession() {
 		this.cancelRadioRetry();
-		this.radio = null;
-		this.emitRadioChange();
+		if (this.radio) {
+			this.radio = null;
+			this.emitRadioChange();
+		}
 		this.leave();
 		this.queue.clear();
 		this.port.destroy();

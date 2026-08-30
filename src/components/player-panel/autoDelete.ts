@@ -6,7 +6,6 @@ import type {
 } from "../../types";
 
 export const AUTO_DELETE_MS = 3_000;
-export const PANEL_REPLY_DELETE_MS = AUTO_DELETE_MS;
 export const REPEAT_MENU_DELETE_MS = 10_000;
 
 function scheduleDelete(
