@@ -1,4 +1,5 @@
 import { ChannelType, MessageFlags, SlashCommandBuilder } from "discord.js";
+import { surahName } from "../catalog/suwar";
 import type { Command } from "../core/Command";
 
 const playCommand: Command = {
@@ -40,17 +41,18 @@ const playCommand: Command = {
 			return;
 		}
 
+		const locale = context.locale;
 		const matches = context.catalog.surahList
-			.filter(
-				(surah) =>
-					surah.name.toLowerCase().includes(query) ||
-					String(surah.number).includes(query),
-			)
+			.filter((surah) => {
+				if (String(surah.number).includes(query)) return true;
+				const names = [surah.name, ...Object.values(surah.names ?? {})];
+				return names.some((n) => n.toLowerCase().includes(query));
+			})
 			.slice(0, 25);
 
 		await interaction.respond(
 			matches.map((surah) => ({
-				name: `${surah.number}. ${surah.name}`,
+				name: `${surah.number}. ${surahName(surah, locale)}`,
 				value: String(surah.number),
 			})),
 		);
