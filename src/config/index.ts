@@ -31,6 +31,11 @@ export interface BotConfig {
 		 */
 		gracePeriodMs: number;
 	};
+	website: {
+		base: string;
+		reciters: string;
+		radios: string;
+	};
 }
 
 export const config: BotConfig = {
@@ -56,6 +61,11 @@ export const config: BotConfig = {
 	},
 	voice: {
 		gracePeriodMs: Number(process.env.GRACE_PERIOD_MS ?? 60_000),
+	},
+	website: {
+		base: "https://zakkirbot.vercel.app",
+		reciters: "https://zakkirbot.vercel.app/reciters",
+		radios: "https://zakkirbot.vercel.app/radios",
 	},
 };
 

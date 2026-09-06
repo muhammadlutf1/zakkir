@@ -12,7 +12,7 @@ import {
 } from "discord.js";
 import type { Catalog, Radio, Rewayah } from "../catalog/Catalog";
 import { type Surah, surahName } from "../catalog/suwar";
-import { DEFAULT_LOCALE } from "../config";
+import { config, DEFAULT_LOCALE } from "../config";
 import { createLogger } from "../core/logger";
 import type { GuildConfig } from "../guild/GuildConfig";
 import type { GlobalDefaults, RewayahCoverage } from "../guild/types";
@@ -211,7 +211,10 @@ export class PlaybackRequest {
 		);
 
 		if (outcome.kind === "error") {
-			await input.editReply({ content: outcome.message, components: [] });
+			await input.editReply({
+				content: outcome.message,
+				components: outcome.components ?? [],
+			});
 			return;
 		}
 
@@ -581,9 +584,17 @@ export class PlaybackRequest {
 			const reciter = await catalog.resolveReciterByName(reciterOption);
 
 			if (!reciter) {
+				const recitersRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+					new ButtonBuilder()
+						.setLabel(t("website.browseReciters"))
+						.setStyle(ButtonStyle.Link)
+						.setURL(`${config.website.reciters}?lang=${locale}`),
+				);
+
 				return {
 					kind: "error",
 					message: t("command.reciterNotFound", { reciter: reciterOption }),
+					components: [recitersRow],
 				};
 			}
 
@@ -710,7 +721,11 @@ export interface RewayahChoice {
 type PlayOutcome =
 	| { kind: "play"; recitation: Recitation }
 	| PickerOutcome
-	| { kind: "error"; message: string };
+	| {
+			kind: "error";
+			message: string;
+			components?: Array<ActionRowBuilder<ButtonBuilder> | ContainerBuilder>;
+	  };
 
 interface PickerOutcome {
 	kind: "picker";

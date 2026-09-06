@@ -28,9 +28,9 @@ export const ar = {
 	"command.needVoice": "أهلًا! يرجى الانضمام إلى القناة الصوتية معي 😄",
 	"command.joined": "تم الانضمام إلى {channel}!",
 	"command.playNotFound":
-		'إدخال السورة "{input}" غير صحيح. يرجى التحقق من `suwar/` والمحاولة مرة أخرى! <:error:1385171040098979961>',
+		'إدخال السورة "{input}" غير صحيح. يرجى اختيار سورة من قائمة الإكمال التلقائي والمحاولة مرة أخرى! <:error:1385171040098979961>',
 	"command.reciterNotFound":
-		'إدخال القارئ "{reciter}" غير صحيح. يرجى التحقق من `reciters/` والمحاولة مرة أخرى! <:error:1385171040098979961>',
+		'إدخال القارئ "{reciter}" غير صحيح. يرجى اختيار قارئ من قائمة الإكمال التلقائي والمحاولة مرة أخرى! <:error:1385171040098979961>',
 	"command.noDefaultReciter":
 		"لا يوجد قارئ افتراضي مُحدد لهذا الخادم. مرّر <reciter> للعب.",
 	"command.reciterMissing": "القارئ غير موجود.",
@@ -132,6 +132,8 @@ export const ar = {
 	"vote.action.radioToQueue": "إيقاف الراديو وتشغيل **{label}**",
 	"vote.action.queueToRadio": "مسح قائمة التشغيل وتشغيل راديو **{station}**",
 	// Generic interaction error fallbacks
+	"website.browseReciters": "🌐 تصفح القراء",
+	"website.browseRadios": "🌐 تصفح الإذاعات",
 	"error.componentGeneric": "حدث خطأ أثناء معالجة هذا المكوّن!",
 	"error.commandGeneric": "حدث خطأ أثناء تنفيذ هذا الأمر!",
 	// Custom Discord emotes used inside the messages above

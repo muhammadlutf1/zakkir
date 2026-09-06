@@ -1,4 +1,12 @@
-import { ChannelType, MessageFlags, SlashCommandBuilder } from "discord.js";
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	ChannelType,
+	MessageFlags,
+	SlashCommandBuilder,
+} from "discord.js";
+import { config } from "../config";
 import type { Command } from "../core/Command";
 
 const radioCommand: Command = {
@@ -51,10 +59,18 @@ const radioCommand: Command = {
 			);
 
 		if (!radio) {
+			const radiosRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+				new ButtonBuilder()
+					.setLabel(context.translator.t("website.browseRadios"))
+					.setStyle(ButtonStyle.Link)
+					.setURL(`${config.website.radios}?lang=${context.locale}`),
+			);
+
 			await interaction.editReply({
 				content: context.translator.t("command.radioStationNotFound", {
 					station: stationInput,
 				}),
+				components: [radiosRow],
 			});
 			return;
 		}

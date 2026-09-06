@@ -27,9 +27,9 @@ export const en = {
 	"command.needVoice": "Hey! Join the same voice channel as me first 😄",
 	"command.joined": "Joined {channel}!",
 	"command.playNotFound":
-		'<:error:1385171040098979961> Incorrect surah input "{input}". Check `/suwar` and try again!',
+		'<:error:1385171040098979961> Incorrect surah input "{input}". Please pick a surah from the autocomplete list and try again!',
 	"command.reciterNotFound":
-		'<:error:1385171040098979961> Incorrect reciter input "{reciter}". Check `/reciters` and try again!',
+		'<:error:1385171040098979961> Incorrect reciter input "{reciter}". Please pick a reciter from the autocomplete list and try again!',
 	"command.noDefaultReciter":
 		"No default reciter is set for this server. Pass a <reciter> to play.",
 	"command.reciterMissing": "Reciter not found.",
@@ -132,6 +132,8 @@ export const en = {
 	"vote.action.radioToQueue": "stop the radio and play **{label}**",
 	"vote.action.queueToRadio": "clear the queue and play radio **{station}**",
 	// Generic interaction error fallbacks
+	"website.browseReciters": "🌐 Browse Reciters",
+	"website.browseRadios": "🌐 Browse Radios",
 	"error.componentGeneric": "There was an error while handling that component!",
 	"error.commandGeneric": "There was an error while executing this command!",
 	// Custom Discord emotes used inside the messages above
