@@ -1,0 +1,97 @@
+name: Bug report
+description: Report something that isn't working as expected
+title: "fix: [short description]"
+labels: [needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug  -  clear reproductions get fixed fastest.
+        Please search existing issues first to avoid duplicates.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What happened, and what did you expect to happen?
+      placeholder: |
+        Example: When I run /play 1 while the bot is already in a voice channel with other members, it...
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps someone else can follow to hit the same bug.
+      placeholder: |
+        1. Invite the bot to a server with ...
+        2. Run /play ...
+        3. Click / do ...
+        4. Observe ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Bot version / commit
+      description: The commit SHA, tag, or version you were running.
+      placeholder: e.g. main @ abc1234 or v1.2.0
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the bot does this affect?
+      options:
+        - Playback / Player / Queue
+        - Commands (/play, /radio, /preferences, …)
+        - Voice / connection
+        - PlayerPanel / components
+        - Vote / access control
+        - Localization (i18n)
+        - Catalog / MP3Quran API
+        - Build / config / other
+      default: 0
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Paste relevant log output or attach screenshots. Wrap logs in a fenced code block.
+      placeholder: |
+        ```text
+        paste logs here
+        ```
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Anything relevant about where the bot was running.
+      placeholder: |
+        - Node.js version:
+        - Hosting (local, VPS, Docker, ...):
+        - Discord.js version:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and didn't find a duplicate.
+          required: true
+        - label: I included enough detail for someone else to reproduce the bug.
+          required: false

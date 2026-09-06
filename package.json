@@ -1,7 +1,7 @@
 {
-	"name": "zakker",
+	"name": "zakkir",
 	"version": "1.0.0",
-	"description": "",
+	"description": "A feature-rich Discord bot for 24/7 Quran streaming and audio services",
 	"main": "dist/index.js",
 	"scripts": {
 		"deploy:commands": "tsx --env-file=.env src/scripts/deployCommands.ts",
