@@ -6,4 +6,4 @@ export type {
 	GuildPermissionsLike,
 	HasPermissions,
 	ReplyableInteraction,
-} from "./discord";
+} from "./discord.ts";

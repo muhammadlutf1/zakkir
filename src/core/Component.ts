@@ -1,5 +1,5 @@
 import type { MessageComponentInteraction } from "discord.js";
-import type { ComponentContext } from "./interactionContext";
+import type { ComponentContext } from "./interactionContext.ts";
 
 export interface Component {
 	/**

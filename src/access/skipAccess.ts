@@ -1,11 +1,11 @@
-import type { Locale, Localizable } from "../i18n/locale";
-import { recitationLabel } from "../i18n/recitationLabel";
-import type { HasPermissions } from "../types";
-import type { Player } from "../voice/Player";
-import type { Recitation } from "../voice/Recitation";
-import { handleActionWithGate } from "./actionGate";
-import type { SendableTextChannel } from "./types";
-import type { VoteManager } from "./VoteManager";
+import type { Locale, Localizable } from "../i18n/locale.ts";
+import { recitationLabel } from "../i18n/recitationLabel.ts";
+import type { HasPermissions } from "../types/index.ts";
+import type { Player } from "../voice/Player.ts";
+import type { Recitation } from "../voice/Recitation.ts";
+import { handleActionWithGate } from "./actionGate.ts";
+import type { SendableTextChannel } from "./types.ts";
+import type { VoteManager } from "./VoteManager.ts";
 
 export interface SkipGateInput {
 	player: Player;

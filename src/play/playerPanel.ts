@@ -12,11 +12,11 @@ import {
 	type TextBasedChannel,
 	TextDisplayBuilder,
 } from "discord.js";
-import { surahName } from "../catalog/suwar";
-import { createLogger } from "../core/logger";
-import { type Locale, localizable } from "../i18n/locale";
-import type { CodedDiscordError } from "../types";
-import type { Player } from "../voice/Player";
+import { surahName } from "../catalog/suwar.ts";
+import { createLogger } from "../core/logger.ts";
+import { type Locale, localizable } from "../i18n/locale.ts";
+import type { CodedDiscordError } from "../types/index.ts";
+import type { Player } from "../voice/Player.ts";
 
 type SendableTextChannel = Exclude<TextBasedChannel, PartialGroupDMChannel>;
 

@@ -1,4 +1,4 @@
-import type { Locale } from "../i18n/locale";
+import type { Locale } from "../i18n/locale.ts";
 
 export interface Surah {
 	number: number;

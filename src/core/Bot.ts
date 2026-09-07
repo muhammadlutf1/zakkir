@@ -1,11 +1,11 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import type { VoteManager } from "../access/VoteManager";
-import type { GuildConfig } from "../guild/GuildConfig";
-import type { PlaybackRequest } from "../play/playbackRequest";
-import type { PlayerRegistry } from "../voice/PlayerRegistry";
-import type { Command } from "./Command";
-import type { Component } from "./Component";
-import type { BotEvent } from "./Event";
+import type { VoteManager } from "../access/VoteManager.ts";
+import type { GuildConfig } from "../guild/GuildConfig.ts";
+import type { PlaybackRequest } from "../play/playbackRequest.ts";
+import type { PlayerRegistry } from "../voice/PlayerRegistry.ts";
+import type { Command } from "./Command.ts";
+import type { Component } from "./Component.ts";
+import type { BotEvent } from "./Event.ts";
 
 export default class Bot extends Client {
 	private initialized = false;

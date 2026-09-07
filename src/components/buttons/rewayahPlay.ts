@@ -1,4 +1,4 @@
-import type { Component } from "../../core/Component";
+import type { Component } from "../../core/Component.ts";
 
 const component: Component = {
 	match: (customId) => customId.startsWith("rewayah-play:"),

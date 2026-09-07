@@ -7,13 +7,13 @@ import {
 	VoiceConnectionStatus,
 } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
-import { createLogger } from "../core/logger";
+import { createLogger } from "../core/logger.ts";
 import type {
 	VoicePort,
 	VoicePortEventName,
 	VoicePortEventPayload,
 	VoicePortEvents,
-} from "./VoicePort";
+} from "./VoicePort.ts";
 
 const logger = createLogger("discordVoicePort");
 

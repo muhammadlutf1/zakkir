@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { GuildConfig } from "../../src/guild/GuildConfig";
-import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
+import { GuildConfig } from "../../src/guild/GuildConfig.ts";
+import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore.ts";
 
 function memoryStore() {
 	return new SqliteGuildConfigStore(":memory:");

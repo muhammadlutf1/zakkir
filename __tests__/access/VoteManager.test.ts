@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { SendableTextChannel } from "../../src/access/types";
-import { VoteManager } from "../../src/access/VoteManager";
-import { localizable } from "../../src/i18n/locale";
+import type { SendableTextChannel } from "../../src/access/types.ts";
+import { VoteManager } from "../../src/access/VoteManager.ts";
+import { localizable } from "../../src/i18n/locale.ts";
 
 function makeChannel() {
 	const sends: Array<Record<string, unknown>> = [];

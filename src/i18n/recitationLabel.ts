@@ -1,7 +1,7 @@
-import { surahName } from "../catalog/suwar";
-import { DEFAULT_LOCALE } from "../config";
-import type { Recitation } from "../voice/Recitation";
-import { type Locale, localizable } from "./locale";
+import { surahName } from "../catalog/suwar.ts";
+import { DEFAULT_LOCALE } from "../config/index.ts";
+import type { Recitation } from "../voice/Recitation.ts";
+import { type Locale, localizable } from "./locale.ts";
 
 /**
  * Renders a recitation's label in the target locale: the Surah name localized

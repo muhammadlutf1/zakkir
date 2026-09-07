@@ -2,15 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { AudioPlayerStatus } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
-import type { Radio } from "../../src/catalog/Catalog";
-import { Player } from "../../src/voice/Player";
-import type { Recitation } from "../../src/voice/Recitation";
+import type { Radio } from "../../src/catalog/Catalog.ts";
+import { Player } from "../../src/voice/Player.ts";
+import type { Recitation } from "../../src/voice/Recitation.ts";
 import type {
 	VoicePort,
 	VoicePortEventName,
 	VoicePortEventPayload,
 	VoicePortEvents,
-} from "../../src/voice/VoicePort";
+} from "../../src/voice/VoicePort.ts";
 
 class FakeVoicePort implements VoicePort {
 	readonly calls: string[] = [];

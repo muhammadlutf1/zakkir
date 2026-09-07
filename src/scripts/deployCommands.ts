@@ -1,7 +1,7 @@
 import { REST, Routes } from "discord.js";
-import { config } from "../config";
-import commandLoader from "../core/loaders/commandLoader";
-import { createLogger } from "../core/logger";
+import { config } from "../config/index.ts";
+import commandLoader from "../core/loaders/commandLoader.ts";
+import { createLogger } from "../core/logger.ts";
 
 const logger = createLogger("deployCommands");
 

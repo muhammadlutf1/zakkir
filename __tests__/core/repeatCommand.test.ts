@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import repeatCommand from "../../src/commands/repeat";
-import type { CommandContext } from "../../src/core/interactionContext";
-import { localizable, t } from "../../src/i18n/locale";
-import { ar, en } from "../../src/i18n/messages";
-import { RepeatMode } from "../../src/voice/Queue";
+import repeatCommand from "../../src/commands/repeat.ts";
+import type { CommandContext } from "../../src/core/interactionContext.ts";
+import { localizable, t } from "../../src/i18n/locale.ts";
+import { ar, en } from "../../src/i18n/messages/index.ts";
+import { RepeatMode } from "../../src/voice/Queue.ts";
 
 function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 	return {

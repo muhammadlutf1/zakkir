@@ -13,19 +13,19 @@ before(() => {
 
 describe("resolveLogLevel", () => {
 	it("defaults to debug in development", async () => {
-		const { resolveLogLevel } = await import("../../src/core/logger");
+		const { resolveLogLevel } = await import("../../src/core/logger.ts");
 
 		assert.equal(resolveLogLevel({}), "debug");
 	});
 
 	it("defaults to info in production", async () => {
-		const { resolveLogLevel } = await import("../../src/core/logger");
+		const { resolveLogLevel } = await import("../../src/core/logger.ts");
 
 		assert.equal(resolveLogLevel({ NODE_ENV: "production" }), "info");
 	});
 
 	it("honors LOG_LEVEL", async () => {
-		const { resolveLogLevel } = await import("../../src/core/logger");
+		const { resolveLogLevel } = await import("../../src/core/logger.ts");
 
 		assert.equal(resolveLogLevel({ LOG_LEVEL: "warn" }), "warn");
 		assert.equal(
@@ -37,7 +37,7 @@ describe("resolveLogLevel", () => {
 
 describe("createLogger", () => {
 	it("returns a single shared logger per module name", async () => {
-		const { createLogger } = await import("../../src/core/logger");
+		const { createLogger } = await import("../../src/core/logger.ts");
 
 		assert.equal(createLogger("shared"), createLogger("shared"));
 		assert.notEqual(createLogger("shared"), createLogger("other"));
@@ -45,7 +45,7 @@ describe("createLogger", () => {
 
 	it("binds the module name into emitted log lines", () => {
 		const loggerUrl = pathToFileURL(
-			join(dirname(fileURLToPath(import.meta.url)), "../../src/core/logger"),
+			join(dirname(fileURLToPath(import.meta.url)), "../../src/core/logger.ts"),
 		).href;
 
 		const dir = mkdtempSync(join(tmpdir(), "logger-test-"));
@@ -63,7 +63,7 @@ describe("createLogger", () => {
 		try {
 			const stdout = execFileSync(
 				process.execPath,
-				["--import", "tsx", fixture],
+				["--experimental-transform-types", fixture],
 				{ encoding: "utf8", env: { ...process.env, NODE_ENV: "production" } },
 			);
 

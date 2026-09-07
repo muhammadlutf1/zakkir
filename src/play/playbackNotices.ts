@@ -1,9 +1,12 @@
-import { DEFAULT_LOCALE } from "../config";
-import { type Locale, localizable } from "../i18n/locale";
-import type { MessageKey } from "../i18n/messages";
-import { recitationLabel } from "../i18n/recitationLabel";
-import type { PlayerNoticeFormatter, PlayerNoticeKind } from "../voice/Player";
-import type { Recitation } from "../voice/Recitation";
+import { DEFAULT_LOCALE } from "../config/index.ts";
+import { type Locale, localizable } from "../i18n/locale.ts";
+import type { MessageKey } from "../i18n/messages/index.ts";
+import { recitationLabel } from "../i18n/recitationLabel.ts";
+import type {
+	PlayerNoticeFormatter,
+	PlayerNoticeKind,
+} from "../voice/Player.ts";
+import type { Recitation } from "../voice/Recitation.ts";
 
 /** Each playback-failure notice kind maps to its catalog key. */
 const NOTICE_KEYS: Record<PlayerNoticeKind, MessageKey> = {

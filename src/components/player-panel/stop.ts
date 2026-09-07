@@ -1,7 +1,10 @@
-import { gateOrVoteStarted } from "../../access/actionGate";
-import type { Component } from "../../core/Component";
-import { PANEL_STOP_CUSTOM_ID, setPanelStatus } from "../../play/playerPanel";
-import { resolvePanelPlayer } from "./shared";
+import { gateOrVoteStarted } from "../../access/actionGate.ts";
+import type { Component } from "../../core/Component.ts";
+import {
+	PANEL_STOP_CUSTOM_ID,
+	setPanelStatus,
+} from "../../play/playerPanel.ts";
+import { resolvePanelPlayer } from "./shared.ts";
 
 const component: Component = {
 	match: (customId) => customId === PANEL_STOP_CUSTOM_ID,

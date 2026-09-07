@@ -1,9 +1,9 @@
-import { gateOrVoteStarted } from "../../access/actionGate";
-import type { Component } from "../../core/Component";
-import { PANEL_REPEAT_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
-import { RepeatMode } from "../../voice/Queue";
-import { followUpWithAutoDelete } from "./autoDelete";
-import { buildRepeatRow, resolvePanelPlayer } from "./shared";
+import { gateOrVoteStarted } from "../../access/actionGate.ts";
+import type { Component } from "../../core/Component.ts";
+import { PANEL_REPEAT_CUSTOM_ID, updatePanel } from "../../play/playerPanel.ts";
+import { RepeatMode } from "../../voice/Queue.ts";
+import { followUpWithAutoDelete } from "./autoDelete.ts";
+import { buildRepeatRow, resolvePanelPlayer } from "./shared.ts";
 
 const MODES: Record<string, RepeatMode> = {
 	off: RepeatMode.OFF,

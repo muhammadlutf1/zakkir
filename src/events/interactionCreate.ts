@@ -5,15 +5,15 @@ import type {
 	MessageComponentInteraction,
 } from "discord.js";
 import { Events, MessageFlags } from "discord.js";
-import { Catalog } from "../catalog/Catalog";
-import type { BotEvent } from "../core/Event";
+import { Catalog } from "../catalog/Catalog.ts";
+import type { BotEvent } from "../core/Event.ts";
 import type {
 	CommandContext,
 	ComponentContext,
-} from "../core/interactionContext";
-import { createLogger } from "../core/logger";
-import { type Localizable, localizable } from "../i18n/locale";
-import type { CodedDiscordError } from "../types";
+} from "../core/interactionContext.ts";
+import { createLogger } from "../core/logger.ts";
+import { type Localizable, localizable } from "../i18n/locale.ts";
+import type { CodedDiscordError } from "../types/index.ts";
 
 const logger = createLogger("interactionCreate");
 

@@ -1,12 +1,12 @@
-import { replyWithAutoDelete } from "../components/player-panel/autoDelete";
-import type { Locale, Localizable } from "../i18n/locale";
-import { getPanel } from "../play/playerPanel";
-import type { HasPermissions, ReplyableInteraction } from "../types";
-import type { Player } from "../voice/Player";
-import type { Recitation } from "../voice/Recitation";
-import { isQualified } from "./Gate";
-import type { SendableTextChannel } from "./types";
-import type { VoteManager } from "./VoteManager";
+import { replyWithAutoDelete } from "../components/player-panel/autoDelete.ts";
+import type { Locale, Localizable } from "../i18n/locale.ts";
+import { getPanel } from "../play/playerPanel.ts";
+import type { HasPermissions, ReplyableInteraction } from "../types/index.ts";
+import type { Player } from "../voice/Player.ts";
+import type { Recitation } from "../voice/Recitation.ts";
+import { isQualified } from "./Gate.ts";
+import type { SendableTextChannel } from "./types.ts";
+import type { VoteManager } from "./VoteManager.ts";
 
 export interface ActionGateInput {
 	player: Player;

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
-import { Catalog } from "../../src/catalog/Catalog";
-import { config } from "../../src/config";
-import { isolateEndpointCache } from "./isolateEndpointCache";
+import { Catalog } from "../../src/catalog/Catalog.ts";
+import { config } from "../../src/config/index.ts";
+import { isolateEndpointCache } from "./isolateEndpointCache.ts";
 
 /**
  * Stubs the global fetch so both Catalog endpoints run offline, counting

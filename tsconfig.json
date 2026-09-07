@@ -1,15 +1,17 @@
 {
 	"compilerOptions": {
 		"target": "es2024",
-		"module": "ESNext",
-		"moduleResolution": "bundler",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"types": ["node"],
 		"rootDir": ".",
-		"outDir": "./dist"
+		"allowImportingTsExtensions": true,
+		"rewriteRelativeImportExtensions": true,
+		"verbatimModuleSyntax": true
 	},
 	"include": ["src", "__tests__"],
-	"exclude": ["node_modules", "*.config.ts", "dist"]
+	"exclude": ["node_modules", "dist"]
 }

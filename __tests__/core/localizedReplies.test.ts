@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import clearCommand from "../../src/commands/clear";
-import type { CommandContext } from "../../src/core/interactionContext";
-import { localizable } from "../../src/i18n/locale";
-import { ar, en } from "../../src/i18n/messages";
+import clearCommand from "../../src/commands/clear.ts";
+import type { CommandContext } from "../../src/core/interactionContext.ts";
+import { localizable } from "../../src/i18n/locale.ts";
+import { ar, en } from "../../src/i18n/messages/index.ts";
 
 function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 	return {

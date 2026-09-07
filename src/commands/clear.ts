@@ -1,7 +1,7 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
-import { gateOrVoteStarted } from "../access/actionGate";
-import type { Command } from "../core/Command";
-import { updatePanel } from "../play/playerPanel";
+import { gateOrVoteStarted } from "../access/actionGate.ts";
+import type { Command } from "../core/Command.ts";
+import { updatePanel } from "../play/playerPanel.ts";
 
 const clearCommand: Command = {
 	data: new SlashCommandBuilder()

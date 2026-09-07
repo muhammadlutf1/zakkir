@@ -1,9 +1,9 @@
-import { handleSkipWithGate } from "../../access/skipAccess";
-import type { Component } from "../../core/Component";
-import { recitationLabel } from "../../i18n/recitationLabel";
-import { PANEL_SKIP_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
-import { followUpWithAutoDelete, replyWithAutoDelete } from "./autoDelete";
-import { resolvePanelPlayer } from "./shared";
+import { handleSkipWithGate } from "../../access/skipAccess.ts";
+import type { Component } from "../../core/Component.ts";
+import { recitationLabel } from "../../i18n/recitationLabel.ts";
+import { PANEL_SKIP_CUSTOM_ID, updatePanel } from "../../play/playerPanel.ts";
+import { followUpWithAutoDelete, replyWithAutoDelete } from "./autoDelete.ts";
+import { resolvePanelPlayer } from "./shared.ts";
 
 const component: Component = {
 	match: (customId) => customId === PANEL_SKIP_CUSTOM_ID,

@@ -1,7 +1,7 @@
-import type { Component } from "../../core/Component";
-import { PANEL_REPEAT_CUSTOM_ID } from "../../play/playerPanel";
-import { REPEAT_MENU_DELETE_MS, replyWithAutoDelete } from "./autoDelete";
-import { buildRepeatRow, resolvePanelPlayer } from "./shared";
+import type { Component } from "../../core/Component.ts";
+import { PANEL_REPEAT_CUSTOM_ID } from "../../play/playerPanel.ts";
+import { REPEAT_MENU_DELETE_MS, replyWithAutoDelete } from "./autoDelete.ts";
+import { buildRepeatRow, resolvePanelPlayer } from "./shared.ts";
 
 const component: Component = {
 	match: (customId) => customId === PANEL_REPEAT_CUSTOM_ID,

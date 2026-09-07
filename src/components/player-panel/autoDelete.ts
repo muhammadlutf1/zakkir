@@ -3,7 +3,7 @@ import type {
 	DeletableMessage,
 	FollowUpableInteraction,
 	ReplyableInteraction,
-} from "../../types";
+} from "../../types/index.ts";
 
 export const AUTO_DELETE_MS = 3_000;
 export const REPEAT_MENU_DELETE_MS = 10_000;

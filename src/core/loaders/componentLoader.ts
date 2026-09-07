@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import type { Component } from "../Component";
-import loader from "./loader";
+import type { Component } from "../Component.ts";
+import loader from "./loader.ts";
 
 /**
  * reads and builds components collection dynamically from components folder

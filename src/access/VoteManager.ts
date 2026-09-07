@@ -5,10 +5,10 @@ import {
 	type Message,
 	type MessageCreateOptions,
 } from "discord.js";
-import { createLogger } from "../core/logger";
-import type { Locale, Localizable } from "../i18n/locale";
-import type { PanelSnapshot } from "../play/playerPanel";
-import type { SendableTextChannel } from "./types";
+import { createLogger } from "../core/logger.ts";
+import type { Locale, Localizable } from "../i18n/locale.ts";
+import type { PanelSnapshot } from "../play/playerPanel.ts";
+import type { SendableTextChannel } from "./types.ts";
 
 const logger = createLogger("VoteManager");
 

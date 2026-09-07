@@ -1,5 +1,5 @@
-import type { MessageCatalog, MessageKey } from "./messages";
-import { ar, en } from "./messages";
+import type { MessageCatalog, MessageKey } from "./messages/index.ts";
+import { ar, en } from "./messages/index.ts";
 
 /** The locales the bot currently ships, in the API's `language` values. */
 export const LOCALES = ["ar", "en"] as const;

@@ -52,26 +52,24 @@ pnpm run dev           # watch mode
 
 | Script | What it does |
 |---|---|
-| `pnpm run dev` | Run the bot with `tsx --watch` |
-| `pnpm run build` | Production build via esbuild to `dist/` |
-| `pnpm run start` | Run the built bot |
-| `pnpm test` | Run tests (`tsx --test`) |
+| `pnpm run dev` | Run the bot with `node --watch` + native TS |
+| `pnpm run start` | Run the bot (native TS, same as pm2) |
+| `pnpm test` | Run tests (`node --test` + native TS) |
 | `pnpm lint` | Check with Biome (warnings fail) |
 | `pnpm run lint:fix` | Auto-fix lint issues |
 | `pnpm exec tsc --noEmit` | Typecheck |
 
 ### Before You Submit
 
-Run all four quality gates locally. CI enforces the same:
+Run quality gates locally. CI enforces the same:
 
 ```bash
 pnpm lint
 pnpm exec tsc --noEmit
 pnpm test
-pnpm build
 ```
 
-All four must pass. Biome warnings fail lint, so run `pnpm run lint:fix` if needed.
+All must pass. Biome warnings fail lint, so run `pnpm run lint:fix` if needed.
 
 ## Project Conventions
 
@@ -135,7 +133,7 @@ chore: bump discord.js to 14.28
 1. **Fork** the repo and create a branch from `main`. Name it `feat/<short-name>` or `fix/<short-name>`.
 2. **Keep PRs focused**. One feature or fix per PR. Smaller PRs get reviewed faster.
 3. **Write a clear description**: what changed, why, and how to verify. Link the related issue.
-4. **Pass CI**. Lint, typecheck, test, and build must all be green.
+4. **Pass CI**. Lint, typecheck, and test must all be green.
 5. **Be responsive**. Address review feedback with new commits (do not force-push during review unless asked).
 
 > [!TIP]

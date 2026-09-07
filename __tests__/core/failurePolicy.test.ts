@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { decideFailureResponse } from "../../src/events/interactionCreate";
-import { localizable } from "../../src/i18n/locale";
+import { decideFailureResponse } from "../../src/events/interactionCreate.ts";
+import { localizable } from "../../src/i18n/locale.ts";
 
 const translator = localizable("en");
 

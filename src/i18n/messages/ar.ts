@@ -1,4 +1,4 @@
-import type { MessageCatalog } from "./en";
+import type { MessageCatalog } from "./en.ts";
 
 /**
  * Arabic message catalog. The wording and custom Discord emotes are lifted

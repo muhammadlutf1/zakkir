@@ -50,7 +50,7 @@ Zakkir connects to voice, resolves recitations through the [MP3Quran API](https:
 
 ### Prerequisites
 
-- Node.js 22+
+- Node.js 24+
 - pnpm 11.3+
 - A Discord application and bot token ([Discord Developer Portal](https://discord.com/developers/applications))
 
@@ -83,10 +83,19 @@ pnpm run dev
 | `GRACE_PERIOD_MS` | No | `60000` | Grace period before ending a session after the last human leaves (ms) |
 | `LOG_LEVEL` | No | `info` | Pino log level (`debug`, `info`, `warn`, `error`) |
 
-### Production Build
+### Production (VPS + pm2)
 
 ```bash
-pnpm run build
+# no build step — runs TS directly on Node 24
+pnpm install --prod --frozen-lockfile
+pm2 start ecosystem.config.cjs
+# deploy: git pull && pnpm install --prod --frozen-lockfile && pm2 restart zakkir --update-env
+pnpm run deploy:commands  # after changing commands, re-deploy to Discord
+```
+
+Alternative without pm2:
+
+```bash
 pnpm run start
 ```
 
@@ -119,7 +128,7 @@ pnpm install
 cp .env.example .env
 # set BOT_TOKEN and CLIENT_ID for your own Discord application
 pnpm run deploy:commands
-pnpm run build && pnpm run start
+pnpm run start        # or pm2 start ecosystem.config.cjs on VPS
 # or pnpm run dev for local development
 ```
 
@@ -155,8 +164,7 @@ Key concepts are defined in [`CONTEXT.md`](CONTEXT.md) - Player, Queue, Recitati
 - [discord.js](https://discord.js.org/) `^14` with [@discordjs/voice](https://github.com/discordjs/discord.js) for Discord API and voice
 - [pino](https://github.com/pinojs/pino) for structured logging
 - [Biome](https://biomejs.dev/) for linting and formatting
-- [esbuild](https://esbuild.github.io/) for production builds
-- [tsx](https://github.com/privatenumber/tsx) for dev and tests
+- Node 24 native TypeScript (`--experimental-transform-types`, `.ts` extensions, no build)
 
 ## Contributing
 

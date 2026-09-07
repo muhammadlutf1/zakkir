@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { resolveSurah, SURAH_LIST, surahName } from "../../src/catalog/suwar";
+import {
+	resolveSurah,
+	SURAH_LIST,
+	surahName,
+} from "../../src/catalog/suwar.ts";
 
 describe("SURAH_LIST", () => {
 	it("lists all 114 surahs numbered 1..114", () => {

@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { AudioPlayerStatus } from "@discordjs/voice";
 import type { Message, VoiceChannel } from "discord.js";
 import { MessageFlags } from "discord.js";
-import type { Locale } from "../../src/i18n/locale";
+import type { Locale } from "../../src/i18n/locale.ts";
 import {
 	buildPanelPayload,
 	createPanel,
@@ -17,16 +17,16 @@ import {
 	PANEL_STOP_CUSTOM_ID,
 	repostPanel,
 	updatePanel,
-} from "../../src/play/playerPanel";
-import { Player } from "../../src/voice/Player";
-import { RepeatMode } from "../../src/voice/Queue";
-import type { Recitation } from "../../src/voice/Recitation";
+} from "../../src/play/playerPanel.ts";
+import { Player } from "../../src/voice/Player.ts";
+import { RepeatMode } from "../../src/voice/Queue.ts";
+import type { Recitation } from "../../src/voice/Recitation.ts";
 import type {
 	VoicePort,
 	VoicePortEventName,
 	VoicePortEventPayload,
 	VoicePortEvents,
-} from "../../src/voice/VoicePort";
+} from "../../src/voice/VoicePort.ts";
 
 class FakeVoicePort implements VoicePort {
 	readonly calls: string[] = [];

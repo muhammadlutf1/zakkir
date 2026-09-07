@@ -1,17 +1,17 @@
-import { VoteManager } from "./access/VoteManager";
-import { config } from "./config";
-import Bot from "./core/Bot";
-import commandLoader from "./core/loaders/commandLoader";
-import componentLoader from "./core/loaders/componentLoader";
-import eventLoader from "./core/loaders/eventLoader";
-import { createLogger } from "./core/logger";
-import { GuildConfig } from "./guild/GuildConfig";
-import { SqliteGuildConfigStore } from "./guild/SqliteGuildConfigStore";
-import { playbackNotices } from "./play/playbackNotices";
-import { PlaybackRequest } from "./play/playbackRequest";
-import { DiscordVoicePort } from "./voice/DiscordVoicePort";
-import { Player } from "./voice/Player";
-import { PlayerRegistry } from "./voice/PlayerRegistry";
+import { VoteManager } from "./access/VoteManager.ts";
+import { config } from "./config/index.ts";
+import Bot from "./core/Bot.ts";
+import commandLoader from "./core/loaders/commandLoader.ts";
+import componentLoader from "./core/loaders/componentLoader.ts";
+import eventLoader from "./core/loaders/eventLoader.ts";
+import { createLogger } from "./core/logger.ts";
+import { GuildConfig } from "./guild/GuildConfig.ts";
+import { SqliteGuildConfigStore } from "./guild/SqliteGuildConfigStore.ts";
+import { playbackNotices } from "./play/playbackNotices.ts";
+import { PlaybackRequest } from "./play/playbackRequest.ts";
+import { DiscordVoicePort } from "./voice/DiscordVoicePort.ts";
+import { Player } from "./voice/Player.ts";
+import { PlayerRegistry } from "./voice/PlayerRegistry.ts";
 
 const logger = createLogger("index");
 

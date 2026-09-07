@@ -1,6 +1,6 @@
 import { ChannelType, MessageFlags, SlashCommandBuilder } from "discord.js";
-import { surahName } from "../catalog/suwar";
-import type { Command } from "../core/Command";
+import { surahName } from "../catalog/suwar.ts";
+import type { Command } from "../core/Command.ts";
 
 const playCommand: Command = {
 	data: new SlashCommandBuilder()

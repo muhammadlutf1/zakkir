@@ -1,21 +1,21 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { MessageFlags, type VoiceChannel } from "discord.js";
-import type { Catalog } from "../../src/catalog/Catalog";
-import panelCommand from "../../src/commands/panel";
-import type { CommandContext } from "../../src/core/interactionContext";
-import { GuildConfig } from "../../src/guild/GuildConfig";
-import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
-import { localizable } from "../../src/i18n/locale";
-import { getPanel, hasPanel } from "../../src/play/playerPanel";
-import { Player } from "../../src/voice/Player";
-import { RepeatMode } from "../../src/voice/Queue";
-import type { Recitation } from "../../src/voice/Recitation";
+import type { Catalog } from "../../src/catalog/Catalog.ts";
+import panelCommand from "../../src/commands/panel.ts";
+import type { CommandContext } from "../../src/core/interactionContext.ts";
+import { GuildConfig } from "../../src/guild/GuildConfig.ts";
+import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore.ts";
+import { localizable } from "../../src/i18n/locale.ts";
+import { getPanel, hasPanel } from "../../src/play/playerPanel.ts";
+import { Player } from "../../src/voice/Player.ts";
+import { RepeatMode } from "../../src/voice/Queue.ts";
+import type { Recitation } from "../../src/voice/Recitation.ts";
 import type {
 	VoicePort,
 	VoicePortEventName,
 	VoicePortEvents,
-} from "../../src/voice/VoicePort";
+} from "../../src/voice/VoicePort.ts";
 
 class FakeVoicePort implements VoicePort {
 	private _joinedChannelId: string | null = null;

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { Player } from "../../src/voice/Player";
-import { PlayerRegistry } from "../../src/voice/PlayerRegistry";
-import type { VoicePort } from "../../src/voice/VoicePort";
+import { Player } from "../../src/voice/Player.ts";
+import { PlayerRegistry } from "../../src/voice/PlayerRegistry.ts";
+import type { VoicePort } from "../../src/voice/VoicePort.ts";
 
 class NoopVoicePort implements VoicePort {
 	readonly joinedChannelId = null;

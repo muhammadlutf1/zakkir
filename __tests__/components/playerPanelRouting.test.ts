@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import pauseComponent from "../../src/components/player-panel/pause";
-import repeatComponent from "../../src/components/player-panel/repeat";
-import repeatModeComponent from "../../src/components/player-panel/repeatMode";
-import selectComponent from "../../src/components/player-panel/select";
-import skipComponent from "../../src/components/player-panel/skip";
-import stopComponent from "../../src/components/player-panel/stop";
+import pauseComponent from "../../src/components/player-panel/pause.ts";
+import repeatComponent from "../../src/components/player-panel/repeat.ts";
+import repeatModeComponent from "../../src/components/player-panel/repeatMode.ts";
+import selectComponent from "../../src/components/player-panel/select.ts";
+import skipComponent from "../../src/components/player-panel/skip.ts";
+import stopComponent from "../../src/components/player-panel/stop.ts";
 
 const ROUTES: Array<{
 	component: typeof pauseComponent;

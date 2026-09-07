@@ -3,16 +3,16 @@ import { createServer, type Server } from "node:http";
 import { after, before, describe, it } from "node:test";
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { VoiceChannel } from "discord.js";
-import { playbackNotices } from "../../src/play/playbackNotices";
-import { Player } from "../../src/voice/Player";
-import { RepeatMode } from "../../src/voice/Queue";
-import type { Recitation } from "../../src/voice/Recitation";
+import { playbackNotices } from "../../src/play/playbackNotices.ts";
+import { Player } from "../../src/voice/Player.ts";
+import { RepeatMode } from "../../src/voice/Queue.ts";
+import type { Recitation } from "../../src/voice/Recitation.ts";
 import type {
 	VoicePort,
 	VoicePortEventName,
 	VoicePortEventPayload,
 	VoicePortEvents,
-} from "../../src/voice/VoicePort";
+} from "../../src/voice/VoicePort.ts";
 
 class FakeVoicePort implements VoicePort {
 	readonly calls: string[] = [];

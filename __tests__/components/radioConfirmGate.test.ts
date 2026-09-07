@@ -4,14 +4,14 @@ import { PermissionFlagsBits } from "discord.js";
 import type {
 	VoteManager,
 	VoteProposeInput,
-} from "../../src/access/VoteManager";
-import radioConfirmComponent from "../../src/components/buttons/radioToQueue";
-import type { ComponentContext } from "../../src/core/interactionContext";
-import { localizable, t as renderTemplate } from "../../src/i18n/locale";
-import { en } from "../../src/i18n/messages";
-import { recitationLabel } from "../../src/i18n/recitationLabel";
-import type { PlaybackRequest } from "../../src/play/playbackRequest";
-import type { Recitation } from "../../src/voice/Recitation";
+} from "../../src/access/VoteManager.ts";
+import radioConfirmComponent from "../../src/components/buttons/radioToQueue.ts";
+import type { ComponentContext } from "../../src/core/interactionContext.ts";
+import { localizable, t as renderTemplate } from "../../src/i18n/locale.ts";
+import { en } from "../../src/i18n/messages/index.ts";
+import { recitationLabel } from "../../src/i18n/recitationLabel.ts";
+import type { PlaybackRequest } from "../../src/play/playbackRequest.ts";
+import type { Recitation } from "../../src/voice/Recitation.ts";
 
 function makeVotes() {
 	const proposals: VoteProposeInput[] = [];

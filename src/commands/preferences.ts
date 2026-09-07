@@ -3,11 +3,11 @@ import {
 	PermissionFlagsBits,
 	SlashCommandBuilder,
 } from "discord.js";
-import type { Reciter, Rewayah } from "../catalog/Catalog";
-import { DEFAULT_LOCALE } from "../config";
-import type { Command } from "../core/Command";
-import { LOCALES, type Locale, type Localizable } from "../i18n/locale";
-import type { MessageKey } from "../i18n/messages";
+import type { Reciter, Rewayah } from "../catalog/Catalog.ts";
+import { DEFAULT_LOCALE } from "../config/index.ts";
+import type { Command } from "../core/Command.ts";
+import { LOCALES, type Locale, type Localizable } from "../i18n/locale.ts";
+import type { MessageKey } from "../i18n/messages/index.ts";
 
 const LANGUAGE_NAME_KEYS: Record<Locale, MessageKey> = {
 	en: "language.name.en",

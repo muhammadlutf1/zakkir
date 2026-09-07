@@ -2,13 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { Collection } from "discord.js";
-import type { Command } from "../Command";
-import { isCommand } from "../Command";
-import type { Component } from "../Component";
-import { isComponent } from "../Component";
-import type { BotEvent } from "../Event";
-import { isBotEvent } from "../Event";
-import { createLogger } from "../logger";
+import type { Command } from "../Command.ts";
+import { isCommand } from "../Command.ts";
+import type { Component } from "../Component.ts";
+import { isComponent } from "../Component.ts";
+import type { BotEvent } from "../Event.ts";
+import { isBotEvent } from "../Event.ts";
+import { createLogger } from "../logger.ts";
 
 const logger = createLogger("loader");
 

@@ -1,5 +1,5 @@
 import type { ClientEvents } from "discord.js";
-import type Bot from "./Bot";
+import type Bot from "./Bot.ts";
 
 export interface BotEvent<T extends keyof ClientEvents = keyof ClientEvents> {
 	readonly name: T;

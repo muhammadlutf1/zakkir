@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { config, DEFAULT_LOCALE } from "../../src/config";
-import { isLocale, localizable, t } from "../../src/i18n/locale";
-import { ar, en } from "../../src/i18n/messages";
+import { config, DEFAULT_LOCALE } from "../../src/config/index.ts";
+import { isLocale, localizable, t } from "../../src/i18n/locale.ts";
+import { ar, en } from "../../src/i18n/messages/index.ts";
 
 function catalogKeys(catalog: object) {
 	return Object.keys(catalog).sort();

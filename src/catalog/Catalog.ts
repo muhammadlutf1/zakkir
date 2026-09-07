@@ -1,7 +1,7 @@
-import { config } from "../config";
-import { createLogger } from "../core/logger";
-import type { Locale } from "../i18n/locale";
-import { resolveSurah, SURAH_LIST, type Surah } from "./suwar";
+import { config } from "../config/index.ts";
+import { createLogger } from "../core/logger.ts";
+import type { Locale } from "../i18n/locale.ts";
+import { resolveSurah, SURAH_LIST, type Surah } from "./suwar.ts";
 
 const logger = createLogger("catalog");
 

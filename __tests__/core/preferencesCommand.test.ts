@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog";
-import preferencesCommand from "../../src/commands/preferences";
-import type { CommandContext } from "../../src/core/interactionContext";
-import { GuildConfig } from "../../src/guild/GuildConfig";
-import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
-import { localizable, t } from "../../src/i18n/locale";
-import { ar, en } from "../../src/i18n/messages";
+import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog.ts";
+import preferencesCommand from "../../src/commands/preferences.ts";
+import type { CommandContext } from "../../src/core/interactionContext.ts";
+import { GuildConfig } from "../../src/guild/GuildConfig.ts";
+import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore.ts";
+import { localizable, t } from "../../src/i18n/locale.ts";
+import { ar, en } from "../../src/i18n/messages/index.ts";
 
 const rewayah = (id: number, name: string): Rewayah => ({
 	id,

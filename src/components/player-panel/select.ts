@@ -1,9 +1,9 @@
-import { gateOrVoteStarted } from "../../access/actionGate";
-import type { Component } from "../../core/Component";
-import { recitationLabel } from "../../i18n/recitationLabel";
-import { PANEL_SELECT_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
-import { followUpWithAutoDelete } from "./autoDelete";
-import { resolvePanelPlayer } from "./shared";
+import { gateOrVoteStarted } from "../../access/actionGate.ts";
+import type { Component } from "../../core/Component.ts";
+import { recitationLabel } from "../../i18n/recitationLabel.ts";
+import { PANEL_SELECT_CUSTOM_ID, updatePanel } from "../../play/playerPanel.ts";
+import { followUpWithAutoDelete } from "./autoDelete.ts";
+import { resolvePanelPlayer } from "./shared.ts";
 
 const TRACK_VALUE_PREFIX = "track-";
 

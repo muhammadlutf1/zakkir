@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { ChannelType } from "discord.js";
-import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog";
-import { resolveSurah, SURAH_LIST } from "../../src/catalog/suwar";
-import playCommand from "../../src/commands/play";
-import type { CommandContext } from "../../src/core/interactionContext";
-import { GuildConfig } from "../../src/guild/GuildConfig";
-import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
-import type { GlobalDefaults } from "../../src/guild/types";
-import { localizable } from "../../src/i18n/locale";
-import { PlaybackRequest } from "../../src/play/playbackRequest";
-import type { Player } from "../../src/voice/Player";
+import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog.ts";
+import { resolveSurah, SURAH_LIST } from "../../src/catalog/suwar.ts";
+import playCommand from "../../src/commands/play.ts";
+import type { CommandContext } from "../../src/core/interactionContext.ts";
+import { GuildConfig } from "../../src/guild/GuildConfig.ts";
+import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore.ts";
+import type { GlobalDefaults } from "../../src/guild/types.ts";
+import { localizable } from "../../src/i18n/locale.ts";
+import { PlaybackRequest } from "../../src/play/playbackRequest.ts";
+import type { Player } from "../../src/voice/Player.ts";
 
 const NO_DEFAULTS: GlobalDefaults = {
 	language: "ar",

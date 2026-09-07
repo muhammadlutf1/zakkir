@@ -2,8 +2,8 @@ import { MessageFlags } from "discord.js";
 import {
 	VOTE_NO_CUSTOM_ID,
 	VOTE_YES_CUSTOM_ID,
-} from "../../access/VoteManager";
-import type { Component } from "../../core/Component";
+} from "../../access/VoteManager.ts";
+import type { Component } from "../../core/Component.ts";
 
 const component: Component = {
 	match: (customId) =>

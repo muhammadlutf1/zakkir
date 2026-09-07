@@ -1,7 +1,7 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
-import { handleSkipWithGate } from "../access/skipAccess";
-import type { Command } from "../core/Command";
-import { recitationLabel } from "../i18n/recitationLabel";
+import { handleSkipWithGate } from "../access/skipAccess.ts";
+import type { Command } from "../core/Command.ts";
+import { recitationLabel } from "../i18n/recitationLabel.ts";
 
 const skipCommand: Command = {
 	data: new SlashCommandBuilder()

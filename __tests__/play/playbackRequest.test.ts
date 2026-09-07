@@ -7,23 +7,23 @@ import type {
 	VoiceChannel,
 } from "discord.js";
 import { MessageFlags } from "discord.js";
-import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog";
-import { resolveSurah } from "../../src/catalog/suwar";
-import playCommand from "../../src/commands/play";
-import type { CommandContext } from "../../src/core/interactionContext";
-import { GuildConfig } from "../../src/guild/GuildConfig";
-import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore";
-import type { GlobalDefaults } from "../../src/guild/types";
-import { localizable } from "../../src/i18n/locale";
+import type { Catalog, Reciter, Rewayah } from "../../src/catalog/Catalog.ts";
+import { resolveSurah } from "../../src/catalog/suwar.ts";
+import playCommand from "../../src/commands/play.ts";
+import type { CommandContext } from "../../src/core/interactionContext.ts";
+import { GuildConfig } from "../../src/guild/GuildConfig.ts";
+import { SqliteGuildConfigStore } from "../../src/guild/SqliteGuildConfigStore.ts";
+import type { GlobalDefaults } from "../../src/guild/types.ts";
+import { localizable } from "../../src/i18n/locale.ts";
 import {
 	PlaybackRequest,
 	type PlayReply,
 	parsePickerCustomId,
 	pickerCustomId,
-} from "../../src/play/playbackRequest";
-import { hasPanel } from "../../src/play/playerPanel";
-import type { Player } from "../../src/voice/Player";
-import type { Recitation } from "../../src/voice/Recitation";
+} from "../../src/play/playbackRequest.ts";
+import { hasPanel } from "../../src/play/playerPanel.ts";
+import type { Player } from "../../src/voice/Player.ts";
+import type { Recitation } from "../../src/voice/Recitation.ts";
 
 const NO_DEFAULTS: GlobalDefaults = {
 	language: "ar",

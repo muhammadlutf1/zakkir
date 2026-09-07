@@ -4,13 +4,13 @@ import {
 	ButtonStyle,
 	type MessageComponentInteraction,
 } from "discord.js";
-import type { ComponentContext } from "../../core/interactionContext";
-import { type Locale, localizable } from "../../i18n/locale";
-import type { MessageKey } from "../../i18n/messages/en";
-import { PANEL_REPEAT_CUSTOM_ID } from "../../play/playerPanel";
-import type { Player } from "../../voice/Player";
-import { RepeatMode } from "../../voice/Queue";
-import { replyWithAutoDelete } from "./autoDelete";
+import type { ComponentContext } from "../../core/interactionContext.ts";
+import { type Locale, localizable } from "../../i18n/locale.ts";
+import type { MessageKey } from "../../i18n/messages/en.ts";
+import { PANEL_REPEAT_CUSTOM_ID } from "../../play/playerPanel.ts";
+import type { Player } from "../../voice/Player.ts";
+import { RepeatMode } from "../../voice/Queue.ts";
+import { replyWithAutoDelete } from "./autoDelete.ts";
 
 const REPEAT_MODES: Array<{ mode: RepeatMode; key: MessageKey }> = [
 	{ mode: RepeatMode.OFF, key: "panel.repeatOff" },

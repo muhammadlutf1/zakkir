@@ -1,5 +1,5 @@
 import { mock } from "node:test";
-import { config } from "../../src/config";
+import { config } from "../../src/config/index.ts";
 
 let clock = 0;
 

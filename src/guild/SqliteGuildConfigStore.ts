@@ -1,8 +1,8 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { isLocale } from "../i18n/locale";
-import type { GuildConfigData } from "./types";
+import { isLocale } from "../i18n/locale.ts";
+import type { GuildConfigData } from "./types.ts";
 
 interface Row {
 	language: string | null;

@@ -6,8 +6,8 @@ import {
 	MessageFlags,
 	SlashCommandBuilder,
 } from "discord.js";
-import { config } from "../config";
-import type { Command } from "../core/Command";
+import { config } from "../config/index.ts";
+import type { Command } from "../core/Command.ts";
 
 const radioCommand: Command = {
 	data: new SlashCommandBuilder()

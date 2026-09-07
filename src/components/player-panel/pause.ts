@@ -1,7 +1,7 @@
-import type { Component } from "../../core/Component";
-import { PANEL_PAUSE_CUSTOM_ID, updatePanel } from "../../play/playerPanel";
-import { followUpWithAutoDelete } from "./autoDelete";
-import { resolvePanelPlayer } from "./shared";
+import type { Component } from "../../core/Component.ts";
+import { PANEL_PAUSE_CUSTOM_ID, updatePanel } from "../../play/playerPanel.ts";
+import { followUpWithAutoDelete } from "./autoDelete.ts";
+import { resolvePanelPlayer } from "./shared.ts";
 
 const component: Component = {
 	match: (customId) => customId === PANEL_PAUSE_CUSTOM_ID,

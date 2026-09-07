@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import type { Command } from "../Command";
-import loader from "./loader";
+import type { Command } from "../Command.ts";
+import loader from "./loader.ts";
 
 /**
  * reads and builds commands collection dynamically from commands folder

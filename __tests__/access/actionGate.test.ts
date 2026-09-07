@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { PermissionFlagsBits } from "discord.js";
-import { handleActionWithGate } from "../../src/access/actionGate";
-import { handleSkipWithGate } from "../../src/access/skipAccess";
-import type { SendableTextChannel } from "../../src/access/types";
+import { handleActionWithGate } from "../../src/access/actionGate.ts";
+import { handleSkipWithGate } from "../../src/access/skipAccess.ts";
+import type { SendableTextChannel } from "../../src/access/types.ts";
 import type {
 	VoteManager,
 	VoteProposeInput,
-} from "../../src/access/VoteManager";
-import { localizable } from "../../src/i18n/locale";
-import type { Player } from "../../src/voice/Player";
-import type { Recitation } from "../../src/voice/Recitation";
+} from "../../src/access/VoteManager.ts";
+import { localizable } from "../../src/i18n/locale.ts";
+import type { Player } from "../../src/voice/Player.ts";
+import type { Recitation } from "../../src/voice/Recitation.ts";
 
 function makePlayer(
 	overrides: { humanIds?: string[]; current?: Recitation } = {},

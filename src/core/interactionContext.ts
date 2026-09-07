@@ -1,9 +1,9 @@
-import type { VoteManager } from "../access/VoteManager";
-import type { Catalog } from "../catalog/Catalog";
-import type { GuildConfig } from "../guild/GuildConfig";
-import type { Locale, Localizable } from "../i18n/locale";
-import type { PlaybackRequest } from "../play/playbackRequest";
-import type { PlayerRegistry } from "../voice/PlayerRegistry";
+import type { VoteManager } from "../access/VoteManager.ts";
+import type { Catalog } from "../catalog/Catalog.ts";
+import type { GuildConfig } from "../guild/GuildConfig.ts";
+import type { Locale, Localizable } from "../i18n/locale.ts";
+import type { PlaybackRequest } from "../play/playbackRequest.ts";
+import type { PlayerRegistry } from "../voice/PlayerRegistry.ts";
 
 /**
  * The slice of the Player registry that handlers touch — never the whole

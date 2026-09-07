@@ -1,5 +1,5 @@
 import { Events, type VoiceChannel } from "discord.js";
-import type { BotEvent } from "../core/Event";
+import type { BotEvent } from "../core/Event.ts";
 
 /**
  * Reflects a guild voice-state change back into that guild's Player so it can

@@ -1,12 +1,12 @@
-import { config } from "../config";
-import { isLocale, type Locale } from "../i18n/locale";
-import type { SqliteGuildConfigStore } from "./SqliteGuildConfigStore";
+import { config } from "../config/index.ts";
+import { isLocale, type Locale } from "../i18n/locale.ts";
+import type { SqliteGuildConfigStore } from "./SqliteGuildConfigStore.ts";
 import type {
 	GlobalDefaults,
 	GuildConfigData,
 	ResolveRequest,
 	RewayahCoverage,
-} from "./types";
+} from "./types.ts";
 
 export class GuildConfig {
 	private readonly cache = new Map<string, GuildConfigData>();

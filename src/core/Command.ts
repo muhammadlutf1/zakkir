@@ -5,7 +5,7 @@ import type {
 	SlashCommandOptionsOnlyBuilder,
 	SlashCommandSubcommandsOnlyBuilder,
 } from "discord.js";
-import type { CommandContext } from "./interactionContext";
+import type { CommandContext } from "./interactionContext.ts";
 
 export interface Command {
 	readonly data:

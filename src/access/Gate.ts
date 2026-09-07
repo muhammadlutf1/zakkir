@@ -1,7 +1,7 @@
 import { type GuildMember, PermissionFlagsBits } from "discord.js";
-import type { GuildPermissionsLike } from "../types";
-import type { Player } from "../voice/Player";
-import type { Recitation } from "../voice/Recitation";
+import type { GuildPermissionsLike } from "../types/index.ts";
+import type { Player } from "../voice/Player.ts";
+import type { Recitation } from "../voice/Recitation.ts";
 
 export interface GateCheck {
 	member: Pick<GuildMember, "id"> & {

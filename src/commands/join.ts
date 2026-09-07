@@ -1,5 +1,5 @@
 import { ChannelType, MessageFlags, SlashCommandBuilder } from "discord.js";
-import type { Command } from "../core/Command";
+import type { Command } from "../core/Command.ts";
 
 const joinCommand: Command = {
 	data: new SlashCommandBuilder()

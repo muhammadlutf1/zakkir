@@ -1,6 +1,6 @@
-import { RepeatMode } from "../voice/Queue";
-import type { Localizable } from "./locale";
-import type { MessageKey } from "./messages";
+import { RepeatMode } from "../voice/Queue.ts";
+import type { Localizable } from "./locale.ts";
+import type { MessageKey } from "./messages/index.ts";
 
 const REPEAT_MODE_KEYS: Record<RepeatMode, MessageKey> = {
 	[RepeatMode.OFF]: "repeat.mode.off",

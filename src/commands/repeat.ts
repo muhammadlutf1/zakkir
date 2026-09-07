@@ -1,8 +1,8 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
-import { gateOrVoteStarted } from "../access/actionGate";
-import type { Command } from "../core/Command";
-import { repeatModeLabel } from "../i18n/repeatModeLabel";
-import { RepeatMode } from "../voice/Queue";
+import { gateOrVoteStarted } from "../access/actionGate.ts";
+import type { Command } from "../core/Command.ts";
+import { repeatModeLabel } from "../i18n/repeatModeLabel.ts";
+import { RepeatMode } from "../voice/Queue.ts";
 
 const REPEAT_CHOICES = [
 	{ name: "Off", value: RepeatMode.OFF },

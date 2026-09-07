@@ -1,4 +1,4 @@
-import type { Surah } from "../catalog/suwar";
+import type { Surah } from "../catalog/suwar.ts";
 
 /**
  * The Queue's unit of playback — a Surah read by a Reciter in a specific

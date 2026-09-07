@@ -1,10 +1,10 @@
 import { AudioPlayerStatus, VoiceConnectionStatus } from "@discordjs/voice";
 import type { TextBasedChannel, VoiceChannel } from "discord.js";
-import type { Radio } from "../catalog/Catalog";
-import { createLogger } from "../core/logger";
-import { Queue, type RepeatMode } from "./Queue";
-import type { Recitation } from "./Recitation";
-import type { VoicePort } from "./VoicePort";
+import type { Radio } from "../catalog/Catalog.ts";
+import { createLogger } from "../core/logger.ts";
+import { Queue, type RepeatMode } from "./Queue.ts";
+import type { Recitation } from "./Recitation.ts";
+import type { VoicePort } from "./VoicePort.ts";
 
 const logger = createLogger("player");
 

@@ -1,18 +1,18 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { MessageComponentInteraction } from "discord.js";
-import type { Catalog } from "../../src/catalog/Catalog";
-import pauseComponent from "../../src/components/player-panel/pause";
-import repeatComponent from "../../src/components/player-panel/repeat";
-import repeatModeComponent from "../../src/components/player-panel/repeatMode";
-import selectComponent from "../../src/components/player-panel/select";
-import skipComponent from "../../src/components/player-panel/skip";
-import stopComponent from "../../src/components/player-panel/stop";
-import type { ComponentContext } from "../../src/core/interactionContext";
-import type { GuildConfig } from "../../src/guild/GuildConfig";
-import { localizable } from "../../src/i18n/locale";
-import type { Player } from "../../src/voice/Player";
-import { RepeatMode } from "../../src/voice/Queue";
+import type { Catalog } from "../../src/catalog/Catalog.ts";
+import pauseComponent from "../../src/components/player-panel/pause.ts";
+import repeatComponent from "../../src/components/player-panel/repeat.ts";
+import repeatModeComponent from "../../src/components/player-panel/repeatMode.ts";
+import selectComponent from "../../src/components/player-panel/select.ts";
+import skipComponent from "../../src/components/player-panel/skip.ts";
+import stopComponent from "../../src/components/player-panel/stop.ts";
+import type { ComponentContext } from "../../src/core/interactionContext.ts";
+import type { GuildConfig } from "../../src/guild/GuildConfig.ts";
+import { localizable } from "../../src/i18n/locale.ts";
+import type { Player } from "../../src/voice/Player.ts";
+import { RepeatMode } from "../../src/voice/Queue.ts";
 
 interface RowJson {
 	type: number;

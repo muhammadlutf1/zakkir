@@ -10,19 +10,19 @@ import {
 	SeparatorBuilder,
 	TextDisplayBuilder,
 } from "discord.js";
-import type { Catalog, Radio, Rewayah } from "../catalog/Catalog";
-import { type Surah, surahName } from "../catalog/suwar";
-import { config, DEFAULT_LOCALE } from "../config";
-import { createLogger } from "../core/logger";
-import type { GuildConfig } from "../guild/GuildConfig";
-import type { GlobalDefaults, RewayahCoverage } from "../guild/types";
-import { type Locale, type Localizable, localizable } from "../i18n/locale";
-import { recitationLabel } from "../i18n/recitationLabel";
-import type { CodedDiscordError, EditableMessage } from "../types";
-import type { Player, PlayResult } from "../voice/Player";
-import type { PlayerRegistry } from "../voice/PlayerRegistry";
-import type { Recitation } from "../voice/Recitation";
-import { createPanel, hasPanel } from "./playerPanel";
+import type { Catalog, Radio, Rewayah } from "../catalog/Catalog.ts";
+import { type Surah, surahName } from "../catalog/suwar.ts";
+import { config, DEFAULT_LOCALE } from "../config/index.ts";
+import { createLogger } from "../core/logger.ts";
+import type { GuildConfig } from "../guild/GuildConfig.ts";
+import type { GlobalDefaults, RewayahCoverage } from "../guild/types.ts";
+import { type Locale, type Localizable, localizable } from "../i18n/locale.ts";
+import { recitationLabel } from "../i18n/recitationLabel.ts";
+import type { CodedDiscordError, EditableMessage } from "../types/index.ts";
+import type { Player, PlayResult } from "../voice/Player.ts";
+import type { PlayerRegistry } from "../voice/PlayerRegistry.ts";
+import type { Recitation } from "../voice/Recitation.ts";
+import { createPanel, hasPanel } from "./playerPanel.ts";
 
 const logger = createLogger("PlaybackRequest");
 

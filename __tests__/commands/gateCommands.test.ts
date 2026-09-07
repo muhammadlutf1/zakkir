@@ -4,17 +4,17 @@ import { PermissionFlagsBits } from "discord.js";
 import type {
 	VoteManager,
 	VoteProposeInput,
-} from "../../src/access/VoteManager";
-import clearCommand from "../../src/commands/clear";
-import removeCommand from "../../src/commands/remove";
-import repeatCommand from "../../src/commands/repeat";
-import type { CommandContext } from "../../src/core/interactionContext";
-import { localizable, t as renderTemplate } from "../../src/i18n/locale";
-import { en } from "../../src/i18n/messages";
-import { recitationLabel } from "../../src/i18n/recitationLabel";
-import type { Player } from "../../src/voice/Player";
-import { RepeatMode } from "../../src/voice/Queue";
-import type { Recitation } from "../../src/voice/Recitation";
+} from "../../src/access/VoteManager.ts";
+import clearCommand from "../../src/commands/clear.ts";
+import removeCommand from "../../src/commands/remove.ts";
+import repeatCommand from "../../src/commands/repeat.ts";
+import type { CommandContext } from "../../src/core/interactionContext.ts";
+import { localizable, t as renderTemplate } from "../../src/i18n/locale.ts";
+import { en } from "../../src/i18n/messages/index.ts";
+import { recitationLabel } from "../../src/i18n/recitationLabel.ts";
+import type { Player } from "../../src/voice/Player.ts";
+import { RepeatMode } from "../../src/voice/Queue.ts";
+import type { Recitation } from "../../src/voice/Recitation.ts";
 
 function makeVotes() {
 	const proposals: VoteProposeInput[] = [];

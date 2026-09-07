@@ -1,6 +1,6 @@
 import { ActivityType, Events } from "discord.js";
-import type { BotEvent } from "../core/Event";
-import { createLogger } from "../core/logger";
+import type { BotEvent } from "../core/Event.ts";
+import { createLogger } from "../core/logger.ts";
 
 const logger = createLogger("ready");
 

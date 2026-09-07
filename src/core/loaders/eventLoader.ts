@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import type { BotEvent } from "../Event";
-import loader from "./loader";
+import type { BotEvent } from "../Event.ts";
+import loader from "./loader.ts";
 
 /**
  * reads and builds events collection dynamically from events folder

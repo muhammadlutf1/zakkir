@@ -3,13 +3,13 @@ import {
 	PermissionFlagsBits,
 	SlashCommandBuilder,
 } from "discord.js";
-import type { Command } from "../core/Command";
+import type { Command } from "../core/Command.ts";
 import {
 	createPanel,
 	hasPanel,
 	repostPanel,
 	updatePanel,
-} from "../play/playerPanel";
+} from "../play/playerPanel.ts";
 
 const panelCommand: Command = {
 	data: new SlashCommandBuilder()

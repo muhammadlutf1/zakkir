@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { playbackNotices } from "../../src/play/playbackNotices";
-import type { Recitation } from "../../src/voice/Recitation";
+import { playbackNotices } from "../../src/play/playbackNotices.ts";
+import type { Recitation } from "../../src/voice/Recitation.ts";
 
 const recitationFixture: Recitation = {
 	surah: { number: 18, name: "الكهف", names: { en: "Al-Kahf" } },

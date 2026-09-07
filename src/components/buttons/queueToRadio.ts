@@ -1,11 +1,11 @@
 import { MessageFlags } from "discord.js";
-import { gateOrVoteStarted } from "../../access/actionGate";
-import type { Component } from "../../core/Component";
+import { gateOrVoteStarted } from "../../access/actionGate.ts";
+import type { Component } from "../../core/Component.ts";
 import {
 	CANCEL_QUEUE_TO_RADIO_CUSTOM_ID,
 	CONFIRM_QUEUE_TO_RADIO_CUSTOM_ID,
 	type PlayReply,
-} from "../../play/playbackRequest";
+} from "../../play/playbackRequest.ts";
 
 const component: Component = {
 	match: (customId) =>
