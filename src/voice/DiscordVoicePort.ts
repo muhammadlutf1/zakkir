@@ -1,3 +1,5 @@
+import { Readable } from "node:stream";
+import type { ReadableStream } from "node:stream/web";
 import {
 	type AudioPlayer,
 	createAudioPlayer,
@@ -17,6 +19,9 @@ import type {
 
 const logger = createLogger("discordVoicePort");
 
+/** Connect-phase budget — cleared once response headers arrive so long tracks never trip it mid-stream. */
+const FETCH_CONNECT_TIMEOUT_MS = 15_000;
+
 /**
  * @discordjs/voice adapter. Every 'error' source is attached to a listener
  * before use so nothing crashes the process with an unhandled rejection.
@@ -25,6 +30,9 @@ export class DiscordVoicePort implements VoicePort {
 	private connection: VoiceConnection | null = null;
 	private audioPlayer: AudioPlayer | null = null;
 	private channelId: string | null = null;
+	private fetchController: AbortController | null = null;
+	private fetchStream: Readable | null = null;
+	private playToken = 0;
 
 	get joinedChannelId() {
 		return this.channelId;
@@ -101,13 +109,64 @@ export class DiscordVoicePort implements VoicePort {
 	play(url: string): void {
 		if (!this.audioPlayer) return;
 
-		try {
-			const resource = createAudioResource(url);
+		// Fetch via Node (proper UA, follows Cloudflare) and pipe to ffmpeg,
+		// instead of letting ffmpeg fetch the URL directly (Lavf UA is blocked on some nodes).
+		// Cancel any in-flight fetch so a superseded response can never overwrite the new track.
+		// cancelFetch bumps the token, so the new fetch owns the fresh value.
+		this.cancelFetch();
+		void this.playViaFetch(url, this.playToken);
+	}
 
-			this.audioPlayer.play(resource);
+	private async playViaFetch(url: string, token: number) {
+		const player = this.audioPlayer;
+		if (!player) return;
+
+		const controller = new AbortController();
+		this.fetchController = controller;
+		const timer = setTimeout(
+			() => controller.abort(),
+			FETCH_CONNECT_TIMEOUT_MS,
+		);
+		timer.unref();
+
+		try {
+			const res = await fetch(url, {
+				headers: { "User-Agent": "zakkir/1.0" },
+				signal: controller.signal,
+			});
+
+			// stop the connect timer so the body can stream
+			clearTimeout(timer);
+
+			if (!res.ok || !res.body)
+				throw new Error(`fetch ${url} -> ${res.status}`);
+			// Superseded or stopped after a newer play()/stop() took over
+			if (token !== this.playToken) {
+				void res.body.cancel().catch(() => {});
+				return;
+			}
+
+			const stream = Readable.fromWeb(res.body as ReadableStream);
+			this.fetchStream = stream;
+			const resource = createAudioResource(stream);
+			player.play(resource);
 		} catch (error) {
+			clearTimeout(timer);
+			// Superseded or stopped after a newer play()/stop() took over.
+			if (token !== this.playToken) return;
+			this.fetchController = null;
 			this.emit("streamError", error);
 		}
+	}
+
+	private cancelFetch() {
+		this.fetchController?.abort();
+		this.fetchController = null;
+		this.fetchStream?.destroy();
+		this.fetchStream = null;
+		// Single source of truth: every cancel invalidates in-flight fetches,
+		// so the token check alone tells stale ones to stay quiet.
+		this.playToken += 1;
 	}
 
 	pause(): void {
@@ -119,6 +178,7 @@ export class DiscordVoicePort implements VoicePort {
 	}
 
 	stop(): void {
+		this.cancelFetch();
 		this.audioPlayer?.stop();
 	}
 
@@ -131,6 +191,7 @@ export class DiscordVoicePort implements VoicePort {
 	}
 
 	destroy(): void {
+		this.cancelFetch();
 		for (const listeners of Object.values(this.listeners)) listeners.clear();
 	}
 
