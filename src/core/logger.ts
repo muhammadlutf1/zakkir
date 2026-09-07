@@ -7,12 +7,19 @@ export function resolveLogLevel(env: NodeJS.ProcessEnv = process.env) {
 	return env.NODE_ENV === "production" ? "info" : "debug";
 }
 
-const base: Logger = isProduction
-	? pino({ level: resolveLogLevel() })
-	: pino({
+function createBase(): Logger {
+	if (isProduction) return pino({ level: resolveLogLevel() });
+	try {
+		return pino({
 			level: resolveLogLevel(),
 			transport: { target: "pino-pretty", options: { colorize: true } },
 		});
+	} catch {
+		return pino({ level: resolveLogLevel() });
+	}
+}
+
+const base: Logger = createBase();
 
 const loggers = new Map<string, Logger>();
 
