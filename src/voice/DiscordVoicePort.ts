@@ -1,8 +1,10 @@
+import { Readable } from "node:stream";
 import {
 	type AudioPlayer,
 	createAudioPlayer,
 	createAudioResource,
 	joinVoiceChannel,
+	StreamType,
 	type VoiceConnection,
 	VoiceConnectionStatus,
 } from "@discordjs/voice";
@@ -101,9 +103,27 @@ export class DiscordVoicePort implements VoicePort {
 	play(url: string): void {
 		if (!this.audioPlayer) return;
 
-		try {
-			const resource = createAudioResource(url);
+		// Fetch via Node (proper UA, follows Cloudflare) and pipe to ffmpeg,
+		// instead of letting ffmpeg fetch the URL directly (Lavf UA is blocked on some nodes).
+		void this.playViaFetch(url);
+	}
 
+	private async playViaFetch(url: string) {
+		if (!this.audioPlayer) return;
+		try {
+			const res = await fetch(url, {
+				headers: { "User-Agent": "zakkir/1.0" },
+				signal: AbortSignal.timeout(15000),
+			});
+			if (!res.ok || !res.body)
+				throw new Error(`fetch ${url} -> ${res.status}`);
+			const stream = Readable.fromWeb(
+				res.body as unknown as import("node:stream/web").ReadableStream,
+			);
+			const resource = createAudioResource(stream, {
+				inputType: StreamType.Arbitrary,
+				inlineVolume: false,
+			});
 			this.audioPlayer.play(resource);
 		} catch (error) {
 			this.emit("streamError", error);
