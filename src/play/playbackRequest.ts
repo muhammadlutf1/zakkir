@@ -169,9 +169,8 @@ export class PlaybackRequest {
 
 			void channel.send(message).catch((error: unknown) => {
 				logger.error(
-					error,
-					"Failed to post notice in guild %s",
-					player.guildId,
+					{ err: error, guildId: player.guildId },
+					"Failed to post notice",
 				);
 			});
 		});
@@ -185,7 +184,10 @@ export class PlaybackRequest {
 			if (!channel || !("send" in channel)) return;
 			posting = true;
 			void createPanel(player, channel, locale).catch((error: unknown) => {
-				logger.error(error, "Failed to post panel in guild %s", player.guildId);
+				logger.error(
+					{ err: error, guildId: player.guildId },
+					"Failed to post panel",
+				);
 				posting = false;
 			});
 		};
@@ -365,12 +367,11 @@ export class PlaybackRequest {
 			const body = formatPlayResult(pending.recitation, result, input.locale);
 			const reply = v2 ? v2TextReply(body) : { content: body, components: [] };
 			await input.update(reply);
-			if (linked) await this.updateLinked(linked, reply);
+			if (linked) await this.updateLinked(linked, reply, input.guildId);
 		} catch (error) {
 			logger.error(
-				error,
-				"Radio confirm play failed in guild %s",
-				input.guildId,
+				{ err: error, guildId: input.guildId },
+				"Radio confirm play failed",
 			);
 			const reply = v2
 				? v2TextReply(input.translator.t("command.resolveFailed"))
@@ -379,7 +380,7 @@ export class PlaybackRequest {
 						components: [],
 					};
 			await input.update(reply);
-			if (linked) await this.updateLinked(linked, reply);
+			if (linked) await this.updateLinked(linked, reply, input.guildId);
 		}
 	}
 
@@ -419,12 +420,11 @@ export class PlaybackRequest {
 
 		try {
 			await input.update(reply);
-			if (linked) await this.updateLinked(linked, reply);
+			if (linked) await this.updateLinked(linked, reply, input.guildId);
 		} catch (error) {
 			logger.error(
-				error,
-				"Radio cancel update failed in guild %s",
-				input.guildId,
+				{ err: error, guildId: input.guildId },
+				"Radio cancel update failed",
 			);
 		}
 	}
@@ -443,9 +443,8 @@ export class PlaybackRequest {
 			await input.update({ content: body, components: [] });
 		} catch (error) {
 			logger.error(
-				error,
-				"Queue-radio cancel update failed in guild %s",
-				input.guildId,
+				{ err: error, guildId: input.guildId },
+				"Queue-radio cancel update failed",
 			);
 		}
 	}
@@ -453,18 +452,22 @@ export class PlaybackRequest {
 	private async updateLinked(
 		linked: Array<(reply: PlayReply) => Promise<unknown>>,
 		reply: PlayReply,
+		guildId: string,
 	) {
 		await Promise.all(
 			linked.map((edit) =>
 				Promise.resolve(edit(reply)).catch((error: unknown) => {
 					if (isUnknownMessage(error)) {
 						logger.debug(
-							{ err: error },
+							{ err: error, guildId },
 							"Picker linked message not found (already deleted)",
 						);
 						return;
 					}
-					logger.error(error, "Picker linked-message update failed");
+					logger.error(
+						{ err: error, guildId },
+						"Picker linked-message update failed",
+					);
 				}),
 			),
 		);
@@ -1077,7 +1080,10 @@ class ActivePicker {
 		this.timer = setTimeout(() => {
 			this.timer = null;
 			this.timeout().catch((error) => {
-				logger.error(error, "Picker timeout action failed");
+				logger.error(
+					{ err: error, guildId: this.options.player.guildId },
+					"Picker timeout action failed",
+				);
 			});
 		}, this.options.timeoutMs);
 
@@ -1156,14 +1162,18 @@ class ActivePicker {
 		await Promise.all(
 			this.edits.map((edit) =>
 				Promise.resolve(edit(reply)).catch((error: unknown) => {
+					const guildId = this.options.player.guildId;
 					if (isUnknownMessage(error)) {
 						logger.debug(
-							{ err: error },
+							{ err: error, guildId },
 							"Picker linked message not found (already deleted)",
 						);
 						return;
 					}
-					logger.error(error, "Picker linked-message update failed");
+					logger.error(
+						{ err: error, guildId },
+						"Picker linked-message update failed",
+					);
 				}),
 			),
 		);

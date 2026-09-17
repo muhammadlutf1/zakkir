@@ -116,7 +116,10 @@ export class VoteManager {
 			}, VOTE_TIMEOUT_MS);
 			vote.timer.unref();
 		} catch (error) {
-			logger.error(error, "Failed to post vote in guild %s", input.guildId);
+			logger.error(
+				{ err: error, guildId: input.guildId },
+				"Failed to post vote",
+			);
 			this.votes.delete(input.guildId);
 			return undefined;
 		}
@@ -201,7 +204,10 @@ export class VoteManager {
 		try {
 			await vote.onPass();
 		} catch (error) {
-			logger.error(error, "Vote pass action failed in guild %s", vote.guildId);
+			logger.error(
+				{ err: error, guildId: vote.guildId },
+				"Vote pass action failed",
+			);
 		}
 		await this.resolve(vote, "passed");
 	}
@@ -264,9 +270,8 @@ export class VoteManager {
 			await vote.message.edit({ content, components });
 		} catch (error) {
 			logger.warn(
-				error,
-				"Failed to refresh vote message in guild %s",
-				vote.guildId,
+				{ err: error, guildId: vote.guildId },
+				"Failed to refresh vote message",
 			);
 		}
 	}
@@ -286,9 +291,8 @@ export class VoteManager {
 				await vote.message.edit({ content, components });
 			} catch (error) {
 				logger.warn(
-					error,
-					"Failed to resolve vote message in guild %s",
-					vote.guildId,
+					{ err: error, guildId: vote.guildId },
+					"Failed to resolve vote message",
 				);
 			}
 		}

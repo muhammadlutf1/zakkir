@@ -124,7 +124,12 @@ async function dispatchWithErrorPolicy(
 	try {
 		await execute();
 	} catch (error) {
-		logger.error(error, "Error handling %s", logLabel);
+		const guildId =
+			interaction.guild?.id ??
+			("guildId" in interaction
+				? (interaction.guildId ?? undefined)
+				: undefined);
+		logger.error({ err: error, guildId }, "Error handling %s", logLabel);
 
 		const decision = decideFailureResponse(
 			kind,
@@ -155,14 +160,23 @@ async function dispatchWithErrorPolicy(
 			// 10062 Unknown interaction — token expired (>3s without defer, >15m after defer).
 			// 40060 Interaction has already been acknowledged — already replied/deferred.
 			const code = (replyError as CodedDiscordError).code;
+			const guildId =
+				interaction.guild?.id ??
+				("guildId" in interaction
+					? (interaction.guildId ?? undefined)
+					: undefined);
 			if (code === 10062 || code === 40060) {
 				logger.debug(
-					replyError,
+					{ err: replyError, guildId },
 					"Skipped error reply for %s — interaction expired",
 					logLabel,
 				);
 			} else {
-				logger.warn(replyError, "Failed to send error reply for %s", logLabel);
+				logger.warn(
+					{ err: replyError, guildId },
+					"Failed to send error reply for %s",
+					logLabel,
+				);
 			}
 		}
 	}

@@ -99,11 +99,11 @@ export class Player {
 		this.notices = options.notices;
 
 		port.on("error", (error) => {
-			logger.error(error, "Voice error in guild %s", this.guildId);
+			logger.error({ err: error, guildId: this.guildId }, "Voice error");
 		});
 
 		port.on("streamError", (error) => {
-			logger.error(error, "Stream error in guild %s", this.guildId);
+			logger.error({ err: error, guildId: this.guildId }, "Stream error");
 			this.onStreamError();
 		});
 
@@ -298,9 +298,8 @@ export class Player {
 	async join(channel: VoiceChannel): Promise<void> {
 		this.channel = channel;
 		logger.info(
-			"Player joining voice channel %s in guild %s",
-			channel.id,
-			this.guildId,
+			{ guildId: this.guildId, channelId: channel.id },
+			"Player joining voice channel",
 		);
 		await this.port.join(channel);
 	}
@@ -318,16 +317,15 @@ export class Player {
 			return;
 		}
 		logger.info(
-			"Player moved to voice channel %s in guild %s via external move",
-			channel.id,
-			this.guildId,
+			{ guildId: this.guildId, channelId: channel.id },
+			"Player moved to voice channel via external move",
 		);
 		this.channel = channel;
 		this.refreshVoiceMembership();
 	}
 
 	leave(): void {
-		logger.info("Player leaving voice channel in guild %s", this.guildId);
+		logger.info({ guildId: this.guildId }, "Player leaving voice channel");
 		this.cancelGraceTimer();
 		this.cancelRadioRetry();
 		if (this.radio) {
@@ -457,8 +455,8 @@ export class Player {
 		this.graceTimer = setTimeout(() => {
 			this.graceTimer = undefined;
 			logger.info(
-				"Grace period elapsed in guild %s — ending session",
-				this.guildId,
+				{ guildId: this.guildId },
+				"Grace period elapsed — ending session",
 			);
 			this.endSession();
 		}, this.gracePeriodMs);
@@ -486,12 +484,14 @@ export class Player {
 			const delay = RADIO_RETRY_BASE_MS * 2 ** radio.retries;
 			radio.retries += 1;
 			logger.info(
-				"Retrying radio %s in guild %s (%d/%d) in %dms",
-				radio.name,
-				this.guildId,
-				radio.retries,
-				MAX_RADIO_RETRIES,
-				delay,
+				{
+					guildId: this.guildId,
+					radio: radio.name,
+					attempt: radio.retries,
+					maxRetries: MAX_RADIO_RETRIES,
+					delayMs: delay,
+				},
+				"Retrying radio",
 			);
 			this.cancelRadioRetry();
 			this.radioRetryTimer = setTimeout(() => {
@@ -503,10 +503,12 @@ export class Player {
 			return;
 		}
 		logger.warn(
-			"Radio %s in guild %s failed after %d retries — going idle",
-			radio.name,
-			this.guildId,
-			MAX_RADIO_RETRIES,
+			{
+				guildId: this.guildId,
+				radio: radio.name,
+				maxRetries: MAX_RADIO_RETRIES,
+			},
+			"Radio failed after retries — going idle",
 		);
 		this.cancelRadioRetry();
 		this.radio = null;
@@ -545,10 +547,12 @@ export class Player {
 		if (active.retries < MAX_STREAM_RETRIES) {
 			active.retries += 1;
 			logger.info(
-				"Retrying stream in guild %s (%d/%d)",
-				this.guildId,
-				active.retries,
-				MAX_STREAM_RETRIES,
+				{
+					guildId: this.guildId,
+					attempt: active.retries,
+					maxRetries: MAX_STREAM_RETRIES,
+				},
+				"Retrying stream",
 			);
 			this.port.play(active.item.url);
 			return;
@@ -579,13 +583,13 @@ export class Player {
 	private emitNotice(message?: string) {
 		if (!message) {
 			logger.warn(
-				"No notice formatter injected — playback failure in guild %s produced no user-facing notice",
-				this.guildId,
+				{ guildId: this.guildId },
+				"No notice formatter injected — playback failure produced no user-facing notice",
 			);
 			return;
 		}
 
-		logger.info("Notice in guild %s: %s", this.guildId, message);
+		logger.info({ guildId: this.guildId, notice: message }, "Notice");
 
 		for (const listener of this.noticeListeners) listener(message);
 	}

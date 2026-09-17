@@ -294,7 +294,7 @@ export async function deletePanel(guildId: string) {
 	} catch (error) {
 		// SAFETY: discord.js errors expose code; 10008 is Unknown Message
 		if ((error as CodedDiscordError)?.code === 10008) return;
-		logger.warn(error, "Could not delete old panel in guild %s", guildId);
+		logger.warn({ err: error, guildId }, "Could not delete old panel");
 	}
 }
 
@@ -314,7 +314,10 @@ export async function repostPanel(
 		await createPanel(player, channel, locale);
 		return true;
 	} catch (error) {
-		logger.error(error, "Could not repost panel in guild %s", player.guildId);
+		logger.error(
+			{ err: error, guildId: player.guildId },
+			"Could not repost panel",
+		);
 		return false;
 	}
 }
@@ -372,9 +375,8 @@ async function refreshEntry(entry: PanelEntry) {
 				return;
 			} catch (error) {
 				logger.warn(
-					error,
-					"Panel edit failed in guild %s — reposting",
-					entry.player.guildId,
+					{ err: error, guildId: entry.player.guildId },
+					"Panel edit failed — reposting",
 				);
 			}
 		}
@@ -383,17 +385,15 @@ async function refreshEntry(entry: PanelEntry) {
 			// SAFETY: discord.js errors expose code; 10008 is Unknown Message
 			if ((error as CodedDiscordError)?.code === 10008) return;
 			logger.debug(
-				error,
-				"Old panel already gone in guild %s",
-				entry.player.guildId,
+				{ err: error, guildId: entry.player.guildId },
+				"Old panel already gone",
 			);
 		});
 		entry.message = await entry.channel.send(payload);
 	} catch (error) {
 		logger.error(
-			error,
-			"Panel refresh failed in guild %s",
-			entry.player.guildId,
+			{ err: error, guildId: entry.player.guildId },
+			"Panel refresh failed",
 		);
 	} finally {
 		entry.updating = false;
@@ -410,9 +410,8 @@ async function isBuried(entry: PanelEntry): Promise<boolean> {
 		return !recent.has(entry.message.id);
 	} catch (error) {
 		logger.warn(
-			error,
-			"Could not fetch recent messages in guild %s — treating panel as buried",
-			entry.player.guildId,
+			{ err: error, guildId: entry.player.guildId },
+			"Could not fetch recent messages — treating panel as buried",
 		);
 		return true;
 	}
@@ -434,6 +433,6 @@ async function disablePanel(guildId: string) {
 	try {
 		await entry.message.edit(payload);
 	} catch (error) {
-		logger.warn(error, "Could not disable panel in guild %s", guildId);
+		logger.warn({ err: error, guildId }, "Could not disable panel");
 	}
 }
