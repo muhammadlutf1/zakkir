@@ -6,7 +6,7 @@
 		"deploy:commands": "node --experimental-transform-types --env-file=.env src/scripts/deployCommands.ts",
 		"dev": "node --experimental-transform-types --env-file=.env --watch src/index.ts",
 		"start": "node --experimental-transform-types --env-file=.env src/index.ts",
-		"test": "node --experimental-transform-types --test __tests__/**/*.test.ts",
+		"test": "node --experimental-transform-types --test --test-concurrency=1 __tests__/**/*.test.ts",
 		"lint": "biome check --error-on-warnings ./src ./__tests__",
 		"lint:fix": "biome check --write ./src ./__tests__",
 		"format": "biome format ./src ./__tests__",
